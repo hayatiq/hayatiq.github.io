@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hayatiq - Handmade Beauty</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=Roboto:wght@300;400;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/main.css">
+    <script>
+        const fallbackImage = "https://picsum.photos/1200/800";
+        function handleImageError(event) {
+            event.target.src = fallbackImage;
+        }
+    </script>
+</head>
+<body>
+    <section class="top-nav">
+        <a href="../index.html" class="logo-link">
+            <button class="btn btn-primary" type="button">
+                Root Page
+            </button>
+        </a>
+    </section>
+
+    <header class="site-header">
+        <a href="index.html" class="logo-link">
+            <img src="https://scontent.fdac24-2.fna.fbcdn.net/v/t39.30808-6/522650387_122116021466924373_8989561160250415010_n.jpg?_nc_cat=111&ccb=1-7&_nc_sid=6ee11a&_nc_ohc=moN0romE4hQQ7kNvwHhak5r&_nc_oc=Adk6F6C377SNkmAootjqJxWWKiPSwOufXreGJfBzVU7T9lLITOY_NmF02hXE-SPQtjQ&_nc_zt=23&_nc_ht=scontent.fdac24-2.fna&_nc_gid=oabiZDu0aELLkVxzG0asCQ&oh=00_AfWcft11fuB51LPk2IRfJ-kVfOKUwvriQokbB9gQKPZ81w&oe=68A3C06F" alt="Hayatiq Logo" class="logo" onerror="handleImageError(event);">
+        </a>
+        <nav class="main-nav">
+            <ul class="nav-links">
+                <li><a href="products.html">Shop</a></li>
+                <li class="dropdown">
+                    <a href="#">Categories</a>
+                    <ul class="dropdown-menu">
+                        <li><a href="#">Skincare</a></li>
+                        <li><a href="#">Haircare</a></li>
+                        <li><a href="#">Wellness</a></li>
+                    </ul>
+                </li>
+                <li><a href="#">About</a></li>
+                <li><a href="contact.html">Contact</a></li>
+            </ul>
+        </nav>
+        <button class="menu-toggle" aria-expanded="false" aria-controls="main-nav">
+            <span></span>
+            <span></span>
+            <span></span>
+        </button>
+    </header>
+
+    <main>
+        <section class="hero-section">
+            <div class="hero-content">
+                <h1 class="hero-title">Crafted with Care. Inspired by Nature.</h1>
+                <p class="hero-subtitle">Experience the art of handmade beauty.</p>
+                <a href="products.html" class="btn btn-primary">Shop Now</a>
+            </div>
+            <img src="images/hero-bg.jpg" alt="A woman applying a face cream" class="hero-image" onerror="handleImageError(event);">
+        </section>
+
+        <section class="about-section content-section">
+            <h2 class="section-title">Our Philosophy</h2>
+            <div class="about-content">
+                <p>Hayatiq is more than just a beauty brand; it's a commitment to authenticity and purity. We believe in harnessing the power of natural ingredients to create products that are kind to your skin and the environment. Each item is meticulously handcrafted, blending ancient traditions with modern science to deliver a truly unique and effective experience.</p>
+                <a href="#" class="text-link">Learn More About Us &rarr;</a>
+            </div>
+        </section>
+
+        <section class="featured-products content-section">
+            <h2 class="section-title">Featured Products</h2>
+            <div class="product-grid">
+                <div class="product-card">
+                    <a href="product-detail.html" class="product-link">
+                        <img src="images/product-1.jpg" alt="Product Name" class="product-image" onerror="handleImageError(event);">
+                        <div class="product-info">
+                            <h3 class="product-name">Herbal Clay Mask</h3>
+                            <p class="product-price">$24.99</p>
+                        </div>
+                    </a>
+                </div>
+                <div class="product-card">
+                    <a href="product-detail.html" class="product-link">
+                        <img src="images/product-2.jpg" alt="Product Name" class="product-image" onerror="handleImageError(event);">
+                        <div class="product-info">
+                            <h3 class="product-name">Lavender Body Oil</h3>
+                            <p class="product-price">$32.50</p>
+                        </div>
+                    </a>
+                </div>
+                <div class="product-card">
+                    <a href="product-detail.html" class="product-link">
+                        <img src="images/product-3.jpg" alt="Product Name" class="product-image" onerror="handleImageError(event);">
+                        <div class="product-info">
+                            <h3 class="product-name">Rosewater Toner</h3>
+                            <p class="product-price">$18.00</p>
+                        </div>
+                    </a>
+                </div>
+                <div class="product-card">
+                    <a href="product-detail.html" class="product-link">
+                        <img src="images/product-4.jpg" alt="Product Name" class="product-image" onerror="handleImageError(event);">
+                        <div class="product-info">
+                            <h3 class="product-name">Sandalwood Scrub</h3>
+                            <p class="product-price">$28.75</p>
+                        </div>
+                    </a>
+                </div>
+                <div class="product-card">
+                    <a href="product-detail.html" class="product-link">
+                        <img src="images/product-5.jpg" alt="Product Name" class="product-image" onerror="handleImageError(event);">
+                        <div class="product-info">
+                            <h3 class="product-name">Jasmine Soap Bar</h3>
+                            <p class="product-price">$12.00</p>
+                        </div>
+                    </a>
+                </div>
+                <div class="product-card">
+                    <a href="product-detail.html" class="product-link">
+                        <img src="images/product-6.jpg" alt="Product Name" class="product-image" onerror="handleImageError(event);">
+                        <div class="product-info">
+                            <h3 class="product-name">Coffee Eye Cream</h3>
+                            <p class="product-price">$35.00</p>
+                        </div>
+                    </a>
+                </div>
+                <div class="product-card">
+                    <a href="product-detail.html" class="product-link">
+                        <img src="images/product-7.jpg" alt="Product Name" class="product-image" onerror="handleImageError(event);">
+                        <div class="product-info">
+                            <h3 class="product-name">Aloe Vera Gel</h3>
+                            <p class="product-price">$15.50</p>
+                        </div>
+                    </a>
+                </div>
+                <div class="product-card">
+                    <a href="product-detail.html" class="product-link">
+                        <img src="images/product-8.jpg" alt="Product Name" class="product-image" onerror="handleImageError(event);">
+                        <div class="product-info">
+                            <h3 class="product-name">Argan Oil Serum</h3>
+                            <p class="product-price">$45.00</p>
+                        </div>
+                    </a>
+                </div>
+            </div>
+            <div class="text-center">
+                <a href="products.html" class="btn btn-secondary">View All Products</a>
+            </div>
+        </section>
+
+        <section class="how-it-works content-section">
+            <h2 class="section-title">Our Process: From Nature to You</h2>
+            <div class="process-steps">
+                <div class="step">
+                    <img src="images/step-1.svg" alt="Step 1 Icon">
+                    <h3>Sourcing</h3>
+                    <p>We ethically source the finest natural ingredients from trusted partners around the globe.</p>
+                </div>
+                <div class="step">
+                    <img src="images/step-2.svg" alt="Step 2 Icon">
+                    <h3>Crafting</h3>
+                    <p>Each product is lovingly handmade in small batches to ensure quality and freshness.</p>
+                </div>
+                <div class="step">
+                    <img src="images/step-3.svg" alt="Step 3 Icon">
+                    <h3>Testing</h3>
+                    <p>We rigorously test our creations to guarantee they are safe, effective, and pure.</p>
+                </div>
+                <div class="step">
+                    <img src="images/step-4.svg" alt="Step 4 Icon">
+                    <h3>Packaging</h3>
+                    <p>Our eco-friendly packaging is designed to protect both the product and the planet.</p>
+                </div>
+            </div>
+        </section>
+
+        <section class="contact-teaser content-section">
+            <h2 class="section-title">Have a question?</h2>
+            <p>We'd love to hear from you. Get in touch with our team for personalized recommendations or any inquiries you might have.</p>
+            <a href="contact.html" class="btn btn-primary">Contact Us</a>
+        </section>
+    </main>
+
+    <footer class="site-footer">
+        <div class="footer-content">
+            <div class="footer-section footer-logo">
+                <img src="https://scontent.fdac24-2.fna.fbcdn.net/v/t39.30808-6/522650387_122116021466924373_8989561160250415010_n.jpg?_nc_cat=111&ccb=1-7&_nc_sid=6ee11a&_nc_ohc=moN0romE4hQQ7kNvwHhak5r&_nc_oc=Adk6F6C377SNkmAootjqJxWWKiPSwOufXreGJfBzVU7T9lLITOY_NmF02hXE-SPQtjQ&_nc_zt=23&_nc_ht=scontent.fdac24-2.fna&_nc_gid=oabiZDu0aELLkVxzG0asCQ&oh=00_AfWcft11fuB51LPk2IRfJ-kVfOKUwvriQokbB9gQKPZ81w&oe=68A3C06F" alt="Hayatiq Logo" class="logo">
+                <p>&copy; 2024 Hayatiq. All Rights Reserved.</p>
+            </div>
+            <div class="footer-section footer-links">
+                <h3>Quick Links</h3>
+                <ul>
+                    <li><a href="#">About Us</a></li>
+                    <li><a href="products.html">Products</a></li>
+                    <li><a href="#">Categories</a></li>
+                    <li><a href="#">FAQs</a></li>
+                </ul>
+            </div>
+            <div class="footer-section footer-social">
+                <h3>Follow Us</h3>
+                <div class="social-icons">
+                    <a href="https://instagram.com" target="_blank" aria-label="Instagram"><img src="images/instagram.svg" alt="Instagram"></a>
+                    <a href="https://facebook.com" target="_blank" aria-label="Facebook"><img src="images/facebook.svg" alt="Facebook"></a>
+                    <a href="https://pinterest.com" target="_blank" aria-label="Pinterest"><img src="images/pinterest.svg" alt="Pinterest"></a>
+                </div>
+            </div>
+            <div class="footer-section footer-qr">
+                <h3>Scan to shop</h3>
+                <img src="images/qr-code.png" alt="QR Code to Hayatiq website" class="qr-code">
+            </div>
+        </div>
+    </footer>
+
+    <script src="js/main.js"></script>
+</body>
+</html>

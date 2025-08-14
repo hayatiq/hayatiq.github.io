@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Assistants</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@500;700&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap');
+
+        :root {
+            --bg-gradient-start: #f3e8f8;
+            --bg-gradient-end: #e5e5f7;
+            --container-bg: rgba(255, 255, 255, 0.8);
+            --text-color: #2c3e50;
+            --button-bg: #ffffff;
+            --button-hover-bg: #f9f9f9;
+            --button-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+        }
+
+        body {
+            font-family: 'Poppins', sans-serif;
+            background-image: linear-gradient(135deg, var(--bg-gradient-start) 0%, var(--bg-gradient-end) 100%);
+            color: var(--text-color);
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            text-align: center;
+        }
+
+        .container {
+            max-width: 450px;
+            width: 90%;
+            padding: 30px;
+            border-radius: 20px;
+            background-color: var(--container-bg);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            transition: all 0.3s ease;
+        }
+
+        .container:hover {
+            box-shadow: 0 15px 40px rgba(0, 0, 0, 0.2);
+        }
+
+        h1 {
+            font-family: 'Montserrat', sans-serif;
+            font-size: clamp(1.8rem, 5vw, 2.5rem);
+            margin-bottom: 30px;
+            color: #34495e;
+            font-weight: 700;
+        }
+
+        .button-group {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .button {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 18px;
+            font-size: 1.2rem;
+            text-decoration: none;
+            color: var(--text-color);
+            background-color: var(--button-bg);
+            border: none;
+            border-radius: 12px;
+            transition: all 0.3s ease;
+            font-weight: 600;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .button:hover {
+            transform: translateY(-5px) scale(1.02);
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+        }
+
+        /* Specific glow effect for each button on hover */
+        .button.claude:hover {
+            color: #1a73e8;
+            box-shadow: 0 0 20px #a1c4fd, 0 8px 20px rgba(0, 0, 0, 0.15);
+        }
+
+        .button.gemini:hover {
+            color: #ea4335;
+            box-shadow: 0 0 20px #ffadad, 0 8px 20px rgba(0, 0, 0, 0.15);
+        }
+
+        .button.deepseek:hover {
+            color: #4285f4;
+            box-shadow: 0 0 20px #c9e0ff, 0 8px 20px rgba(0, 0, 0, 0.15);
+        }
+
+        /* Tablet and Desktop styles */
+        @media (min-width: 768px) {
+            .button-group {
+                flex-direction: row;
+                justify-content: center;
+            }
+
+            .button {
+                width: 140px;
+                padding: 20px 10px;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h1>Choose Version</h1>
+        <div class="button-group">
+            <a href="./claude/index.html" class="button claude">Claude</a>
+            <a href="./gemini/index.html" class="button gemini">Gemini</a>
+            <a href="./deepseek/index.html" class="button deepseek">Deepseek</a>
+        </div>
+    </div>
+
+</body>
+</html>

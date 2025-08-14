@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hayatiq | Handmade Beauty</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/responsive.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500&family=Playfair+Display:wght@400;500&family=Parisienne&display=swap" rel="stylesheet">
+    <script>
+        const fallbackImage = "https://picsum.photos/1200/800";
+        function handleImageError(event) {
+            event.target.src = fallbackImage;
+        }
+    </script>
+</head>
+<body>
+    <section class="top-nav">
+        <a href="../index.html" class="logo-link">
+            <button class="btn btn-primary" type="button">
+                Root Page
+            </button>
+        </a>
+    </section>
+    
+    <!-- Header -->
+    <header class="header">
+        <div class="container">
+            <div class="header-content">
+                <div class="logo">
+                    <a href="index.html">Hayatiq</a>
+                </div>
+                <nav class="main-nav">
+                    <ul>
+                        <li><a href="index.html">Home</a></li>
+                        <li><a href="products.html">Products</a></li>
+                        <li><a href="categories.html">Categories</a></li>
+                        <li><a href="contact.html">Contact</a></li>
+                    </ul>
+                </nav>
+                <div class="mobile-nav-toggle">
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                </div>
+                <div class="cart-icon">
+                    <span class="cart-count">0</span>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Hero Section -->
+    <section class="hero">
+        <div class="container">
+            <div class="hero-content">
+                <h1>Handcrafted Beauty, Naturally</h1>
+                <p class="subtitle">Premium handmade skincare with ethically sourced ingredients</p>
+                <a href="products.html" class="btn btn-primary">Shop Now</a>
+            </div>
+        </div>
+    </section>
+
+    <!-- About Section -->
+    <section class="about-section">
+        <div class="container">
+            <div class="section-header">
+                <h2>Our Story</h2>
+                <p class="section-subtitle">Handmade with love</p>
+            </div>
+            <div class="about-content">
+                <div class="about-text">
+                    <p>Founded in 2020, Hayatiq began as a small kitchen experiment and grew into a passion for creating clean, effective beauty products. Each item is carefully crafted by hand in small batches to ensure quality and freshness.</p>
+                    <p>We believe in transparency, sustainability, and the power of nature to nurture your skin. Our products are free from harsh chemicals, parabens, and synthetic fragrances.</p>
+                    <a href="#" class="btn btn-outline">Learn More</a>
+                </div>
+                <div class="about-image">
+                    <img src="assets/images/about-image.jpg" alt="Handmade process at Hayatiq" onerror="handleImageError(event);">
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Featured Products -->
+    <section class="featured-products">
+        <div class="container">
+            <div class="section-header">
+                <h2>Featured Products</h2>
+                <p class="section-subtitle">Customer favorites</p>
+            </div>
+            <div class="products-grid">
+                <!-- Product 1 -->
+                <div class="product-card">
+                    <div class="product-image">
+                        <img src="assets/images/product1.jpg" alt="Lavender Body Butter" onerror="handleImageError(event);">
+                        <div class="product-overlay">
+                            <button class="quick-view">Quick View</button>
+                        </div>
+                    </div>
+                    <div class="product-info">
+                        <h3>Lavender Body Butter</h3>
+                        <p class="price">$24.99</p>
+                        <button class="btn btn-small add-to-cart">Add to Cart</button>
+                    </div>
+                </div>
+                
+                <!-- Product 2 -->
+                <div class="product-card">
+                    <div class="product-image">
+                        <img src="assets/images/product2.jpg" alt="Rosehip Facial Oil" onerror="handleImageError(event);">
+                        <div class="product-overlay">
+                            <button class="quick-view">Quick View</button>
+                        </div>
+                    </div>
+                    <div class="product-info">
+                        <h3>Rosehip Facial Oil</h3>
+                        <p class="price">$29.99</p>
+                        <button class="btn btn-small add-to-cart">Add to Cart</button>
+                    </div>
+                </div>
+                
+                <!-- Product 3 -->
+                <div class="product-card">
+                    <div class="product-image">
+                        <img src="assets/images/product3.jpg" alt="Charcoal Detox Mask" onerror="handleImageError(event);">
+                        <div class="product-overlay">
+                            <button class="quick-view">Quick View</button>
+                        </div>
+                    </div>
+                    <div class="product-info">
+                        <h3>Charcoal Detox Mask</h3>
+                        <p class="price">$19.99</p>
+                        <button class="btn btn-small add-to-cart">Add to Cart</button>
+                    </div>
+                </div>
+                
+                <!-- Product 4 -->
+                <div class="product-card">
+                    <div class="product-image">
+                        <img src="assets/images/product4.jpg" alt="Citrus Sugar Scrub" onerror="handleImageError(event);">
+                        <div class="product-overlay">
+                            <button class="quick-view">Quick View</button>
+                        </div>
+                    </div>
+                    <div class="product-info">
+                        <h3>Citrus Sugar Scrub</h3>
+                        <p class="price">$22.99</p>
+                        <button class="btn btn-small add-to-cart">Add to Cart</button>
+                    </div>
+                </div>
+            </div>
+            <div class="text-center">
+                <a href="products.html" class="btn btn-outline">View All Products</a>
+            </div>
+        </div>
+    </section>
+
+    <!-- How It Works -->
+    <section class="process-section">
+        <div class="container">
+            <div class="section-header">
+                <h2>Our Process</h2>
+                <p class="section-subtitle">How we create our products</p>
+            </div>
+            <div class="process-steps">
+                <div class="process-step">
+                    <div class="step-number">1</div>
+                    <h3>Sourcing</h3>
+                    <p>We carefully select organic, ethically sourced ingredients from trusted suppliers.</p>
+                </div>
+                <div class="process-step">
+                    <div class="step-number">2</div>
+                    <h3>Formulating</h3>
+                    <p>Each recipe is developed with care, balancing effectiveness and natural ingredients.</p>
+                </div>
+                <div class="process-step">
+                    <div class="step-number">3</div>
+                    <h3>Crafting</h3>
+                    <p>Products are handmade in small batches to ensure quality and freshness.</p>
+                </div>
+                <div class="process-step">
+                    <div class="step-number">4</div>
+                    <h3>Packaging</h3>
+                    <p>We use sustainable, recyclable materials for all our packaging.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Contact Teaser -->
+    <section class="contact-teaser">
+        <div class="container">
+            <div class="contact-content">
+                <h2>Have questions?</h2>
+                <p>We'd love to hear from you! Reach out with any questions about our products or process.</p>
+                <a href="contact.html" class="btn btn-primary">Contact Us</a>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-grid">
+                <div class="footer-col">
+                    <h3>Hayatiq</h3>
+                    <p>Handmade beauty products crafted with natural ingredients and love.</p>
+                    <div class="social-links">
+                        <a href="#"><span class="icon-instagram"></span></a>
+                        <a href="#"><span class="icon-facebook"></span></a>
+                        <a href="#"><span class="icon-pinterest"></span></a>
+                    </div>
+                </div>
+                <div class="footer-col">
+                    <h3>Quick Links</h3>
+                    <ul>
+                        <li><a href="index.html">Home</a></li>
+                        <li><a href="products.html">Products</a></li>
+                        <li><a href="categories.html">Categories</a></li>
+                        <li><a href="contact.html">Contact</a></li>
+                    </ul>
+                </div>
+                <div class="footer-col">
+                    <h3>Categories</h3>
+                    <ul>
+                        <li><a href="#">Skincare</a></li>
+                        <li><a href="#">Haircare</a></li>
+                        <li><a href="#">Wellness</a></li>
+                        <li><a href="#">Gift Sets</a></li>
+                    </ul>
+                </div>
+                <div class="footer-col">
+                    <h3>Newsletter</h3>
+                    <p>Subscribe for updates and special offers.</p>
+                    <form class="newsletter-form">
+                        <input type="email" placeholder="Your email">
+                        <button type="submit" class="btn btn-small">Subscribe</button>
+                    </form>
+                    <div class="qr-code">
+                        <img src="assets/images/qr-code.png" alt="QR Code to homepage">
+                        <p>Scan to visit</p>
+                    </div>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p>&copy; 2025 Hayatiq. All rights reserved.</p>
+                <div class="legal-links">
+                    <a href="#">Privacy Policy</a>
+                    <a href="#">Terms of Service</a>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <script src="js/script.js"></script>
+</body>
+</html>

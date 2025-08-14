@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Product Detail | Hayatiq</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/responsive.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500&family=Playfair+Display:wght@400;500&family=Parisienne&display=swap" rel="stylesheet">
+</head>
+<body>
+    <!-- Header (same as index.html) -->
+    <header class="header">
+        <!-- ... same header content ... -->
+    </header>
+
+    <!-- Product Detail -->
+    <section class="product-detail-section">
+        <div class="container">
+            <div class="product-detail">
+                <!-- Product Gallery -->
+                <div class="product-gallery">
+                    <div class="main-image">
+                        <img src="assets/images/product1-large.jpg" alt="Lavender Body Butter">
+                    </div>
+                    <div class="thumbnail-images">
+                        <div class="thumbnail active">
+                            <img src="assets/images/product1-thumb1.jpg" alt="Lavender Body Butter">
+                        </div>
+                        <div class="thumbnail">
+                            <img src="assets/images/product1-thumb2.jpg" alt="Lavender Body Butter">
+                        </div>
+                        <div class="thumbnail">
+                            <img src="assets/images/product1-thumb3.jpg" alt="Lavender Body Butter">
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Product Info -->
+                <div class="product-info">
+                    <h1>Lavender Body Butter</h1>
+                    <p class="price">$24.99</p>
+                    <div class="rating">
+                        <span class="star filled">★</span>
+                        <span class="star filled">★</span>
+                        <span class="star filled">★</span>
+                        <span class="star filled">★</span>
+                        <span class="star">★</span>
+                        <span class="review-count">(42 reviews)</span>
+                    </div>
+                    <p class="short-description">Our luxurious lavender body butter is formulated with shea butter, coconut oil, and pure lavender essential oil to deeply moisturize and relax your senses.</p>
+                    
+                    <div class="quantity-selector">
+                        <button class="quantity-btn minus">-</button>
+                        <input type="number" value="1" min="1">
+                        <button class="quantity-btn plus">+</button>
+                    </div>
+                    
+                    <button class="btn btn-primary add-to-cart">Add to Cart</button>
+                    
+                    <div class="product-tabs">
+                        <div class="tab-header">
+                            <button class="tab-btn active" data-tab="description">Description</button>
+                            <button class="tab-btn" data-tab="ingredients">Ingredients</button>
+                            <button class="tab-btn" data-tab="usage">How to Use</button>
+                            <button class="tab-btn" data-tab="warnings">Warnings</button>
+                        </div>
+                        <div class="tab-content">
+                            <div class="tab-pane active" id="description">
+                                <p>Indulge in our ultra-rich lavender body butter that melts into your skin, providing deep hydration and a calming lavender aroma. Perfect for dry skin, this formula absorbs quickly without leaving a greasy residue.</p>
+                                <h3>Benefits:</h3>
+                                <ul>
+                                    <li>Deeply moisturizes dry skin</li>
+                                    <li>Calming lavender fragrance</li>
+                                    <li>Non-greasy formula</li>
+                                    <li>Vegan and cruelty-free</li>
+                                </ul>
+                            </div>
+                            <div class="tab-pane" id="ingredients">
+                                <p>Organic shea butter, organic coconut oil, organic jojoba oil, lavender essential oil, vitamin E, rosemary extract (natural preservative).</p>
+                            </div>
+                            <div class="tab-pane" id="usage">
+                                <p>Apply to clean, dry skin as needed. Massage in circular motions until fully absorbed. Best used after showering or bathing when skin is still slightly damp.</p>
+                            </div>
+                            <div class="tab-pane" id="warnings">
+                                <p>For external use only. Discontinue use if irritation occurs. Keep out of reach of children. Avoid contact with eyes. Store in a cool, dry place.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Related Products -->
+            <div class="related-products">
+                <h2>You May Also Like</h2>
+                <div class="products-grid">
+                    <!-- Product 2 -->
+                    <div class="product-card">
+                        <div class="product-image">
+                            <img src="assets/images/product2.jpg" alt="Rosehip Facial Oil">
+                            <div class="product-overlay">
+                                <button class="quick-view">Quick View</button>
+                            </div>
+                        </div>
+                        <div class="product-info">
+                            <h3>Rosehip Facial Oil</h3>
+                            <p class="price">$29.99</p>
+                            <button class="btn btn-small add-to-cart">Add to Cart</button>
+                        </div>
+                    </div>
+                    
+                    <!-- Product 3 -->
+                    <div class="product-card">
+                        <div class="product-image">
+                            <img src="assets/images/product3.jpg" alt="Charcoal Detox Mask">
+                            <div class="product-overlay">
+                                <button class="quick-view">Quick View</button>
+                            </div>
+                        </div>
+                        <div class="product-info">
+                            <h3>Charcoal Detox Mask</h3>
+                            <p class="price">$19.99</p>
+                            <button class="btn btn-small add-to-cart">Add to Cart</button>
+                        </div>
+                    </div>
+                    
+                    <!-- Product 5 -->
+                    <div class="product-card">
+                        <div class="product-image">
+                            <img src="assets/images/product5.jpg" alt="Vanilla Lip Balm">
+                            <div class="product-overlay">
+                                <button class="quick-view">Quick View</button>
+                            </div>
+                        </div>
+                        <div class="product-info">
+                            <h3>Vanilla Lip Balm</h3>
+                            <p class="price">$12.99</p>
+                            <button class="btn btn-small add-to-cart">Add to Cart</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-grid">
+                <div class="footer-col">
+                    <h3>Hayatiq</h3>
+                    <p>Handmade beauty products crafted with natural ingredients and love.</p>
+                    <div class="social-links">
+                        <a href="#"><span class="icon-instagram"></span></a>
+                        <a href="#"><span class="icon-facebook"></span></a>
+                        <a href="#"><span class="icon-pinterest"></span></a>
+                    </div>
+                </div>
+                <div class="footer-col">
+                    <h3>Quick Links</h3>
+                    <ul>
+                        <li><a href="index.html">Home</a></li>
+                        <li><a href="products.html">Products</a></li>
+                        <li><a href="categories.html">Categories</a></li>
+                        <li><a href="contact.html">Contact</a></li>
+                    </ul>
+                </div>
+                <div class="footer-col">
+                    <h3>Categories</h3>
+                    <ul>
+                        <li><a href="#">Skincare</a></li>
+                        <li><a href="#">Haircare</a></li>
+                        <li><a href="#">Wellness</a></li>
+                        <li><a href="#">Gift Sets</a></li>
+                    </ul>
+                </div>
+                <div class="footer-col">
+                    <h3>Newsletter</h3>
+                    <p>Subscribe for updates and special offers.</p>
+                    <form class="newsletter-form">
+                        <input type="email" placeholder="Your email">
+                        <button type="submit" class="btn btn-small">Subscribe</button>
+                    </form>
+                    <div class="qr-code">
+                        <img src="assets/images/qr-code.png" alt="QR Code to homepage">
+                        <p>Scan to visit</p>
+                    </div>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p>&copy; 2025 Hayatiq. All rights reserved.</p>
+                <div class="legal-links">
+                    <a href="#">Privacy Policy</a>
+                    <a href="#">Terms of Service</a>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <script src="js/script.js"></script>
+    <script>
+        // Product detail specific JS
+        document.addEventListener('DOMContentLoaded', function() {
+            // Tab functionality
+            const tabBtns = document.querySelectorAll('.tab-btn');
+            const tabPanes = document.querySelectorAll('.tab-pane');
+            
+            tabBtns.forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const tabId = this.getAttribute('data-tab');
+                    
+                    // Update active tab button
+                    tabBtns.forEach(btn => btn.classList.remove('active'));
+                    this.classList.add('active');
+                    
+                    // Update active tab pane
+                    tabPanes.forEach(pane => pane.classList.remove('active'));
+                    document.getElementById(tabId).classList.add('active');
+                });
+            });
+            
+            // Thumbnail image switching
+            const thumbnails = document.querySelectorAll('.thumbnail');
+            const mainImage = document.querySelector('.main-image img');
+            
+            thumbnails.forEach(thumb => {
+                thumb.addEventListener('click', function() {
+                    // Update active thumbnail
+                    thumbnails.forEach(t => t.classList.remove('active'));
+                    this.classList.add('active');
+                    
+                    // Update main image (in a real site, you'd use the full size image)
+                    const thumbImg = this.querySelector('img');
+                    mainImage.src = thumbImg.src.replace('-thumb', '-large');
+                });
+            });
+            
+            // Quantity selector
+            const minusBtn = document.querySelector('.quantity-btn.minus');
+            const plusBtn = document.querySelector('.quantity-btn.plus');
+            const quantityInput = document.querySelector('.quantity-selector input');
+            
+            minusBtn.addEventListener('click', function() {
+                let value = parseInt(quantityInput.value);
+                if (value > 1) {
+                    quantityInput.value = value - 1;
+                }
+            });
+            
+            plusBtn.addEventListener('click', function() {
+                let value = parseInt(quantityInput.value);
+                quantityInput.value = value + 1;
+            });
+        });
+    </script>
+</body>
+</html>
