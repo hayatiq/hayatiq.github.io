@@ -15,11 +15,12 @@
       href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600&family=Dancing+Script:wght@600;700&display=swap"
       rel="stylesheet"
     />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/7.0.0/css/all.min.css" integrity="sha512-DxV+EoADOkOygM4IR9yXP8Sb2qwgidEmeqAEmDKIOfPRQZOWbXCzLC6vjbZyy0vPisbH2SyW27+ddLVCN+OMzQ==" crossorigin="anonymous" referrerpolicy="no-referrer" />
     <style>
       :root {
         /* Consistent palette used across the file */
-        --color-silver: #c8c5be;   /* neutral surface */
-        --color-timberwolf: #d7d6cf; /* page bg */
+        --color-silver: #a3922145;   /* neutral surface */
+        --color-timberwolf: #f5f5f5; /* page bg */
         --color-khaki: #aba69b;   /* subtle hover */
         --color-night: #100f0f;   /* text */
         --color-seal-brown: #57341e; /* brand primary */
@@ -28,8 +29,9 @@
 
         /* Layout tokens */
         --radius: 16px;
+        --radius-sm: 8px;
         --radius-lg: 20px;
-        --shadow-soft: 0 6px 20px rgba(16, 15, 15, 0.08);
+        --shadow-soft: 0 6px 20px rgb(64 64 64 / 8%);
         --shadow-card: 0 10px 30px rgba(16, 15, 15, 0.1);
         --container: 1200px;
       }
@@ -62,11 +64,7 @@
       /* Utilities */
       .container { width: 100%; max-width: var(--container); margin: 0 auto; padding: 0 1rem; border: none; border-color: transparent; }
       .grid { display: grid; gap: 1rem; }
-      .btn {
-        display: inline-flex; align-items: center; justify-content: center; gap: 0.5rem;
-        padding: 0.8rem 1.1rem; border-radius: var(--radius); border: 1px solid transparent;
-        font-weight: 600; transition: all 0.25s ease; cursor: pointer;
-      }
+      .btn { display: inline-flex; align-items: center; justify-content: center; gap: 0.5rem; padding: 0.8rem 1.1rem; border-radius: var(--radius); border: 1px solid transparent; font-weight: 600; transition: all 0.25s ease; cursor: pointer; }
       .button-primary { background-color: var(--color-seal-brown); color: var(--color-white); }
       .button-primary:hover { background-color: var(--color-khaki); color: var(--color-night); }
       .button-ghost { background: transparent; border-color: var(--color-seal-brown); color: var(--color-seal-brown); }
@@ -76,20 +74,10 @@
       .visually-hidden { position: absolute !important; height:1px; width:1px; overflow:hidden; clip:rect(1px,1px,1px,1px); white-space:nowrap; }
 
       /* Header (fixed responsive) */
-      header.site-header {
-        padding: 0 1rem;
-        position: sticky; top: 0; z-index: 50;
-        backdrop-filter: blur(6px);
-        background: rgba(215, 214, 207, 0.85);
-        border-bottom: 1px solid rgba(16, 15, 15, 0.06);
-      }
+      header.site-header { padding: 0 1rem; position: sticky; top: 0; z-index: 50; backdrop-filter: blur(6px); background: rgb(227 227 223 / 85%); border-bottom: 1px solid rgba(16, 15, 15, 0.06); }
       .nav { display: flex; align-items: center; justify-content: space-between; padding: 0.8rem 0; }
       .brand { display: flex; align-items: center; gap: 0.6rem; font-weight: 700; letter-spacing: 0.5px; }
-      .brand-logo { width: 36px; height: 36px; border-radius: 50%; background-image: url("https://tinyurl.com/yc2v97hu");
-        background-size: contain;
-        background-repeat: no-repeat; 
-        background-position: center;
-        flex: 0 0 36px; }
+      .brand-logo { width: 36px; height: 36px; border-radius: 50%; background-image: url("https://tinyurl.com/yc2v97hu"); background-size: contain; background-repeat: no-repeat;  background-position: center; flex: 0 0 36px; }
       .brand-name { font-family: "Dancing Script", cursive; font-size: 1.6rem; color: var(--color-seal-brown); }
 
       .nav-links { display: flex; align-items: center; gap: 0.4rem; }
@@ -97,7 +85,7 @@
       .nav-links a.active, .nav-links a:hover { background: var(--color-silver); }
 
       .cart { position: relative; }
-      .cart-count { position: absolute; top: -6px; right: -6px; background: var(--color-seal-brown); color: var(--color-white); border-radius: 999px; font-size: 0.7rem; padding: 0.1rem 0.35rem; min-width: 18px; text-align: center; }
+      .cart-count { position: absolute; top: -20px; right: -16px; background: var(--color-seal-brown); color: var(--color-white); border-radius: 50%; font-size: 0.6rem; padding: 0.1rem 0.15rem; min-width: 18px; text-align: center; }
 
       /* Mobile nav toggle */
       .mobile-nav-toggle { display: none; margin-left: .5rem; }
@@ -110,13 +98,7 @@
       @media (max-width: 799px) {
         .mobile-nav-toggle { display: block; border: none; background: transparent;}
         .nav { gap: .5rem; }
-        .nav-links {
-          position: fixed; inset: 60px 12px auto 12px; /* below header */
-          display: grid; gap: .4rem; padding: .6rem; border-radius: 12px;
-          background: var(--color-white); border: 1px solid rgba(16,15,15,.08);
-          box-shadow: var(--shadow-card);
-          transform-origin: top center; transform: scale(.98); opacity: 0; pointer-events: none;
-        }
+        .nav-links { position: fixed; inset: 60px 12px auto 12px; /* below header */ display: grid; gap: .4rem; padding: .6rem; border-radius: 12px; background: var(--color-white); border: 1px solid rgba(16,15,15,.08); box-shadow: var(--shadow-card); transform-origin: top center; transform: scale(.98); opacity: 0; pointer-events: none; }
         .nav-links.open { transform: scale(1); opacity: 1; pointer-events: auto; }
         .nav-links a { background: transparent; }
       }
@@ -124,7 +106,7 @@
       /* Hero */
       .hero { position: relative; }
       .hero-wrap { display: grid; grid-template-columns: 1fr; align-items: center; gap: 1rem; padding: 1.2rem 0 0 0; }
-      .hero-card { background: linear-gradient(180deg, rgba(200, 197, 190, 0.65), rgba(215, 214, 207, 0.65)); border: 1px solid rgba(16, 15, 15, 0.06); border-radius: var(--radius-lg); padding: 1.2rem; box-shadow: var(--shadow-soft); }
+      .hero-card { background: linear-gradient(180deg, rgb(215 215 215 / 65%), rgb(203 196 152 / 65%)); border: 1px solid rgb(16 14 14 / 8%); border-radius: var(--radius-lg); padding: 1.2rem; box-shadow: var(--shadow-soft); }
       .hero h1 { font-size: 2rem; }
       .hero p { font-size: 1rem; }
       .hero-cta { display: flex; gap: 0.6rem; flex-wrap: wrap; margin-top: 0.6rem; }
@@ -135,8 +117,8 @@
       .section-title h2 { font-size: 1.6rem; }
 
       /* Product grid */
-      .products-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 0.9rem; }
-      .product-card { background: var(--color-white); border: 1px solid rgba(16, 15, 15, 0.06); border-radius: var(--radius-lg); overflow: hidden; box-shadow: var(--shadow-soft); transition: transform 0.25s ease, box-shadow 0.25s ease; }
+      .products-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 0.7rem; }
+      .product-card { background: var(--color-white); border: 1px solid rgba(16, 15, 15, 0.06); border-radius: var(--radius-sm); overflow: hidden; box-shadow: var(--shadow-soft); transition: transform 0.25s ease, box-shadow 0.25s ease; }
 
       /* Consistent image aspect ratios to prevent layout shift */
       .product-media { position: relative; aspect-ratio: 1/1; overflow: hidden; }
@@ -151,15 +133,53 @@
       .product-price { font-weight: 700; color: var(--color-seal-brown); }
       .quick-view { font-size: 0.85rem; }
 
-      /* Standardized icon/image utility for categories, badges, etc. */
-      .icon-img {
-        width: 64px; height: 64px; flex: 0 0 64px;
-        display: grid; place-items: center;
-        border-radius: 14px;
-        background: var(--color-white);
-        border: 1px solid rgba(16,15,15,.08);
-        overflow: hidden;
+      /* messenger button */
+      .messenger-btn {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background-color: #0866FF; /* Messenger blue */
+        border-top-width: 0;
+        height: 36px;
+        border-bottom-width: 0;
+        border-bottom-right-radius: 8px;
+        padding-right: 12px;
+        padding-left: 12px;
+        flex-wrap: nowrap;
+        box-sizing: border-box;
+        border-bottom-left-radius: 8px;
+        flex-shrink: 0;
+        flex-direction: row;
+        position: relative;
+        z-index: 0;
+        border-top-right-radius: 8px; 
+        border-top-left-radius: 8px;
+        border-left-width: 0;
+        border-right-width: 0;
+        color: #fff;
+      } 
+
+      .messenger-btn i {
+        font-size: 1.1rem; /* Messenger icon size */
       }
+
+      .messenger-btn:hover {
+        background-color: #005ce1; /* Slightly darker blue */
+        box-shadow: 0 2px 4px rgba(0,0,0,0.15);
+      }
+
+      @media (max-width: 600px) {
+        .messenger-btn {
+          width: 100%;
+          padding: 0.55rem;
+          font-size: 1rem;
+        }
+        .product-actions {
+          flex-direction: column;
+        }
+    }
+      /* Standardized icon/image utility for categories, badges, etc. */
+      .icon-img { width: 64px; height: 64px; flex: 0 0 64px; display: grid; place-items: center; border-radius: 14px; background: var(--color-white); border: 1px solid rgba(16,15,15,.08); overflow: hidden; }
       .icon-img img { width: 100%; height: 100%; object-fit: contain; }
 
       /* About / How it works cards */
@@ -182,7 +202,7 @@
       .field input:focus, .field textarea:focus { border-color: var(--color-seal-brown); box-shadow: 0 0 0 4px rgba(87, 52, 30, 0.12); }
 
       /* Footer */
-      footer {padding: 0 1rem; margin-top: 2rem; background: linear-gradient(180deg, rgba(200, 197, 190, 0.55), rgba(171, 166, 155, 0.55)); border-top: 1px solid rgba(16, 15, 15, 0.06); }
+      footer {padding: 0 1rem; margin-top: 2rem; background: linear-gradient(180deg, rgb(227 227 223 / 85%), rgb(161 119 27 / 55%)); border-top: 1px solid rgba(16, 15, 15, 0.06); }
       .footer-grid { display: grid; gap: 1rem; padding: 1.2rem 0; }
       .footer-col { display: grid; gap: .4rem; }
       .qr { width: 110px; height: 110px; display: block; background: repeating-linear-gradient(90deg, var(--color-black) 0 4px, var(--color-white) 4px 8px), repeating-linear-gradient(0deg, var(--color-black) 0 4px, var(--color-white) 4px 8px); border: 8px solid var(--color-white); border-radius: 6px; box-shadow: var(--shadow-soft); }
@@ -212,6 +232,7 @@
         .section-title h2 { font-size: 1.8rem; }
         .products-grid { grid-template-columns: repeat(3, 1fr); gap: 1rem; }
         .footer-grid { grid-template-columns: 2fr 1fr 1fr 1fr; align-items:start; }
+        .product-actions { flex-direction: column;}
       }
       @media (min-width: 1000px) {
         .products-grid { grid-template-columns: repeat(4, 1fr); }
@@ -236,14 +257,16 @@
           <a href="#/categories" data-link>Categories</a>
           <a href="#/about" data-link>About</a>
           <a href="#/contact" data-link>Contact</a>
-          <a href="#/cart" class="cart" aria-label="Cart">
+          <a href="#/cart" aria-label="Cart">
             <!-- Simple cart icon -->
-            <svg width="26" height="26" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+            <span class="cart">
+              <svg width="26" height="26" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
               <path d="M6 6h15l-2 9H8L6 2H2" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
               <circle cx="9" cy="21" r="1" fill="currentColor"/>
               <circle cx="18" cy="21" r="1" fill="currentColor"/>
             </svg>
             <span class="cart-count" id="cartCount">0</span>
+            </span>
           </a>
         </nav>
       </div>
@@ -435,7 +458,7 @@
         <div class="footer-col">
           <strong>Social</strong>
           <div class="socials" style="margin-top: 0.4rem">
-            <a href="https://instagram.com/" target="_blank" aria-label="Instagram" rel="noopener">
+            <a href="https://instagram.com/hayatiqlife  " target="_blank" aria-label="Instagram" rel="noopener">
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="3" y="3" width="18" height="18" rx="5" stroke="currentColor" stroke-width="1.5"/><circle cx="12" cy="12" r="4.5" stroke="currentColor" stroke-width="1.5"/><circle cx="17.5" cy="6.5" r="1" fill="currentColor"/></svg>
             </a>
             <a href="https://facebook.com/hayatiq.life" target="_blank" aria-label="Facebook" rel="noopener">
@@ -596,6 +619,11 @@
           <div class="product-body">
             <div class="product-name">${p.name}</div>
             <div class="product-price">${money(p.price)}</div>
+            <a href="https://www.facebook.com/messages/t/655284374342798" 
+              target="_blank" 
+              class="btn messenger-btn">
+              <i class="fa-brands fa-facebook-messenger"></i> Message
+            </a>
           </div>
         </a>
       </article>`;
@@ -648,7 +676,8 @@
             <div class="muted" aria-label="Average rating"><span class="stars" title="Average: ${avg.toFixed(1)}">${stars(avg)}</span> <small>(${reviews.length} review${reviews.length!==1?'s':''})</small></div>
           </div>
           <div style="display:flex; gap:.6rem; flex-wrap:wrap;">
-            <button class="btn button-primary" onclick="addToCart('${p.id}')">Add to Cart</button>
+            <!-- <button class="btn button-primary" onclick="addToCart('${p.id}')">Add to Cart</button> -->
+            <a class="btn button-primary" href="https://www.facebook.com/messages/t/655284374342798" target="_blank"><i class="fa-brands fa-facebook-messenger"></i> Message</a>
             <a class="btn button-ghost" href="#/products">Back to Products</a>
           </div>
           ${detailList("Ingredients", p.ingredients)}
