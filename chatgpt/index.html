@@ -419,7 +419,7 @@
           <div id="cartItems"></div>
           <div style="display:flex; align-items:center; justify-content:space-between; margin-top:0.8rem;">
             <strong>Total:</strong>
-            <strong id="cartTotal">$0.00</strong>
+            <strong id="cartTotal">৳0.00</strong>
           </div>
           <div style="margin-top:0.8rem; display:flex; gap:0.6rem; flex-wrap:wrap;">
             <button class="btn button-ghost" onclick="clearCart()">Clear Cart</button>
@@ -601,7 +601,7 @@
       const productCount = document.getElementById("productCount");
       const detailWrap = document.getElementById("detailWrap");
 
-      function money(n) { return `$${n.toFixed(2)}`; }
+      function money(n) { return `৳${n.toFixed(2)}`; }
 
       function productCard(p) {
         return `
@@ -619,7 +619,7 @@
           <div class="product-body">
             <div class="product-name">${p.name}</div>
             <div class="product-price">${money(p.price)}</div>
-            <a href="https://www.facebook.com/messages/t/655284374342798" 
+            <a href="https://m.me/hayatiq.life" 
               target="_blank" 
               class="btn messenger-btn">
               <i class="fa-brands fa-facebook-messenger"></i> Message
@@ -677,7 +677,7 @@
           </div>
           <div style="display:flex; gap:.6rem; flex-wrap:wrap;">
             <!-- <button class="btn button-primary" onclick="addToCart('${p.id}')">Add to Cart</button> -->
-            <a class="btn button-primary" href="https://www.facebook.com/messages/t/655284374342798" target="_blank"><i class="fa-brands fa-facebook-messenger"></i> Message</a>
+            <a class="btn button-primary" href="https://m.me/hayatiq.life" target="_blank"><i class="fa-brands fa-facebook-messenger"></i> Message</a>
             <a class="btn button-ghost" href="#/products">Back to Products</a>
           </div>
           ${detailList("Ingredients", p.ingredients)}
@@ -758,7 +758,7 @@
         const list = getCart();
         if (list.length === 0) {
           holder.innerHTML = '<p class="muted">Your cart is empty.</p>';
-          document.getElementById("cartTotal").textContent = "$0.00";
+          document.getElementById("cartTotal").textContent = "৳0.00";
           return;
         }
         holder.innerHTML = list.map((row) => {
