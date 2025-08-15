@@ -403,12 +403,17 @@
             <h2>Contact Us</h2>
             <a class="btn button-ghost" href="https://facebook.com/hayatiq.life" target="_blank" rel="noopener">Facebook Page →</a>
           </div>
-          <form class="contact" onsubmit="event.preventDefault(); alert('Thank you! This form is a static placeholder.');">
-            <div class="field"><label for="name">Name</label><input id="name" placeholder="Your full name" required /></div>
-            <div class="field"><label for="contact">Phone or Email</label><input id="contact" placeholder="e.g., +8801..., or name@email.com" required /></div>
-            <div class="field"><label for="message">Message</label><textarea id="message" rows="5" placeholder="How can we help?" required></textarea></div>
+          <form action="https://formsubmit.co/el/vevigu" class="contact" method="POST" id="contactForm">
+            <input type="hidden" name="_captcha" value="true"> <!-- enable spam protection -->
+            <input type="hidden" name="_template" value="table"> <!-- nice email layout -->
+            <input type="text" name="_honey" style="display:none">
+
+            <div class="field"><label for="name">Name</label><input id="name" name="name" placeholder="Your full name" /></div>
+            <div class="field"><label for="contact">Phone or Email</label><input id="contact" name="email_or_phone" placeholder="e.g., +8801..., or name@email.com" required /></div>
+            <div class="field"><label for="message">Message</label><textarea id="message" name="message" rows="5" placeholder="How can we help?" required></textarea></div>
             <button class="btn button-primary" type="submit">Send Message</button>
           </form>
+          <div id="formMessage" style="margin-top:1rem; display:none;"></div>
         </div>
       </section>
 
@@ -816,6 +821,64 @@
       updateCartCount();
       renderFeatured();
       navigate();
+    </script>
+
+    <!-- === Contact Form -->
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    <script>
+      document.getElementById('contactForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+
+        const form = e.target;
+        const messageBox = document.getElementById('formMessage');
+
+        // === Rate Limiting with localStorage ===
+        const limitKey = 'contactFormSubmissions';
+        const now = Date.now();
+        let submissions = JSON.parse(localStorage.getItem(limitKey)) || [];
+
+        // Remove old submissions (older than 1 hour)
+        submissions = submissions.filter(timestamp => now - timestamp < 3600000);
+        localStorage.setItem(limitKey, JSON.stringify(submissions));
+        
+
+        if (submissions.length >= 3) {
+          messageBox.style.display = 'block';
+          messageBox.style.color = 'red';
+          messageBox.textContent = '⚠️ You have reached your submission limit. Please try again later.';
+          setTimeout(() => {
+            window.location.hash = '/products';
+          }, 5000);
+          return;
+        }
+
+        // === Send via FormSubmit AJAX ===
+        axios.post('https://formsubmit.co/ajax/a921e9769ea9d4556fa8dcbd854fad0a', new FormData(form))
+          .then(response => {
+            // Record submission timestamp
+            submissions.push(now);
+            localStorage.setItem(limitKey, JSON.stringify(submissions));
+            // Show success message
+            messageBox.style.display = 'block';
+            messageBox.style.color = 'green';
+            messageBox.textContent = '✅ We have received your message and will get back to you soon. Redirecting...';
+
+            // Redirect after short delay
+            setTimeout(() => {
+              messageBox.textContent = '';
+              messageBox.style.display = 'none';
+              window.location.hash = '/products';
+            }, 5000);
+            
+            form.reset();
+          })
+          .catch(error => {
+            // Show error message
+            messageBox.style.display = 'block';
+            messageBox.style.color = 'red';
+            messageBox.textContent = '❌ Something went wrong. Please try again later.';
+          });
+      });
     </script>
   </body>
 </html>
