@@ -1,4 +1,22 @@
 /* ==============================
+       Mobile nav toggle
+       ============================== */
+const navToggle = document.getElementById("navToggle");
+const primaryNav = document.getElementById("primaryNav");
+navToggle.addEventListener("click", () => {
+  const open = primaryNav.classList.toggle("open");
+  navToggle.setAttribute("aria-expanded", open ? "true" : "false");
+});
+
+// Close mobile nav on route change or click outside
+document.addEventListener("click", (e) => {
+  if (!primaryNav.contains(e.target) && !navToggle.contains(e.target)) {
+    primaryNav.classList.remove("open");
+    navToggle.setAttribute("aria-expanded", "false");
+  }
+});
+
+/* ==============================
        Minimal SPA Router (hash based)
        ============================== */
 const routes = {
@@ -9,12 +27,16 @@ const routes = {
   contact: document.getElementById("view-contact"),
   about: document.getElementById("view-about"),
   cart: document.getElementById("view-cart"),
+  checkout: document.getElementById("view-checkout"),
 };
 
 function setActiveNav(hash) {
   document.querySelectorAll(".nav-links a[data-link]").forEach((a) => {
     a.classList.toggle("active", a.getAttribute("href") === hash);
   });
+  // Close mobile menu after navigation
+  primaryNav.classList.remove("open");
+  navToggle.setAttribute("aria-expanded", "false");
 }
 
 function navigate() {
@@ -39,6 +61,8 @@ function navigate() {
   } else if (hash === "#/cart") {
     routes.cart.classList.add("active");
     renderCart();
+  } else if (hash === "#/checkout") {
+    routes.checkout.classList.add("active");
   } else {
     routes.home.classList.add("active");
     renderFeatured();
@@ -56,14 +80,15 @@ window.addEventListener("hashchange", navigate);
 const PRODUCTS = [
   {
     id: "1",
-    name: "Rose Glow Serum",
-    price: 24.0,
+    name: "Magnesium oil spray 100ml",
+    price: 360,
     category: "Skincare",
     images: [
-      "https://images.unsplash.com/photo-1611930022073-b7a4ba5fcccd?q=80&w=1200&auto=format&fit=crop",
-      "https://images.unsplash.com/photo-1618473963526-87b11925bdf1?q=80&w=1200&auto=format&fit=crop",
+      "https://tinyurl.com/hatatiq-magnesium-oil",
+      "https://tinyurl.com/hatatiq-magnesium-oil-3",
+      "https://tinyurl.com/hatatiq-magnesium-oil-4",
     ],
-    short: "A lightweight serum for daily radiance.",
+    short: "A lightweight spray for daily radiance.",
     ingredients: ["Rosehip oil", "Squalane", "Vitamin E"],
     how: "Apply 2–3 drops to clean skin.",
     pros: ["Lightweight", "Glowy finish", "Fast absorbing"],
@@ -193,7 +218,7 @@ const productCount = document.getElementById("productCount");
 const detailWrap = document.getElementById("detailWrap");
 
 function money(n) {
-  return `$${n.toFixed(2)}`;
+  return `৳${n.toFixed(2)}`;
 }
 
 function productCard(p) {
@@ -216,6 +241,11 @@ function productCard(p) {
           <div class="product-body">
             <div class="product-name">${p.name}</div>
             <div class="product-price">${money(p.price)}</div>
+            <a href="https://m.me/hayatiq.life" 
+              target="_blank" 
+              class="btn messenger-btn">
+              <i class="fa-brands fa-facebook-messenger"></i> Message
+            </a>
           </div>
         </a>
       </article>`;
@@ -241,9 +271,43 @@ function detailList(title, arr) {
     .join("")}</ul></div>`;
 }
 
+/* ==============================
+       Reviews (localStorage per product)
+       ============================== */
+const REVIEWS_KEY = "hayatiq_reviews";
+function getAllReviews() {
+  try {
+    return JSON.parse(localStorage.getItem(REVIEWS_KEY)) || {};
+  } catch (e) {
+    return {};
+  }
+}
+function setAllReviews(map) {
+  localStorage.setItem(REVIEWS_KEY, JSON.stringify(map));
+}
+function getReviewsFor(id) {
+  const m = getAllReviews();
+  return m[id] || [];
+}
+function addReview(id, review) {
+  const m = getAllReviews();
+  m[id] = [...(m[id] || []), review];
+  setAllReviews(m);
+}
+function averageRating(list) {
+  if (!list.length) return 0;
+  return list.reduce((n, r) => n + Number(r.rating || 0), 0) / list.length;
+}
+function stars(n) {
+  const full = Math.round(n);
+  return "★★★★★☆☆☆☆☆".slice(5 - full, 10 - full); /* visual width stable */
+}
+
 function renderDetail(id) {
   const p = PRODUCTS.find((x) => x.id === id) || PRODUCTS[0];
-  const [main, ...rest] = p.images;
+  const [main] = p.images;
+  const reviews = getReviewsFor(p.id);
+  const avg = averageRating(reviews);
   detailWrap.innerHTML = `
         <div class="gallery">
           <div class="gallery-main"><img id="mainImg" src="${main}" alt="${
@@ -267,11 +331,17 @@ function renderDetail(id) {
               p.price
             )}</div>
             <p class="muted">${p.short}</p>
+            <div class="muted" aria-label="Average rating"><span class="stars" title="Average: ${avg.toFixed(
+              1
+            )}">${stars(avg)}</span> <small>(${reviews.length} review${
+    reviews.length !== 1 ? "s" : ""
+  })</small></div>
           </div>
           <div style="display:flex; gap:.6rem; flex-wrap:wrap;">
-            <button class="btn button-primary" onclick="addToCart('${
+            <!-- <button class="btn button-primary" onclick="addToCart('${
               p.id
-            }')">Add to Cart</button>
+            }')">Add to Cart</button> -->
+            <a class="btn button-primary" href="https://m.me/hayatiq.life" target="_blank"><i class="fa-brands fa-facebook-messenger"></i> Message</a>
             <a class="btn button-ghost" href="#/products">Back to Products</a>
           </div>
           ${detailList("Ingredients", p.ingredients)}
@@ -281,6 +351,43 @@ function renderDetail(id) {
           ${detailList("Pros", p.pros)}
           ${detailList("Cons", p.cons)}
           ${detailList("Warnings / Precautions", p.warns)}
+          
+          <div class="soft-card">
+            <h3 style="margin-bottom:.4rem;">Customer Reviews</h3>
+            <div id="reviewList" class="reviews">${
+              reviews.length
+                ? reviews
+                    .map(
+                      (r) =>
+                        `<div class='review-item'><strong>${
+                          r.name
+                        }</strong> — <span class='stars'>${stars(
+                          r.rating
+                        )}</span><p class='muted' style='margin-top:.3rem;'>${
+                          r.text
+                        }</p><small class='muted'>${new Date(
+                          r.created
+                        ).toLocaleString()}</small></div>`
+                    )
+                    .join("")
+                : '<p class="muted">No reviews yet. Be the first!</p>'
+            }</div>
+            <form id="reviewForm" style="margin-top:.8rem; display:grid; gap:.5rem;">
+              <div class="field"><label for="revName">Name</label><input id="revName" placeholder="Your name" required></div>
+              <div class="field"><label for="revRating">Rating</label>
+                <select id="revRating" required>
+                  <option value="">Select rating</option>
+                  <option value="5">★★★★★</option>
+                  <option value="4">★★★★☆</option>
+                  <option value="3">★★★☆☆</option>
+                  <option value="2">★★☆☆☆</option>
+                  <option value="1">★☆☆☆☆</option>
+                </select>
+              </div>
+              <div class="field"><label for="revText">Review</label><textarea id="revText" rows="4" placeholder="Share your thoughts" required></textarea></div>
+              <button class="btn button-primary" type="submit">Submit Review</button>
+            </form>
+          </div>
         </div>
       `;
   // thumbs interactivity
@@ -294,6 +401,37 @@ function renderDetail(id) {
       img.classList.add("active");
       mainImg.src = img.dataset.src;
     });
+  });
+
+  // review submit handler
+  const form = document.getElementById("reviewForm");
+  const listEl = document.getElementById("reviewList");
+  form.addEventListener("submit", (e) => {
+    e.preventDefault();
+    const name = document.getElementById("revName").value.trim();
+    const rating = Number(document.getElementById("revRating").value);
+    const text = document.getElementById("revText").value.trim();
+    if (!name || !rating || !text) return;
+    const review = { name, rating, text, created: new Date().toISOString() };
+    addReview(p.id, review);
+    // refresh
+    const rs = getReviewsFor(p.id);
+    listEl.innerHTML = rs
+      .map(
+        (r) =>
+          `<div class='review-item'><strong>${
+            r.name
+          }</strong> — <span class='stars'>${stars(
+            r.rating
+          )}</span><p class='muted' style='margin-top:.3rem;'>${
+            r.text
+          }</p><small class='muted'>${new Date(
+            r.created
+          ).toLocaleString()}</small></div>`
+      )
+      .join("");
+    form.reset();
+    toast("Thanks for your review!");
   });
 }
 
@@ -318,9 +456,7 @@ function addToCart(id) {
   if (item) item.qty += 1;
   else cart.push({ id, qty: 1 });
   setCart(cart);
-  // small toast
-  const p = PRODUCTS.find((x) => x.id === id);
-  toast(`${p?.name || "Item"} added to cart`);
+  toast(`${PRODUCTS.find((x) => x.id === id)?.name || "Item"} added to cart`);
 }
 function removeFromCart(id) {
   setCart(getCart().filter((i) => i.id !== id));
@@ -334,60 +470,77 @@ function updateCartCount() {
   const count = getCart().reduce((n, i) => n + i.qty, 0);
   document.getElementById("cartCount").textContent = count;
 }
+
+// New: update quantity controls
+function updateQty(id, qty) {
+  qty = Math.max(1, Math.min(99, Number(qty) || 1));
+  const cart = getCart();
+  const item = cart.find((i) => i.id === id);
+  if (!item) return;
+  item.qty = qty;
+  setCart(cart);
+  renderCart();
+}
+function incQty(id) {
+  const cart = getCart();
+  const item = cart.find((i) => i.id === id);
+  if (!item) return;
+  item.qty = Math.min(99, (item.qty || 1) + 1);
+  setCart(cart);
+  renderCart();
+}
+function decQty(id) {
+  const cart = getCart();
+  const item = cart.find((i) => i.id === id);
+  if (!item) return;
+  item.qty = Math.max(1, (item.qty || 1) - 1);
+  setCart(cart);
+  renderCart();
+}
+
 function renderCart() {
   const holder = document.getElementById("cartItems");
   const list = getCart();
   if (list.length === 0) {
     holder.innerHTML = '<p class="muted">Your cart is empty.</p>';
-    document.getElementById("cartTotal").textContent = "$0.00";
+    document.getElementById("cartTotal").textContent = "৳0.00";
     return;
   }
   holder.innerHTML = list
     .map((row) => {
       const p = PRODUCTS.find((x) => x.id === row.id);
       return `<div style="display:grid; grid-template-columns: 64px 1fr auto; gap:.6rem; align-items:center; padding:.5rem 0; border-bottom:1px solid rgba(16,15,15,.06);">
-        <img src="${p.images[0]}" alt="${
+          <img src="${p.images[0]}" alt="${
         p.name
       }" style="width:64px; height:64px; object-fit:cover; border-radius:10px;">
-        <div>
-          <div style="font-weight:600;">${p.name}</div>
-          <div style="display:flex; align-items:center; gap:.4rem; margin-top:.3rem;">
-            <button class="btn" style="padding:0.2rem 0.4rem;" onclick="updateQty('${
-              row.id
-            }', ${row.qty - 1})">−</button>
-            <span>${row.qty}</span>
-            <button class="btn" style="padding:0.2rem 0.4rem;" onclick="updateQty('${
-              row.id
-            }', ${row.qty + 1})">+</button>
+          <div>
+            <div style="font-weight:600;">${p.name}</div>
+            <div class="qty" aria-label="Quantity controls">
+              <button onclick="decQty('${
+                row.id
+              }')" aria-label="Decrease quantity">−</button>
+              <input type="number" min="1" max="99" value="${
+                row.qty
+              }" onchange="updateQty('${row.id}', this.value)" />
+              <button onclick="incQty('${
+                row.id
+              }')" aria-label="Increase quantity">+</button>
+            </div>
           </div>
-        </div>
-        <div style="display:flex; align-items:center; gap:.4rem;">
-          <strong>${money(p.price * row.qty)}</strong>
-          <button class="btn" title="Remove" onclick="removeFromCart('${
-            row.id
-          }')">✕</button>
-        </div>
-      </div>`;
+          <div style="display:flex; align-items:center; gap:.4rem;">
+            <strong>${money(p.price * row.qty)}</strong>
+            <button class="btn" title="Remove" onclick="removeFromCart('${
+              row.id
+            }')">✕</button>
+          </div>
+        </div>`;
     })
     .join("");
-
   const total = list.reduce((sum, row) => {
     const p = PRODUCTS.find((x) => x.id === row.id);
     return sum + p.price * row.qty;
   }, 0);
   document.getElementById("cartTotal").textContent = money(total);
-}
-
-function updateQty(id, newQty) {
-  if (newQty < 1) {
-    removeFromCart(id);
-    return;
-  }
-  const cart = getCart();
-  const item = cart.find((i) => i.id === id);
-  if (item) item.qty = newQty;
-  setCart(cart);
-  renderCart();
 }
 
 /* ==============================
@@ -424,7 +577,3 @@ document.getElementById("year").textContent = new Date().getFullYear();
 updateCartCount();
 renderFeatured();
 navigate();
-
-document.querySelector(".mobile-nav-toggle").addEventListener("click", () => {
-  document.querySelector(".nav-links").classList.toggle("active");
-});
