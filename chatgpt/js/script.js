@@ -81,6 +81,7 @@ const PRODUCTS = [
   {
     id: "1",
     name: "Magnesium oil spray 100ml",
+    slug: "magnesium-oil",
     price: 360,
     category: "Skincare",
     images: [
@@ -88,124 +89,39 @@ const PRODUCTS = [
       "https://tinyurl.com/hatatiq-magnesium-oil-3",
       "https://tinyurl.com/hatatiq-magnesium-oil-4",
     ],
-    short: "A lightweight spray for daily radiance.",
-    ingredients: ["Rosehip oil", "Squalane", "Vitamin E"],
-    how: "Apply 2–3 drops to clean skin.",
+    short: "Nature’s Calm in Every Spray",
+    ingredients: ["Magnesium Chloride Brine ", "Lavender Essential Oil"],
+    how: [
+      "For best results, apply to clean skin",
+      "A mild tingling sensation is normal and fades with regular use. shake well before use",
+    ],
+    tips: [
+      "For optimal benefits, apply on clean skin",
+      "Consistent application is recommended for effective results",
+      "A mild tingling sensation is normal and fades with regular use",
+      "May dilute with water to ease tingling",
+    ],
     pros: ["Lightweight", "Glowy finish", "Fast absorbing"],
     cons: ["Not fragrance‑free"],
     warns: ["Patch test before use."],
   },
   {
     id: "2",
-    name: "Lavender Cloud Balm",
-    price: 18.5,
+    name: "Loofah Soap Bar (Neem + Moringa)",
+    slug: "loofah-soap",
+    price: "Coming Soon",
     category: "Wellness",
     images: [
-      "https://images.unsplash.com/photo-1522335789203-aabd1fc54bc9?q=80&w=1200&auto=format&fit=crop",
+      "https://tinyurl.com/loofah-soap-1",
       "https://images.unsplash.com/photo-1603921326210-6edd2d60ca68?q=80&w=1200&auto=format&fit=crop",
     ],
     short: "Calming balm for pulse points & lips.",
     ingredients: ["Shea butter", "Lavender", "Beeswax"],
-    how: "Massage a small amount where needed.",
+    how: ["Massage a small amount where needed."],
+    tips: ["Shake well before Use", "as deodorant", "muscle relief"],
     pros: ["Soothing", "Multi‑use"],
     cons: ["Contains beeswax"],
     warns: ["Avoid during allergy flare‑ups."],
-  },
-  {
-    id: "3",
-    name: "Citrus Hair Oil",
-    price: 22.0,
-    category: "Haircare",
-    images: [
-      "https://images.unsplash.com/photo-1601004890684-d8cbf643f5f2?q=80&w=1200&auto=format&fit=crop",
-      "https://images.unsplash.com/photo-1571782742478-0816a4773a10?q=80&w=1200&auto=format&fit=crop",
-    ],
-    short: "Nourishing oil for shine & scalp care.",
-    ingredients: ["Argan oil", "Sweet orange", "Jojoba"],
-    how: "Warm a few drops and apply to ends.",
-    pros: ["Adds shine", "Smells fresh"],
-    cons: ["May feel heavy if overused"],
-    warns: ["Keep away from eyes."],
-  },
-  {
-    id: "4",
-    name: "Oat Milk Cleanser",
-    price: 16.0,
-    category: "Skincare",
-    images: [
-      "https://images.unsplash.com/photo-1598440947619-2c35fc9aa908?q=80&w=1200&auto=format&fit=crop",
-      "https://images.unsplash.com/photo-1616594039964-ae9021a400a0?q=80&w=1200&auto=format&fit=crop",
-    ],
-    short: "Gentle daily cleanser for sensitive skin.",
-    ingredients: ["Colloidal oats", "Glycerin", "Aloe"],
-    how: "Massage into damp skin, rinse.",
-    pros: ["Very gentle", "Non‑stripping"],
-    cons: ["Not waterproof‑makeup remover"],
-    warns: ["External use only."],
-  },
-  {
-    id: "5",
-    name: "Mint Scalp Tonic",
-    price: 14.75,
-    category: "Haircare",
-    images: [
-      "https://images.unsplash.com/photo-1611175694985-b42b0312627b?q=80&w=1200&auto=format&fit=crop",
-      "https://images.unsplash.com/photo-1598440947619-2c35fc9aa908?q=80&w=1200&auto=format&fit=crop",
-    ],
-    short: "Refreshing tonic to awaken the scalp.",
-    ingredients: ["Peppermint", "Witch hazel", "Panthenol"],
-    how: "Spritz onto clean scalp as needed.",
-    pros: ["Cooling", "Lightweight"],
-    cons: ["Cooling can tingle"],
-    warns: ["Do not use on broken skin."],
-  },
-  {
-    id: "6",
-    name: "Vanilla Body Polish",
-    price: 19.25,
-    category: "Wellness",
-    images: [
-      "https://images.unsplash.com/photo-1512203492609-8f9fef3608f9?q=80&w=1200&auto=format&fit=crop",
-      "https://images.unsplash.com/photo-1601004890684-d8cbf643f5f2?q=80&w=1200&auto=format&fit=crop",
-    ],
-    short: "Sugar scrub for buttery‑soft skin.",
-    ingredients: ["Sugar", "Coconut oil", "Vanilla"],
-    how: "Massage on damp skin, rinse.",
-    pros: ["Softens", "Smells warm"],
-    cons: ["Can be slippery"],
-    warns: ["Rinse shower thoroughly."],
-  },
-  {
-    id: "7",
-    name: "Ceramide Cream",
-    price: 26.0,
-    category: "Skincare",
-    images: [
-      "https://images.unsplash.com/photo-1604654894610-df63bc536371?q=80&w=1200&auto=format&fit=crop",
-      "https://images.unsplash.com/photo-1596755094514-f87e8a6c69b0?q=80&w=1200&auto=format&fit=crop",
-    ],
-    short: "Barrier‑supportive daily moisturizer.",
-    ingredients: ["Ceramides", "Niacinamide", "Hyaluronic acid"],
-    how: "Apply to face & neck morning & night.",
-    pros: ["Plump skin", "Supports barrier"],
-    cons: ["Richer texture"],
-    warns: ["Discontinue if irritation occurs."],
-  },
-  {
-    id: "8",
-    name: "Bath Tea Soak",
-    price: 15.0,
-    category: "Wellness",
-    images: [
-      "https://images.unsplash.com/photo-1522335789203-aabd1fc54bc9?q=80&w=1200&auto=format&fit=crop",
-      "https://images.unsplash.com/photo-1596462502278-27bfdc403348?q=80&w=1200&auto=format&fit=crop",
-    ],
-    short: "Herbal soak for a serene bath.",
-    ingredients: ["Chamomile", "Epsom salt", "Calendula"],
-    how: "Steep in warm bath 10 minutes.",
-    pros: ["Deeply relaxing"],
-    cons: ["Not for small tubs"],
-    warns: ["May increase drowsiness."],
   },
 ];
 
@@ -218,6 +134,9 @@ const productCount = document.getElementById("productCount");
 const detailWrap = document.getElementById("detailWrap");
 
 function money(n) {
+  if (typeof n === "string") {
+    return n;
+  }
   return `৳${n.toFixed(2)}`;
 }
 
@@ -241,7 +160,7 @@ function productCard(p) {
           <div class="product-body">
             <div class="product-name">${p.name}</div>
             <div class="product-price">${money(p.price)}</div>
-            <a href="https://m.me/hayatiq.life" 
+            <a href="https://m.me/hayatiq.life?ref=${p.slug}" 
               target="_blank" 
               class="btn messenger-btn">
               <i class="fa-brands fa-facebook-messenger"></i> Message
@@ -345,9 +264,11 @@ function renderDetail(id) {
             <a class="btn button-ghost" href="#/products">Back to Products</a>
           </div>
           ${detailList("Ingredients", p.ingredients)}
-          <div class="soft-card"><strong>How to use</strong><p style="margin-top:.4rem;">${
+          ${detailList("How to use", p.how)}
+          ${detailList("Tips", p.tips)}
+          <!--<div class="soft-card"><strong>How to use</strong><p style="margin-top:.4rem;">${
             p.how
-          }</p></div>
+          }</p></div> -->
           ${detailList("Pros", p.pros)}
           ${detailList("Cons", p.cons)}
           ${detailList("Warnings / Precautions", p.warns)}
