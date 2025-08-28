@@ -15,6 +15,8 @@
   --color-sage: #ACB087; /* sage */
   --color-sand: #C7AF94; /* sand */
 
+  --size-regular: 0.9rem;
+
   /* Layout tokens */
   --radius: 16px;
   --radius-sm: 8px;
@@ -233,40 +235,6 @@ header.site-header {
   top: 6px;
 }
 
-@media (max-width: 799px) {
-  .mobile-nav-toggle {
-    display: block;
-    border: none;
-    background: transparent;
-  }
-  .nav {
-    gap: 0.5rem;
-  }
-  .nav-links {
-    position: fixed;
-    inset: 60px 12px auto 12px; /* below header */
-    display: grid;
-    gap: 0.4rem;
-    padding: 0.6rem;
-    border-radius: 12px;
-    background: var(--color-white);
-    border: 1px solid rgba(16, 15, 15, 0.08);
-    box-shadow: var(--shadow-card);
-    transform-origin: top center;
-    transform: scale(0.98);
-    opacity: 0;
-    pointer-events: none;
-  }
-  .nav-links.open {
-    transform: scale(1);
-    opacity: 1;
-    pointer-events: auto;
-  }
-  .nav-links a {
-    background: transparent;
-  }
-}
-
 /* Hero */
 .hero {
   position: relative;
@@ -429,16 +397,7 @@ section {
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.15);
 }
 
-@media (max-width: 600px) {
-  .messenger-btn {
-    width: 100%;
-    padding: 0.55rem;
-    font-size: 1rem;
-  }
-  .product-actions {
-    flex-direction: column;
-  }
-}
+
 /* Standardized icon/image utility for categories, badges, etc. */
 .icon-img {
   width: 64px;
@@ -464,6 +423,11 @@ section {
   border-radius: var(--radius-lg);
   padding: 1rem;
   box-shadow: var(--shadow-soft);
+}
+.soft-card ul {
+  margin:.4rem 0 0 1rem;
+  padding:0;
+  font-size: var(--size-regular);
 }
 
 /* Detail page */
@@ -639,6 +603,105 @@ footer {
 .view.active {
   display: block;
 }
+/* how to use toggle */
+.how-to-use-container {
+  margin: 0.8rem 0;
+}
+
+.how-to-use-tabs {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  margin-bottom: 1rem;
+  border-bottom: 1px solid rgba(16,15,15,0.1);
+  padding-bottom: 0.8rem;
+}
+
+.how-to-use-tab {
+  padding: 0.3rem 0.8rem;
+  border-radius: var(--radius);
+  background: var(--color-sand);
+  color: var(--color-night);
+  border: 1px solid rgba(16, 15, 15, 0.16);
+  cursor: pointer;
+  font-weight: 500;
+  transition: all 0.25s ease;
+}
+
+.how-to-use-tab:hover,
+.how-to-use-tab.active {
+  background: var(--color-earth);
+  color: var(--color-white);
+}
+
+.how-to-use-content {
+  display: grid;
+  gap: 0.8rem;
+}
+
+.how-to-use-panel {
+  display: none;
+}
+
+.how-to-use-panel.active {
+  display: block;
+}
+
+.how-to-use-point {
+  padding: 0.3rem 0.8rem;
+  background: var(--color-earth);
+  border-radius: var(--radius-sm);
+  margin-bottom: 0.5rem;
+  color: var(--color-white);
+  font-size: var(--size-regular);
+}
+
+.how-to-use-point:last-child {
+  margin-bottom: 0;
+}
+
+.how-to-use-point b {
+  display: inline-block;
+  color: var(--color-white);
+}
+
+/* zoom image */
+.gallery-main {
+  cursor: zoom-in;
+}
+
+.gallery-main.zoomed {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 1000;
+  background: rgba(0,0,0,0.95);
+  display: grid;
+  place-items: center;
+  cursor: zoom-out;
+}
+
+.gallery-main.zoomed img {
+  width: 95%;
+  height: 95%;
+  object-fit: contain;
+  transform: scale(1.1);
+}
+
+/* coming soon container */
+.coming-soon-container {
+  text-align: center;
+  padding: 2rem 1rem;
+}
+
+.coming-soon-image {
+  max-height: 280px;
+  object-fit: contain;
+  margin: 0 auto 1.5rem;
+  border-radius: var(--radius);
+}
 
 /* Responsive */
 @media (min-width: 700px) {
@@ -665,11 +728,60 @@ footer {
     flex-direction: column;
   }
 }
+
+/* products */
 @media (min-width: 1000px) {
   .products-grid {
     grid-template-columns: repeat(4, 1fr);
   }
   section {
     padding: 1.6rem 0;
+  }
+}
+
+/* navbar/ hamburger */
+@media (max-width: 799px) {
+  .mobile-nav-toggle {
+    display: block;
+    border: none;
+    background: transparent;
+  }
+  .nav {
+    gap: 0.5rem;
+  }
+  .nav-links {
+    position: fixed;
+    inset: 60px 12px auto 12px; /* below header */
+    display: grid;
+    gap: 0.4rem;
+    padding: 0.6rem;
+    border-radius: 12px;
+    background: var(--color-white);
+    border: 1px solid rgba(16, 15, 15, 0.08);
+    box-shadow: var(--shadow-card);
+    transform-origin: top center;
+    transform: scale(0.98);
+    opacity: 0;
+    pointer-events: none;
+  }
+  .nav-links.open {
+    transform: scale(1);
+    opacity: 1;
+    pointer-events: auto;
+  }
+  .nav-links a {
+    background: transparent;
+  }
+}
+
+/* messenger btn */
+@media (max-width: 600px) {
+  .messenger-btn {
+    width: 100%;
+    padding: 0.55rem;
+    font-size: 1rem;
+  }
+  .product-actions {
+    flex-direction: column;
   }
 }

@@ -85,25 +85,45 @@ const PRODUCTS = [
     price: 360,
     category: "Skincare",
     images: [
-      "./images/placeholder.webp",
-      "https://tinyurl.com/hatatiq-magnesium-oil-3",
-      "https://tinyurl.com/hatatiq-magnesium-oil-4",
+      "./images/hayatiq_magnesium_oil.jpg",
+      "./images/hayatiq_magnesium_oil_2.jpg",
+      "./images/hayatiq_magnesium_oil_3.jpg",
     ],
     short: "Nature’s Calm in Every Spray",
     ingredients: ["Magnesium Chloride Brine ", "Lavender Essential Oil"],
     how: [
-      "For best results, apply to clean skin",
-      "A mild tingling sensation is normal and fades with regular use. shake well before use",
+      "Daily Supplement: <b>Where</b>: Spread across arms, legs, stomach.; <b>How much</b>: 15–20 sprays total.; <b>When</b>: Split between morning & evening.;",
+      "Muscle Cramps & Soreness:<b>Where</b>: Directly on cramped or sore muscles (calves, thighs, arms).; <b>How much</b>: 10–15 sprays.; <b>When</b>: During cramps, after workouts, or long days standing.; <b>Extra Tip</b>: Massage in for faster relief.;",
+      "Sleep & Relaxation:<b>Where</b>: Soles of feet, back of neck, shoulders.; <b>How much</b>: 5–10 sprays.; <b>When</b>: 30 minutes before bedtime.; <b>Extra Tip</b>: Massage gently into skin for deeper relaxation.;",
+      "Restless Legs Syndrome:<b>Where</b>: Calves, thighs.; <b>How much</b>: 10–15 sprays.; <b>When</b>: Before bedtime.;",
+      "Bone & Joint Health:<b>Where</b>: Knees, elbows, lower back, wrists.; <b>How much</b>: 8–12 sprays.; <b>When</b>: Daily, preferably evening.;",
+      "Headaches & Migraines:<b>Where</b>: Temples (lightly), back of neck, shoulders.; <b>How much</b>: 2–3 sprays.; <b>When</b>: At onset of headache/migraine.; <b>Extra Tip</b>: Soak feet in warm water + magnesium oil for additional relief. Spray on hand then rub it to temple.;",
+      "Hair & Scalp Health:<b>Where</b>: Spray directly onto scalp (part hair).; <b>How much</b>: 5–8 sprays.; <b>When</b>: 2–3 times per week, before shower.; <b>Extra Tip</b>: Massage scalp, leave for 30 minutes, then wash.;",
+      "Cramps & PMS Relief:<b>Where</b>: Lower abdomen, lower back.; <b>How much</b>: 8–12 sprays.; <b>When</b>: During cramps or PMS discomfort.; <b>Extra Tip</b>: Massage gently until absorbed.;",
+      "Energy Boost & Fatigue Relief:<b>Where</b>: Arms, legs, stomach.; <b>How much</b>: 5–10 sprays.; <b>When</b>: Morning or mid-day slump.; <b>Extra Tip</b>: Pair with light stretching or deep breathing.;",
+      "Deodorant:<b>Where</b>: Underarms (on clean, dry skin).; <b>How much</b>: 2–4 sprays per armpit.; <b>When</b>: Once daily (morning), reapply if needed.; <b>Extra Tip</b>: Wear clothing after fully absorbed.;",
+      "Stress & Anxiety:<b>Where</b>: Chest, shoulders, behind ears (not too close to eyes).; <b>How much</b>: 5–8 sprays.; <b>When</b>: During stress, after work, or before meditation.;",
+      "Exercise Recovery:<b>Where</b>: On exercised muscles (legs, arms, back).; <b>How much</b>: 10–15 sprays.; <b>When</b>: Right after workout or before bed.;",
     ],
+
+
     tips: [
-      "For optimal benefits, apply on clean skin",
+      "Apply on clean skin, make sure there are no dead skin",
       "Consistent application is recommended for effective results",
       "A mild tingling sensation is normal and fades with regular use",
       "May dilute with water to ease tingling",
     ],
-    pros: ["Lightweight", "Glowy finish", "Fast absorbing"],
-    cons: ["Not fragrance‑free"],
-    warns: ["Patch test before use."],
+    
+    warns: [
+      "<b>Patch test first:</b>  Always test on a small area (inner wrist/leg) before first full use.", 
+      "<b>For external use only:</b>  Do not ingest unless specifically formulated for oral use.",
+      "<b>Avoid sensitive areas:</b>  Do not spray near eyes, mouth, broken skin, cuts, or freshly shaved skin.",
+      "<b>Skin sensitivity:</b>  A mild tingling, itching, or warmth is normal for first-time users. If irritation persists, rinse off and dilute with water before reapplying."
+    ],
+    storage: [
+      "Keep bottle tightly sealed. Store in a cool, dry placeaway from direct sunlight, heat, or children’s reach.",
+      "Use within 6 months of manufacture."
+    ],
   },
   {
     id: "2",
@@ -112,16 +132,18 @@ const PRODUCTS = [
     price: "Coming Soon",
     category: "Wellness",
     images: [
-      "./images/placeholder.webp",
+      "./images/hayatiq_loofah_soap.jpg",
       "https://images.unsplash.com/photo-1603921326210-6edd2d60ca68?q=80&w=1200&auto=format&fit=crop",
     ],
     short: "Calming balm for pulse points & lips.",
     ingredients: ["Shea butter", "Lavender", "Beeswax"],
     how: ["Massage a small amount where needed."],
     tips: ["Shake well before Use", "as deodorant", "muscle relief"],
-    pros: ["Soothing", "Multi‑use"],
-    cons: ["Contains beeswax"],
     warns: ["Avoid during allergy flare‑ups."],
+    storage: [
+      "Keep bottle tightly sealed. Store in a cool, dry placeaway from direct sunlight, heat, or children’s reach.",
+      "Use within 6 months of manufacture."
+    ],
   },
 ];
 
@@ -185,7 +207,7 @@ function renderProducts(category) {
 }
 
 function detailList(title, arr) {
-  return `<div class="soft-card"><strong>${title}</strong><ul style="margin:.4rem 0 0 1rem; padding:0;">${arr
+  return `<div class="soft-card"><strong>${title}</strong><ul>${arr
     .map((i) => `<li>${i}</li>`)
     .join("")}</ul></div>`;
 }
@@ -224,6 +246,23 @@ function stars(n) {
 
 function renderDetail(id) {
   const p = PRODUCTS.find((x) => x.id === id) || PRODUCTS[0];
+  const isComingSoon = typeof p.price === 'string' && p.price.toLowerCase().includes('coming soon');
+  
+  if (isComingSoon) {
+    const [main] = p.images || ["./images/placeholder.webp"];
+    detailWrap.innerHTML = `
+      <div class="coming-soon-container">
+        ${main ? `<img src="${main}" alt="${p.name}" class="coming-soon-image">` : ''}
+        <h2>${p.name}</h2>
+        <div style="font-size:1.2rem; color:var(--color-earth); margin:1rem 0; font-weight:600;">Coming Soon</div>
+        <p class="muted">This product will be available shortly. Check back soon!</p>
+        <a class="btn button-primary" href="#/products" style="margin-top:1.5rem;">Back to Products</a>
+      </div>
+    `;
+    return;
+  }
+  
+  // Rest of your existing detail rendering code...
   const [main] = p.images;
   const reviews = getReviewsFor(p.id);
   const avg = averageRating(reviews);
@@ -264,16 +303,21 @@ function renderDetail(id) {
             <a class="btn button-ghost" href="#/products">Back to Products</a>
           </div>
           ${detailList("Ingredients", p.ingredients)}
-          ${detailList("How to use", p.how)}
-          ${detailList("Tips", p.tips)}
+          <!-- how to use -->
+          <!-- ${detailList("How to use", p.how)} old -->
+          <!-- new -->
+          <div class="soft-card">
+            <strong>How to use</strong>
+            ${renderHowToUseTags(p.how)}
+          </div>
+          ${detailList("For Optimal Benefits", p.tips)}
           <!--<div class="soft-card"><strong>How to use</strong><p style="margin-top:.4rem;">${
             p.how
           }</p></div> -->
-          ${detailList("Pros", p.pros)}
-          ${detailList("Cons", p.cons)}
-          ${detailList("Warnings / Precautions", p.warns)}
+          ${detailList("Cautions", p.warns)}
+          ${detailList("Storage", p.storage)}
           
-          <div class="soft-card">
+          <!--<div class="soft-card">
             <h3 style="margin-bottom:.4rem;">Customer Reviews</h3>
             <div id="reviewList" class="reviews">${
               reviews.length
@@ -308,7 +352,7 @@ function renderDetail(id) {
               <div class="field"><label for="revText">Review</label><textarea id="revText" rows="4" placeholder="Share your thoughts" required></textarea></div>
               <button class="btn button-primary" type="submit">Submit Review</button>
             </form>
-          </div>
+          </div> -->
         </div>
       `;
   // thumbs interactivity
@@ -324,35 +368,68 @@ function renderDetail(id) {
     });
   });
 
+  // Image zoom functionality
+  mainImg.addEventListener('click', (e) => {
+    e.stopPropagation();
+    mainImg.parentElement.classList.toggle('zoomed');
+  });
+
+  // Close zoom when clicking outside
+  document.addEventListener('click', (e) => {
+    if (mainImg.parentElement.classList.contains('zoomed') && 
+        !e.target.closest('.gallery-main')) {
+      mainImg.parentElement.classList.remove('zoomed');
+    }
+  });
+
   // review submit handler
-  const form = document.getElementById("reviewForm");
-  const listEl = document.getElementById("reviewList");
-  form.addEventListener("submit", (e) => {
-    e.preventDefault();
-    const name = document.getElementById("revName").value.trim();
-    const rating = Number(document.getElementById("revRating").value);
-    const text = document.getElementById("revText").value.trim();
-    if (!name || !rating || !text) return;
-    const review = { name, rating, text, created: new Date().toISOString() };
-    addReview(p.id, review);
-    // refresh
-    const rs = getReviewsFor(p.id);
-    listEl.innerHTML = rs
-      .map(
-        (r) =>
-          `<div class='review-item'><strong>${
-            r.name
-          }</strong> — <span class='stars'>${stars(
-            r.rating
-          )}</span><p class='muted' style='margin-top:.3rem;'>${
-            r.text
-          }</p><small class='muted'>${new Date(
-            r.created
-          ).toLocaleString()}</small></div>`
-      )
-      .join("");
-    form.reset();
-    toast("Thanks for your review!");
+  // const form = document.getElementById("reviewForm");
+  // const listEl = document.getElementById("reviewList");
+  // form.addEventListener("submit", (e) => {
+  //   e.preventDefault();
+  //   const name = document.getElementById("revName").value.trim();
+  //   const rating = Number(document.getElementById("revRating").value);
+  //   const text = document.getElementById("revText").value.trim();
+  //   if (!name || !rating || !text) return;
+  //   const review = { name, rating, text, created: new Date().toISOString() };
+  //   addReview(p.id, review);
+  //   // refresh
+  //   const rs = getReviewsFor(p.id);
+  //   listEl.innerHTML = rs
+  //     .map(
+  //       (r) =>
+  //         `<div class='review-item'><strong>${
+  //           r.name
+  //         }</strong> — <span class='stars'>${stars(
+  //           r.rating
+  //         )}</span><p class='muted' style='margin-top:.3rem;'>${
+  //           r.text
+  //         }</p><small class='muted'>${new Date(
+  //           r.created
+  //         ).toLocaleString()}</small></div>`
+  //     )
+  //     .join("");
+  //   form.reset();
+  //   toast("Thanks for your review!");
+  // });
+
+  // How to use tabs functionality
+  document.querySelectorAll('.how-to-use-tab').forEach(tab => {
+    tab.addEventListener('click', () => {
+      const target = tab.dataset.target;
+      
+      // Update active tab
+      document.querySelectorAll('.how-to-use-tab').forEach(t => {
+        t.classList.remove('active');
+      });
+      tab.classList.add('active');
+      
+      // Show only the clicked panel
+      document.querySelectorAll('.how-to-use-panel').forEach(panel => {
+        panel.classList.remove('active');
+      });
+      document.getElementById(target).classList.add('active');
+    });
   });
 }
 
@@ -463,6 +540,33 @@ function renderCart() {
   }, 0);
   document.getElementById("cartTotal").textContent = money(total);
 }
+  // toggle expand for how to use
+  function renderHowToUseTags(howToUseItems) {
+    if (!howToUseItems || howToUseItems.length === 0) return '';
+    
+    return `
+      <div class="how-to-use-container">
+        <div class="how-to-use-tabs">
+          ${howToUseItems.map((item, index) => {
+            const [tabName] = item.split(':');
+            return `<button class="how-to-use-tab ${index === 0 ? 'active' : ''}" data-target="panel-${index}">${tabName}</button>`;
+          }).join('')}
+        </div>
+        <div class="how-to-use-content">
+        <div class="how-to-use-point" style="margin-bottom:-4px;">Shake well before Use</div>
+          ${howToUseItems.map((item, index) => {
+            const [tabName, ...contentParts] = item.split(':');
+            const content = contentParts.join(':');
+            const points = content.split(';').filter(point => point.trim());
+            
+            return `<div class="how-to-use-panel ${index === 0 ? 'active' : ''}" id="panel-${index}">
+              ${points.map(point => `<div class="how-to-use-point">${point.trim()}</div>`).join('')}
+            </div>`;
+          }).join('')}
+        </div>
+      </div>
+    `;
+  }
 
 /* ==============================
        Toast
