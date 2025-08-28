@@ -85,7 +85,7 @@ const PRODUCTS = [
     price: 360,
     category: "Skincare",
     images: [
-      "https://tinyurl.com/hatatiq-magnesium-oil",
+      "./images/placeholder.webp",
       "https://tinyurl.com/hatatiq-magnesium-oil-3",
       "https://tinyurl.com/hatatiq-magnesium-oil-4",
     ],
@@ -112,7 +112,7 @@ const PRODUCTS = [
     price: "Coming Soon",
     category: "Wellness",
     images: [
-      "https://tinyurl.com/loofah-soap-1",
+      "./images/placeholder.webp",
       "https://images.unsplash.com/photo-1603921326210-6edd2d60ca68?q=80&w=1200&auto=format&fit=crop",
     ],
     short: "Calming balm for pulse points & lips.",

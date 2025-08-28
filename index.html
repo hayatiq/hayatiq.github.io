@@ -1,130 +1,305 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AI Assistants</title>
-    <style>
-        @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@500;700&display=swap');
-        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap');
-
-        :root {
-            --bg-gradient-start: #f3e8f8;
-            --bg-gradient-end: #e5e5f7;
-            --container-bg: rgba(255, 255, 255, 0.8);
-            --text-color: #2c3e50;
-            --button-bg: #ffffff;
-            --button-hover-bg: #f9f9f9;
-            --button-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
-        }
-
-        body {
-            font-family: 'Poppins', sans-serif;
-            background-image: linear-gradient(135deg, var(--bg-gradient-start) 0%, var(--bg-gradient-end) 100%);
-            color: var(--text-color);
-            margin: 0;
-            padding: 20px;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            min-height: 100vh;
-            text-align: center;
-        }
-
-        .container {
-            max-width: 450px;
-            width: 90%;
-            padding: 30px;
-            border-radius: 20px;
-            background-color: var(--container-bg);
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
-            backdrop-filter: blur(10px);
-            border: 1px solid rgba(255, 255, 255, 0.3);
-            transition: all 0.3s ease;
-        }
-
-        .container:hover {
-            box-shadow: 0 15px 40px rgba(0, 0, 0, 0.2);
-        }
-
-        h1 {
-            font-family: 'Montserrat', sans-serif;
-            font-size: clamp(1.8rem, 5vw, 2.5rem);
-            margin-bottom: 30px;
-            color: #34495e;
-            font-weight: 700;
-        }
-
-        .button-group {
-            display: flex;
-            flex-direction: column;
-            gap: 20px;
-        }
-
-        .button {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            padding: 18px;
-            font-size: 1.2rem;
-            text-decoration: none;
-            color: var(--text-color);
-            background-color: var(--button-bg);
-            border: none;
-            border-radius: 12px;
-            transition: all 0.3s ease;
-            font-weight: 600;
-            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
-            text-transform: uppercase;
-            letter-spacing: 1px;
-        }
-
-        .button:hover {
-            transform: translateY(-5px) scale(1.02);
-            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
-        }
-
-        /* Specific glow effect for each button on hover */
-        .button.claude:hover {
-            color: #1a73e8;
-            box-shadow: 0 0 20px #a1c4fd, 0 8px 20px rgba(0, 0, 0, 0.15);
-        }
-
-        .button.gemini:hover {
-            color: #ea4335;
-            box-shadow: 0 0 20px #ffadad, 0 8px 20px rgba(0, 0, 0, 0.15);
-        }
-
-        .button.deepseek:hover {
-            color: #4285f4;
-            box-shadow: 0 0 20px #c9e0ff, 0 8px 20px rgba(0, 0, 0, 0.15);
-        }
-
-        /* Tablet and Desktop styles */
-        @media (min-width: 768px) {
-            .button-group {
-                flex-direction: row;
-                justify-content: center;
-            }
-
-            .button {
-                width: 140px;
-                padding: 20px 10px;
-            }
-        }
-    </style>
-</head>
-<body>
-
-    <div class="container">
-        <h1>Choose Version</h1>
-        <div class="button-group">
-            <a href="./claude/index.html" class="button claude">Claude</a>
-            <a href="./gemini/index.html" class="button gemini">Gemini</a>
-            <a href="./deepseek/index.html" class="button deepseek">Deepseek</a>
-            <a href="./chatgpt/index.html" class="button chatgpt">ChatGPT</a>
-        </div>
-    </div>
-
-</body>
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width,initial-scale=1">
+        <title>Hayatiq — Handcrafted with Intention</title>
+        <meta name="description" content="Hayatiq — Handmade beauty products with a calming, premium aesthetic.">
+        <link rel="preconnect" href="https://fonts.googleapis.com">
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600&family=Dancing+Script:wght@600;700&display=swap" rel="stylesheet">
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/7.0.0/css/all.min.css" integrity="sha512-DxV+EoADOkOygM4IR9yXP8Sb2qwgidEmeqAEmDKIOfPRQZOWbXCzLC6vjbZyy0vPisbH2SyW27+ddLVCN+OMzQ==" crossorigin="anonymous" referrerpolicy="no-referrer">
+        <link rel="stylesheet" href="./css/style.css">
+    </head>
+    <body>
+        <header class="site-header">
+            <div class="container nav">
+                <a href="#/" class="brand" aria-label="Hayatiq Home">
+                    <span class="brand-logo" aria-hidden="true"></span>
+                    <span class="brand-name">HAYA</span>
+                </a>
+                <button class="mobile-nav-toggle" id="navToggle" aria-expanded="false" aria-controls="primaryNav">
+                    <span class="hamburger" aria-hidden="true">
+                        <span></span>
+                    </span>
+                    <span class="visually-hidden">Toggle navigation</span>
+                </button>
+                <nav class="nav-links" id="primaryNav" aria-label="Primary">
+                    <a href="#/products" data-link>Products</a>
+                    <a href="#/categories" data-link>Categories</a>
+                    <a href="#/about" data-link>About</a>
+                    <a href="#/contact" data-link>Contact</a>
+                    <a href="#/cart" aria-label="Cart">
+                        <span class="cart">
+                            <svg width="26" height="26" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                                <path d="M6 6h15l-2 9H8L6 2H2" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
+                                <circle cx="9" cy="21" r="1" fill="currentColor" />
+                                <circle cx="18" cy="21" r="1" fill="currentColor" />
+                            </svg>
+                            <span class="cart-count" id="cartCount">0</span>
+                        </span>
+                    </a>
+                </nav>
+            </div>
+        </header>
+        <main id="app" class="container" tabindex="-1">
+            <section id="view-home" class="view active" aria-label="Homepage">
+                <div class="hero">
+                    <div class="hero-wrap">
+                        <div class="hero-card">
+                            <h1>HAYA</h1>
+                            <p class="muted">Handcrafted with intention. Natural wellness products for your everyday rituals.</p>
+                            <div class="hero-cta">
+                                <a href="#/products" class="btn button-primary">Discover our products</a>
+                            </div>
+                        </div>
+                        <!-- <div>
+                            <div class="soft-card">
+                                <h2>Why HAYATIQ?</h2>
+                                <p>We believe beauty should be gentle, honest, and effective. Each product is handcrafted in small batches using thoughtfully sourced ingredients.</p>
+                                <div style="display:flex;gap:.6rem;margin-top:.6rem;flex-wrap:wrap">
+                                    <span class="tag">Paraben‑Free</span>
+                                    <span class="tag">Cruelty‑Free</span>
+                                    <span class="tag">Recyclable</span>
+                                </div>
+                            </div>
+                        </div> -->
+                    </div>
+                </div>
+                <section aria-label="Featured Products">
+                    <div class="section-title">
+                        <h2>Featured Products</h2>
+                        <a href="#/products" class="button-ghost btn">View All</a>
+                    </div>
+                    <div class="products-grid" id="featuredGrid"></div>
+                </section>
+                <section aria-label="About Hayatiq">
+					<div>
+						<div class="soft-card">
+							<h2>Why HAYA?</h2>
+							<p>We believe wellness should be gentle, honest, and effective. Each product is handcrafted in small batches using thoughtfully sourced ingredients. We create products we love to use ourselves, minimal formulas that let your natural glow shine.</p>
+						</div>
+                    </div>
+                </section>
+                <section aria-label="How It Works">
+                    <div class="section-title">
+                        <h2>How It Works</h2>
+                    </div>
+                    <div class="grid" style="grid-template-columns:repeat(1,minmax(0,1fr));gap:.9rem">
+                        <div class="soft-card">
+                            <strong>1. Source</strong>
+                            <p>We select premium natural ingredients from trusted partners.</p>
+                        </div>
+                        <div class="soft-card">
+                            <strong>2. Craft</strong>
+                            <p>Small‑batch production preserves potency and reduces waste.</p>
+                        </div>
+                        <div class="soft-card">
+                            <strong>3. Test</strong>
+                            <p>Each batch is tested for quality, stability, and safety.</p>
+                        </div>
+                        <div class="soft-card">
+                            <strong>4. Wrap</strong>
+                            <p>Minimalistic packaging keeps it simple and beautiful.</p>
+                        </div>
+                    </div>
+                </section>
+                <section aria-label="Contact teaser">
+                    <div class="soft-card">
+                        <h2>Let’s Talk</h2>
+                        <p>Have a question about our blends? We’d love to hear from you.</p>
+                        <a class="btn button-primary" href="#/contact">Contact Us</a>
+                    </div>
+                </section>
+            </section>
+            <section id="view-products" class="view" aria-label="Product Listing">
+                <div class="section-title">
+                    <h2>Products</h2>
+                    <div class="pill" id="productCount">0 items</div>
+                </div>
+                <div class="products-grid" id="productsGrid"></div>
+            </section>
+            <section id="view-detail" class="view" aria-label="Product Detail">
+                <div class="detail" id="detailWrap"></div>
+            </section>
+            <section id="view-categories" class="view" aria-label="Categories">
+                <div class="section-title">
+                    <h2>Categories</h2>
+                </div>
+                <div class="grid" style="grid-template-columns:repeat(1,minmax(0,1fr))">
+                    <a class="soft-card" href="#/products?cat=Skincare">
+                        <div style="display:flex;align-items:center;gap:.8rem">
+                            <span class="icon-img">
+                                <img alt="Skincare icon" src="./images/skincare.png">
+                            </span>
+                            <div>
+                                <strong>Skincare</strong>
+                                <p class="muted">Cleansers, serums, moisturizers</p>
+                            </div>
+                        </div>
+                    </a>
+                    <a class="soft-card" href="#/products?cat=Haircare">
+                        <div style="display:flex;align-items:center;gap:.8rem">
+                            <span class="icon-img">
+                                <img alt="Haircare icon" src="./images/hair.png">
+                            </span>
+                            <div>
+                                <strong>Haircare</strong>
+                                <p class="muted">Oils, masks, scalp care</p>
+                            </div>
+                        </div>
+                    </a>
+                    <a class="soft-card" href="#/products?cat=Wellness">
+                        <div style="display:flex;align-items:center;gap:.8rem">
+                            <span class="icon-img">
+                                <img alt="Wellness icon" src="./images/meditation.png">
+                            </span>
+                            <div>
+                                <strong>Wellness</strong>
+                                <p class="muted">Balms, bath, aromas</p>
+                            </div>
+                        </div>
+                    </a>
+                </div>
+            </section>
+            <section id="view-about" class="view" aria-label="About">
+                <div class="soft-card">
+                    <h2>Our Story</h2>
+                    <p>Born from a love of simple rituals, HAYATIQ crafts handmade beauty with a minimal, elegant touch. Our blends are inspired by nature and designed to soothe both skin and mind.</p>
+                </div>
+            </section>
+            <section id="view-contact" class="view" aria-label="Contact">
+                <div class="soft-card">
+                    <div style="display:flex;align-items:center;justify-content:space-between;gap:.8rem;flex-wrap:wrap">
+                        <h2>Contact Us</h2>
+                        <a class="btn button-ghost" href="https://facebook.com/hayatiq.life" target="_blank" rel="noopener">Facebook Page →</a>
+                    </div>
+                    <form action="https://formsubmit.co/el/vevigu" class="contact" method="POST" id="contactForm">
+                        <input type="hidden" name="_captcha" value="true">
+                        <input type="hidden" name="_template" value="table">
+                        <input type="text" name="_honey" style="display:none">
+                        <div class="field">
+                            <label for="name">Name</label>
+                            <input id="name" name="name" placeholder="Your full name">
+                        </div>
+                        <div class="field">
+                            <label for="contact">Phone or Email</label>
+                            <input id="contact" name="email_or_phone" placeholder="e.g., +8801..., or name@email.com" required>
+                        </div>
+                        <div class="field">
+                            <label for="message">Message</label>
+                            <textarea id="message" name="message" rows="5" placeholder="How can we help?" required></textarea>
+                        </div>
+                        <button class="btn button-primary" type="submit">Send Message</button>
+                    </form>
+                    <div id="formMessage" style="margin-top:1rem;display:none"></div>
+                </div>
+            </section>
+            <section id="view-cart" class="view" aria-label="Cart">
+                <div class="soft-card">
+                    <h2>Your Cart</h2>
+                    <div id="cartItems"></div>
+                    <div style="display:flex;align-items:center;justify-content:space-between;margin-top:.8rem">
+                        <strong>Total:</strong>
+                        <strong id="cartTotal">৳0.00</strong>
+                    </div>
+                    <div style="margin-top:.8rem;display:flex;gap:.6rem;flex-wrap:wrap">
+                        <button class="btn button-ghost" onclick="clearCart()">Clear Cart</button>
+                        <a class="btn button-primary" href="#/checkout">Checkout</a>
+                    </div>
+                </div>
+            </section>
+            <section id="view-checkout" class="view" aria-label="Checkout">
+                <div class="soft-card">
+                    <h2>Checkout</h2>
+                    <p class="muted">Static placeholder. Integrate with your backend later.</p>
+                </div>
+            </section>
+        </main>
+        <footer>
+            <div class="container footer-grid">
+                <div class="footer-col">
+                    <div class="brand" style="margin-bottom:.6rem">
+                        <span class="brand-logo" aria-hidden="true"></span>
+                        <span class="brand-name">HAYA</span>
+                    </div>
+                    <p class="muted">Handcrafted with intention. Natural wellness products for your everyday rituals.</p>
+                </div>
+                <div class="footer-col">
+                    <strong>Explore</strong>
+                    <div style="display:grid;margin-top:.4rem;gap:.3rem">
+                        <a href="#/about">About</a>
+                        <a href="#/products">Products</a>
+                        <a href="#/categories">Categories</a>
+                    </div>
+                </div>
+                <div class="footer-col">
+                    <strong>Social</strong>
+                    <div class="socials" style="margin-top:.4rem">
+                        <a href="https://instagram.com/hayatiqlife" target="_blank" aria-label="Instagram" rel="noopener">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <rect x="3" y="3" width="18" height="18" rx="5" stroke="currentColor" stroke-width="1.5" />
+                                <circle cx="12" cy="12" r="4.5" stroke="currentColor" stroke-width="1.5" />
+                                <circle cx="17.5" cy="6.5" r="1" fill="currentColor" />
+                            </svg>
+                        </a>
+                        <a href="https://facebook.com/hayatiq.life" target="_blank" aria-label="Facebook" rel="noopener">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <path d="M14 9h3V6h-3a4 4 0 0 0-4 4v2H7v3h3v6h3v-6h3l1-3h-4v-2a1 1 0 0 1 1-1Z" fill="currentColor" />
+                            </svg>
+                        </a>
+                    </div>
+                </div>
+            </div>
+            <div class="container" style="padding-bottom:1rem;font-size:.85rem;text-align:center">© <span id="year"></span> HAYATIQ. All rights reserved. Handcrafted with intention. </div>
+        </footer>
+        <script src="./js/script.js"></script>
+        <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+        <script>
+            document.getElementById("contactForm").addEventListener("submit", function(e) {
+                e.preventDefault();
+                const form = e.target;
+                const messageBox = document.getElementById("formMessage");
+                // === Rate Limiting with localStorage ===
+                const limitKey = "contactFormSubmissions";
+                const now = Date.now();
+                let submissions = JSON.parse(localStorage.getItem(limitKey)) || [];
+                // Remove old submissions (older than 1 hour)
+                submissions = submissions.filter(
+                    (timestamp) => now - timestamp < 3600000);
+                localStorage.setItem(limitKey, JSON.stringify(submissions));
+                if (submissions.length >= 3) {
+                    messageBox.style.display = "block";
+                    messageBox.style.color = "red";
+                    messageBox.textContent = "⚠️ You have reached your submission limit. Please try again later.";
+                    setTimeout(() => {
+                        window.location.hash = "/products";
+                    }, 5000);
+                    return;
+                }
+                // === Send via FormSubmit AJAX ===
+                axios.post("https://formsubmit.co/ajax/a921e9769ea9d4556fa8dcbd854fad0a", new FormData(form)).then((response) => {
+                    // Record submission timestamp
+                    submissions.push(now);
+                    localStorage.setItem(limitKey, JSON.stringify(submissions));
+                    // Show success message
+                    messageBox.style.display = "block";
+                    messageBox.style.color = "green";
+                    messageBox.textContent = "✅ We have received your message and will get back to you soon. Redirecting...";
+                    // Redirect after short delay
+                    setTimeout(() => {
+                        messageBox.textContent = "";
+                        messageBox.style.display = "none";
+                        window.location.hash = "/products";
+                    }, 5000);
+                    form.reset();
+                }).catch((error) => {
+                    // Show error message
+                    messageBox.style.display = "block";
+                    messageBox.style.color = "red";
+                    messageBox.textContent = "❌ Something went wrong. Please try again later.";
+                });
+            });
+        </script>
+    </body>
 </html>
