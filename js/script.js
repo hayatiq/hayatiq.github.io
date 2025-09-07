@@ -63,6 +63,7 @@ function navigate() {
     renderCart();
   } else if (hash === "#/checkout") {
     routes.checkout.classList.add("active");
+    initCheckout();
   } else {
     routes.home.classList.add("active");
     renderFeatured();
@@ -576,32 +577,169 @@ function renderCart() {
     `;
   }
 
+  // Checkout functions
+  function renderCheckoutItems() {
+  const cart = getCart();
+  const container = document.getElementById('checkoutItems');
+  
+  if (cart.length === 0) {
+    container.innerHTML = '<p class="muted">Your cart is empty.</p>';
+    
+    return;
+  }
+  
+  container.innerHTML = cart.map(row => {
+    const p = PRODUCTS.find(x => x.id === row.id);
+    
+    return `
+      <div class="checkout-item">
+        <img src="${p.images[0]}" alt="${p.name}" class="checkout-item-img">
+        <div class="checkout-item-details">
+          <div class="checkout-item-name">${p.name}</div>
+          <div class="checkout-item-qty">Qty: ${row.qty}</div>
+        </div>
+        <div class="checkout-item-price">${money(p.price * row.qty)}</div>
+      </div>
+    `;
+  }).join('');
+}
+
+function updateCartItemsData() {
+  const cart = getCart();
+  const cartItemsWithNames = cart.map(row => {
+    const p = PRODUCTS.find(x => x.id === row.id);
+    return {
+      name: p.name,
+      qty: row.qty,
+      unit_price: p.price
+    };
+  });
+  
+  document.getElementById('cartItemsData').value = JSON.stringify(cartItemsWithNames);
+}
+
+function updateCheckoutTotals() {
+  const cart = getCart();
+  const subtotal = cart.reduce((sum, row) => {
+    const p = PRODUCTS.find(x => x.id === row.id);
+    return sum + p.price * row.qty;
+  }, 0);
+  
+  const shippingMethod = document.querySelector('input[name="shipping_method"]:checked').value;
+  const shippingCost = shippingMethod === 'inside_dhaka' ? 80 : 130;
+  const total = subtotal + shippingCost;
+  
+  document.getElementById('checkoutSubtotal').textContent = `৳${subtotal.toFixed(2)}`;
+  document.getElementById('checkoutShipping').textContent = `৳${shippingCost.toFixed(2)}`;
+  document.getElementById('checkoutTotal').textContent = `৳${total.toFixed(2)}`;
+  
+  // Update hidden fields for form submission
+  updateCartItemsData(); // Add this line
+  document.getElementById('subtotalData').value = subtotal;
+  document.getElementById('shippingData').value = shippingCost;
+  document.getElementById('totalData').value = total;
+}
+
+function updateShipping() {
+  updateCheckoutTotals();
+}
+
+// Character counter for order note
+document.addEventListener('input', function(e) {
+  if (e.target.id === 'orderNote') {
+    const chars = e.target.value.length;
+    document.getElementById('noteChars').textContent = `${chars}/200`;
+  }
+});
+
+// Initialize checkout when view is shown
+function initCheckout() {
+  updateCheckoutTotals();
+  renderCheckoutItems();
+  updateCartItemsData();
+  loadFormData();
+
+  // Auto-save when user types
+  document.getElementById('checkoutName').addEventListener('input', saveFormData);
+  document.getElementById('checkoutPhone').addEventListener('input', saveFormData);
+  document.getElementById('checkoutAddress').addEventListener('input', saveFormData);
+}
+
+document.addEventListener('input', function(e) {
+  if (e.target.id === 'orderNote') {
+    const chars = e.target.value.length;
+    const counter = document.getElementById('noteChars');
+    counter.textContent = `${chars}/200`;
+
+    counter.classList.remove('warning', 'danger');
+    if (chars > 150 && chars <= 190) {
+      counter.classList.add('warning');
+    } else if (chars > 190) {
+      counter.classList.add('danger');
+    }
+  }
+});
+
+const USER_FORM_DATA = "user_form_data";
+
+function saveFormData() {
+  const formData = {
+    name: document.getElementById('checkoutName').value,
+    phone: document.getElementById('checkoutPhone').value,
+    address: document.getElementById('checkoutAddress').value
+  };
+  localStorage.setItem(USER_FORM_DATA, JSON.stringify(formData));
+}
+
+function loadFormData() {
+  const savedData = localStorage.getItem(USER_FORM_DATA);
+  if (savedData) {
+    const formData = JSON.parse(savedData);
+    document.getElementById('checkoutName').value = formData.name || '';
+    document.getElementById('checkoutPhone').value = formData.phone || '';
+    document.getElementById('checkoutAddress').value = formData.address || '';
+  }
+}
+
+function clearFormData() {
+  localStorage.removeItem(USER_FORM_DATA);
+}
+
+
 /* ==============================
        Toast
        ============================== */
-const toastBox = document.createElement("div");
-toastBox.style.position = "fixed";
-toastBox.style.bottom = "16px";
-toastBox.style.left = "50%";
-toastBox.style.transform = "translateX(-50%)";
-toastBox.style.zIndex = "100";
-document.body.appendChild(toastBox);
-function toast(msg) {
-  const el = document.createElement("div");
-  el.textContent = msg;
-  el.style.background = "var(--color-seal-brown)";
-  el.style.color = "var(--color-white)";
-  el.style.padding = "10px 14px";
-  el.style.borderRadius = "12px";
-  el.style.boxShadow = "var(--shadow-card)";
-  el.style.marginTop = "8px";
-  toastBox.appendChild(el);
-  setTimeout(() => {
-    el.style.transition = "opacity .5s";
-    el.style.opacity = "0";
-    setTimeout(() => el.remove(), 500);
-  }, 1200);
+
+function toast(msg, type = 'info') {
+  const Toast = Swal.mixin({
+    toast: true,
+    position: 'top-end',
+    showConfirmButton: false,
+    timer: 3000,
+    timerProgressBar: true,
+    icon: type,
+  });
+  
+  Toast.fire({
+    title: msg,
+  });
 }
+
+function toastBox(msg, type = 'success') {
+    Swal.fire({
+    title: msg,
+    icon: type,
+    confirmButtonText: 'OK',
+    confirmButtonColor: '#95714F', // Your earth color
+    background: '#EADED0', // Your almond color
+    color: '#100f0f', // Your night color
+    customClass: {
+      confirmButton: 'swal-confirm-btn',
+      title: 'swal-title'
+    }
+  });
+}
+
 
 /* ==============================
        Init

@@ -16,7 +16,7 @@
             <div class="container nav">
                 <a href="#/" class="brand" aria-label="Hayatiq Home">
                 <span class="brand-logo" aria-hidden="true"></span>
-                <span class="brand-name">HAYA</span>
+                <span class="brand-name">HAYATIQ</span>
                 </a>
                 <div class="nav-right">
                 <a href="#/cart" aria-label="Cart" class="cart-link">
@@ -59,7 +59,7 @@
                 <div class="hero">
                     <div class="hero-wrap">
                         <div class="hero-card">
-                            <h1>HAYA</h1>
+                            <h1>HAYATIQ</h1>
                             <p class="muted">Handcrafted with intention. Natural wellness products for your everyday rituals.</p>
                             <div class="hero-cta">
                                 <a href="#/products" class="btn button-primary">Discover our products</a>
@@ -77,7 +77,7 @@
                 <section aria-label="About Hayatiq">
 					<div>
 						<div class="soft-card">
-							<h2>Why HAYA?</h2>
+							<h2>Why HAYATIQ?</h2>
 							<p>We believe wellness should be gentle, honest, and effective. Each product is handcrafted in small batches using thoughtfully sourced ingredients. We create products we love to use ourselves, minimal formulas that let your natural glow shine.</p>
 						</div>
                     </div>
@@ -213,7 +213,74 @@
             <section id="view-checkout" class="view" aria-label="Checkout">
                 <div class="soft-card">
                     <h2>Checkout</h2>
-                    <p class="muted">Static placeholder. Integrate with your backend later.</p>
+                    <form action="https://formsubmit.co/el/vevigu" method="POST" id="checkoutForm" class="checkout-form">
+                        <input type="hidden" name="_captcha" value="true">
+                        <input type="hidden" name="_template" value="table">
+                        <input type="text" name="_honey" style="display:none">
+                        <input type="hidden" name="cart_items" id="cartItemsData">
+                        <input type="hidden" name="subtotal" id="subtotalData">
+                        <input type="hidden" name="shipping" id="shippingData">
+                        <input type="hidden" name="total" id="totalData">
+
+                        <div class="field">
+                            <label for="checkoutName">Full Name *</label>
+                            <input id="checkoutName" name="name" required>
+                        </div>
+                        <div class="field">
+                            <label for="checkoutPhone">Phone Number *</label>
+                            <input id="checkoutPhone" name="phone" type="tel" required>
+                        </div>
+                        <div class="field">
+                            <label for="checkoutAddress">Delivery Address *</label>
+                            <textarea id="checkoutAddress" name="address" rows="3" required></textarea>
+                        </div>
+
+                        <div class="shipping-field">
+                            <label>Shipping Method *</label>
+                            <div class="shipping-options">
+                                <label class="shipping-option">
+                                <input type="radio" name="shipping_method" value="inside_dhaka" checked onchange="updateShipping()">
+                                <span>Inside Dhaka</span>
+                                <span class="price">৳80</span>
+                                </label>
+
+                                <label class="shipping-option">
+                                <input type="radio" name="shipping_method" value="outside_dhaka" onchange="updateShipping()">
+                                <span>Outside Dhaka</span>
+                                <span class="price">৳130</span>
+                                </label>
+                            </div>
+                        </div>
+
+
+                        <h3 class="order-summary-title">Order Summary</h3>
+                        <div id="checkoutItems" class="checkout-items"></div>
+
+                        <div class="soft-card checkout-summary">
+                            <div class="summary-row">
+                            <span>Subtotal:</span>
+                            <span id="checkoutSubtotal">৳0.00</span>
+                            </div>
+                            <div class="summary-row">
+                            <span>Delivery:</span>
+                            <span id="checkoutShipping">৳80.00</span>
+                            </div>
+                            <div class="summary-total">
+                            <span>Total:</span>
+                            <span id="checkoutTotal">৳0.00</span>
+                            </div>
+                        </div>
+
+                        <div class="field">
+                            <div>
+                                <label for="orderNote">Order Note (Optional)</label>
+                                <small class="note-chars" id="noteChars">0/200</small>
+                            </div>
+                            <textarea id="orderNote" name="order_note" rows="2" maxlength="200" placeholder="Any special instructions?"></textarea>
+                        </div>
+
+                        <button class="btn button-primary checkout-submit" style="margin-top: 10px;" type="submit">Place Order</button>
+                    </form>
                 </div>
             </section>
         </main>
@@ -222,7 +289,7 @@
                 <div class="footer-col">
                     <div class="brand" style="margin-bottom:.6rem">
                         <span class="brand-logo" aria-hidden="true"></span>
-                        <span class="brand-name">HAYA</span>
+                        <span class="brand-name">HAYATIQ</span>
                     </div>
                     <p class="muted">Handcrafted with intention. Natural wellness products for your everyday rituals.</p>
                 </div>
@@ -255,6 +322,7 @@
             <div class="container" style="padding-bottom:1rem;font-size:.85rem;text-align:center">© <span id="year"></span> HAYATIQ. All rights reserved. Handcrafted with intention. </div>
         </footer>
         <script src="./js/script.js"></script>
+        <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
         <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
         <script>
             document.getElementById("contactForm").addEventListener("submit", function(e) {
@@ -299,6 +367,60 @@
                     messageBox.style.display = "block";
                     messageBox.style.color = "red";
                     messageBox.textContent = "❌ Something went wrong. Please try again later.";
+                });
+            });
+
+            // checkout form submit
+            document.getElementById("checkoutForm").addEventListener("submit", function(e) {
+                e.preventDefault();
+                const form = e.target;
+                const limitKey = "checkoutOrders";
+                const now = Date.now();
+                let orders = JSON.parse(localStorage.getItem(limitKey)) || [];
+                const cart = getCart();
+                 // Cart validation
+                if (cart.length === 0) {
+                    toast("Your cart is empty");
+                    return;
+                }
+
+                const phone = document.getElementById('checkoutPhone').value;
+  
+                // Phone validation
+                const phoneRegex = /^01[3-9]\d{8}$/;
+
+                if (!phoneRegex.test(phone)) {
+                    toast("Please enter a valid Bangladeshi phone number");
+                    return;
+                }
+                // Remove old orders (older than 20 minutes)
+                orders = orders.filter(timestamp => now - timestamp < 1200000);
+                localStorage.setItem(limitKey, JSON.stringify(orders));
+                
+                if (orders.length >= 5) {
+                    toast("Order limit reached. Please try again in 20 minutes.", 'warning');
+                    return;
+                }
+                
+                axios.post("https://formsubmit.co/ajax/a921e9769ea9d4556fa8dcbd854fad0a", new FormData(form)).then((response) => {
+                    // Save form data for next time
+                    saveFormData();
+                    // Record order timestamp
+                    orders.push(now);
+                    localStorage.setItem(limitKey, JSON.stringify(orders));
+                    
+                    // Clear cart and show success
+                    clearCart();
+                    toastBox("Order placed successfully! 😊");
+                    
+                    
+                    setTimeout(() => {
+                        form.reset();
+                        window.location.hash = "/products";
+                    }, 3000);
+                    
+                }).catch((error) => {
+                    toast("Error placing order. Please try again.");
                 });
             });
         </script>
