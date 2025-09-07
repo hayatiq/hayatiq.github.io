@@ -85,9 +85,9 @@ const PRODUCTS = [
     price: 360,
     category: "Skincare",
     images: [
-      "./images/hayatiq_magnesium_oil.jpg",
-      "./images/hayatiq_magnesium_oil_2.jpg",
-      "./images/hayatiq_magnesium_oil_3.jpg",
+      "./images/placeholder.webp",
+      "./images/placeholder.webp",
+      "./images/placeholder.webp",
     ],
     short: "Nature’s Calm in Every Spray",
     ingredients: ["Magnesium Chloride Brine ", "Lavender Essential Oil"],
@@ -132,7 +132,7 @@ const PRODUCTS = [
     price: "Coming Soon",
     category: "Wellness",
     images: [
-      "./images/hayatiq_loofah_soap.jpg",
+      "./images/placeholder.webp",
       "https://images.unsplash.com/photo-1603921326210-6edd2d60ca68?q=80&w=1200&auto=format&fit=crop",
     ],
     short: "Calming balm for pulse points & lips.",
@@ -163,26 +163,25 @@ function money(n) {
 }
 
 function productCard(p) {
+  const isComingSoon = typeof p.price === 'string' && p.price.toLowerCase().includes('coming soon');
+  
   return `
       <article class="product-card" aria-label="${p.name}">
         <a href="#/product/${p.id}">
           <div class="product-media">
             <img loading="lazy" src="${p.images[0]}" alt="${p.name}">
+            ${isComingSoon ? `<div class="coming-soon-overlay">Coming Soon</div>` : ''}
             <div class="product-overlay">
               <div class="product-actions">
-                <button class="btn quick-view" onclick="event.preventDefault(); location.hash='#/product/${
-                  p.id
-                }';">Quick View</button>
-                <button class="btn button-primary" onclick="event.preventDefault(); addToCart('${
-                  p.id
-                }');">Add to Cart</button>
+                <button class="btn quick-view" onclick="event.preventDefault(); location.hash='#/product/${p.id}';">Quick View</button>
+                ${!isComingSoon ? `<button class="btn button-primary" onclick="event.preventDefault(); addToCart('${p.id}');">Add to Cart</button>` : ''}
               </div>
             </div>
           </div>
           <div class="product-body">
             <div class="product-name">${p.name}</div>
             <div class="product-price">${money(p.price)}</div>
-            <a href="https://m.me/hayatiq.life?ref=${p.slug}" 
+            <a href="https://m.me/hayatiq.lif?ref=${p.slug}" 
               target="_blank" 
               class="btn messenger-btn">
               <i class="fa-brands fa-facebook-messenger"></i> Message
@@ -300,7 +299,7 @@ function renderDetail(id) {
               p.id
             }')">Add to Cart</button> -->
             <a class="btn button-primary" href="https://m.me/hayatiq.life" target="_blank"><i class="fa-brands fa-facebook-messenger"></i> Message</a>
-            <a class="btn button-ghost" href="#/products">Back to Products</a>
+            <button class="btn button-ghost" onclick="event.preventDefault(); addToCart('${p.id}');">Add to Cart</button>
           </div>
           ${detailList("Ingredients", p.ingredients)}
           <!-- how to use -->
@@ -451,10 +450,19 @@ function setCart(list) {
 function addToCart(id) {
   const cart = getCart();
   const item = cart.find((i) => i.id === id);
-  if (item) item.qty += 1;
+  if (item){
+    if (item.qty >= 99) {
+      toast("Maximum quantity reached");
+      return;
+    }
+    item.qty += 1;
+  }
   else cart.push({ id, qty: 1 });
   setCart(cart);
   toast(`${PRODUCTS.find((x) => x.id === id)?.name || "Item"} added to cart`);
+  setTimeout(() => {
+    window.location.href = "#/cart";
+  }, 1500);
 }
 function removeFromCart(id) {
   setCart(getCart().filter((i) => i.id !== id));
@@ -466,7 +474,7 @@ function clearCart() {
 }
 function updateCartCount() {
   const count = getCart().reduce((n, i) => n + i.qty, 0);
-  document.getElementById("cartCount").textContent = count;
+  document.querySelectorAll(".cart-count").forEach(el => el.textContent = count);
 }
 
 // New: update quantity controls
@@ -527,7 +535,7 @@ function renderCart() {
           </div>
           <div style="display:flex; align-items:center; gap:.4rem;">
             <strong>${money(p.price * row.qty)}</strong>
-            <button class="btn" title="Remove" onclick="removeFromCart('${
+            <button class="close-btn" title="Remove" onclick="removeFromCart('${
               row.id
             }')">✕</button>
           </div>
