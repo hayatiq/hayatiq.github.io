@@ -86,9 +86,9 @@ const PRODUCTS = [
     price: 360,
     category: "Skincare",
     images: [
-      "./images/placeholder.webp",
-      "./images/placeholder.webp",
-      "./images/placeholder.webp",
+      "./images/hayatiq_magnesium_oil.jpg",
+      "./images/hayatiq_magnesium_oil_2.jpg",
+      "./images/hayatiq_magnesium_oil_3.jpg",
     ],
     short: "Nature’s Calm in Every Spray",
     ingredients: ["Magnesium Chloride Brine ", "Lavender Essential Oil"],
@@ -133,7 +133,7 @@ const PRODUCTS = [
     price: "Coming Soon",
     category: "Wellness",
     images: [
-      "./images/placeholder.webp",
+      "./images/hayatiq_loofah_soap.jpg",
       "https://images.unsplash.com/photo-1603921326210-6edd2d60ca68?q=80&w=1200&auto=format&fit=crop",
     ],
     short: "Calming balm for pulse points & lips.",
@@ -146,6 +146,44 @@ const PRODUCTS = [
       "Use within 6 months of manufacture."
     ],
   },
+  {
+    id: "3",
+    name: "RoseMintClove Scalp Elixir",
+    slug: "scalp-elixir",
+    price: "Coming Soon",
+    category: "Haircare",
+    images: [
+      "./images/rose_mint_clove_scalp_elixir.jpeg",
+    ],
+    short: "Calming balm for pulse points & lips.",
+    ingredients: ["Shea butter", "Lavender", "Beeswax"],
+    how: ["Massage a small amount where needed."],
+    tips: ["Shake well before Use", "as deodorant", "muscle relief"],
+    warns: ["Avoid during allergy flare‐ups."],
+    storage: [
+      "Keep bottle tightly sealed. Store in a cool, dry placeaway from direct sunlight, heat, or children’s reach.",
+      "Use within 6 months of manufacture."
+    ],
+  },
+  {
+    id: "4",
+    name: "Lash & Brow Serum",
+    slug: "lash-brow-serum",
+    price: "Coming Soon",
+    category: "Skincare",
+    images: [
+      "./images/lash&brow_serum.jpeg",
+    ],
+    short: "Calming balm for pulse points & lips.",
+    ingredients: ["Shea butter", "Lavender", "Beeswax"],
+    how: ["Massage a small amount where needed."],
+    tips: ["Shake well before Use", "as deodorant", "muscle relief"],
+    warns: ["Avoid during allergy flare‐ups."],
+    storage: [
+      "Keep bottle tightly sealed. Store in a cool, dry placeaway from direct sunlight, heat, or children’s reach.",
+      "Use within 6 months of manufacture."
+    ],
+  }
 ];
 
 /* ==============================
@@ -182,7 +220,7 @@ function productCard(p) {
           <div class="product-body">
             <div class="product-name">${p.name}</div>
             <div class="product-price">${money(p.price)}</div>
-            <a href="https://m.me/hayatiq.lif?ref=${p.slug}" 
+            <a href="https://m.me/hayatiq.life?ref=${p.slug}"
               target="_blank" 
               class="btn messenger-btn">
               <i class="fa-brands fa-facebook-messenger"></i> Message
