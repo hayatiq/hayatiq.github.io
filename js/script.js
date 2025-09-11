@@ -84,7 +84,7 @@ const PRODUCTS = [
     name: "Magnesium oil spray 100ml",
     slug: "magnesium-oil",
     price: 360,
-    category: "Skincare",
+    category: "Wellness",
     images: [
       "./images/hayatiq_magnesium_oil.jpg",
       "./images/hayatiq_magnesium_oil_2.jpg",
@@ -131,7 +131,7 @@ const PRODUCTS = [
     name: "Loofah Soap Bar (Neem + Moringa)",
     slug: "loofah-soap",
     price: "Coming Soon",
-    category: "Wellness",
+    category: "Skincare",
     images: [
       "./images/hayatiq_loofah_soap.jpg",
       "https://images.unsplash.com/photo-1603921326210-6edd2d60ca68?q=80&w=1200&auto=format&fit=crop",
