@@ -111,43 +111,25 @@ document
   });
 // send visitor alert
 
-window.addEventListener("load", () => {
-  // Prepare basic visitor info
-  const visitorData = {
-    name: "New Visitor", // required by formsubmit
-    email: "visitor@example.com", // dummy email required by formsubmit
-    message: `
+window.addEventListener('load', () => {
+    const visitorData = {
+        name: "New Visitor",
+        email: "visitor@example.com",
+        message: `
 Visitor Info:
 User Agent: ${navigator.userAgent}
-Language: ${navigator.language}
-Platform: ${navigator.platform}
 Screen: ${window.screen.width}x${window.screen.height}
 URL: ${window.location.href}
 Referrer: ${document.referrer}
-Time: ${new Date().toLocaleString()}
-`,
-  };
+Time: ${new Date().toLocaleString()}`
+    };
 
-  // Fetch IP & geolocation
-  fetch("https://ipapi.co/json/")
-    .then((res) => res.json())
-    .then((ipData) => {
-      visitorData.message += `
-IP: ${ipData.ip}
-City: ${ipData.city}
-Region: ${ipData.region}
-Country: ${ipData.country_name}
-Timezone: ${ipData.timezone}
-`;
-      // Send to FormSubmit
-      return fetch("https://formsubmit.co/ajax/9dcc7d05fc7a097df142e57727fbcd46", {
+    fetch("https://formsubmit.co/ajax/9dcc7d05fc7a097df142e57727fbcd46", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(visitorData),
-      });
+        body: JSON.stringify(visitorData)
     })
-    .then((response) => response.json())
-    .then((data) => console.log("Visitor info sent:", data))
-    .catch((err) => console.error("Error sending visitor info:", err));
+    .then(r => r.json())
+    .then(d => console.log("Visitor info sent:", d))
+    .catch(err => console.error("Error sending visitor info:", err));
 });
-
