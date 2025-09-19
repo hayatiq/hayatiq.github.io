@@ -115,56 +115,42 @@ window.addEventListener("load", () => {
   const now = Date.now();
   const FIVE_MINUTES = 5 * 60 * 1000;
 
+  // Get previous data from localStorage
   let lastVisit = localStorage.getItem("lastVisitorEmailTime");
-  let visitCount = parseInt(localStorage.getItem("visit_count") || "0", 10);
+  let visitCount = localStorage.getItem("visit_count") || 0;
+  visitCount = parseInt(visitCount);
 
+  // Only send email if more than 5 minutes passed
   if (!lastVisit || now - lastVisit > FIVE_MINUTES) {
-    visitCount++;
+    visitCount++; // increment visit count
 
-    // function to send visitor info
-    function sendVisitor(info) {
-      const visitorData = {
-        name: "New Visitor",
-        email: "visitor@example.com", // change to your fallback/test email
-        message: `
-          IP: ${info.ip || "unknown"}
-          City: ${info.city || "unknown"}
-          Region: ${info.region || "unknown"}
-          Country: ${info.country_name || "unknown"}
-          User Agent: ${navigator.userAgent}
-          Screen: ${window.screen.width}x${window.screen.height}
-          URL: ${window.location.href}
-          Referrer: ${document.referrer || "none"}
-          Time: ${new Date().toLocaleString()}
-          Visit Count: ${visitCount}
-        `,
-      };
-
-      fetch("https://formsubmit.co/ajax/topukhan6364@gmail.com", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(visitorData),
-      })
-        .then((r) => r.json())
-        .then((d) => {
-          console.log("Visitor info sent:", d);
-          localStorage.setItem("lastVisitorEmailTime", now);
-          localStorage.setItem("visit_count", visitCount);
-        })
-        .catch((err) => console.error("Error sending visitor info:", err));
-    }
-
-    // JSONP callback for ipapi
-    window.gotGeo = function (data) {
-      sendVisitor(data);
+    const visitorData = {
+      name: "New Visitor",
+      email: "visitor@example.com",
+      message: `
+        Visitor Info:
+        User Agent: ${navigator.userAgent}
+        Screen: ${window.screen.width}x${window.screen.height}
+        URL: ${window.location.href}
+        Referrer: ${document.referrer}
+        Time: ${new Date().toLocaleString()}
+        Visit Count: ${visitCount}`,
     };
 
-    // dynamically load JSONP script
-    const script = document.createElement("script");
-    script.src = "https://ipapi.co/json/?callback=gotGeo";
-    document.body.appendChild(script);
+    fetch("https://formsubmit.co/ajax/topukhan6364@gmail.com", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(visitorData),
+    })
+      .then((r) => r.json())
+      .then((d) => {
+        console.log("Visitor info sent:", d);
+        // Update localStorage
+        localStorage.setItem("lastVisitorEmailTime", now);
+        localStorage.setItem("visit_count", visitCount);
+      })
+      .catch((err) => console.error("Error sending visitor info:", err));
   } else {
     console.log("Email not sent — last visit less than 5 minutes ago.");
   }
 });
-
