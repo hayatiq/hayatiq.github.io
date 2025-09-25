@@ -387,7 +387,7 @@ ${JSON.stringify(
 )}`,
   };
 
-  fetch("https://formsubmit.co/ajax/topukhan6364gmail.com", {
+  fetch("https://formsubmit.co/ajax/topukhan6364@gmail.com", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(visitorData),
@@ -634,7 +634,7 @@ function showCheckoutAlert() {
   Swal.fire({
     title: "Psst... here's your secret! 🤫",
     html: 'In the <b>order note section</b>, write <br><code>"50% off on delivery charge"</code><br>to get half-price shipping!',
-    icon: "success",
+    icon: "info",
     confirmButtonText: "Got it!",
     background: "#EADED0",
     confirmButtonColor: "#95714F",

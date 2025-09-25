@@ -652,7 +652,7 @@ function renderCart() {
         p.name
       }" style="width:64px; height:64px; object-fit:cover; border-radius:10px;">
           <div>
-            <div style="font-weight:600;">${p.name}</div>
+            <div style="font-weight:600;">${p.name} <span class="deep-muted"> (${p.subtitle}) </span></div>
             <div class="qty" aria-label="Quantity controls">
               <button onclick="decQty('${
                 row.id
@@ -726,7 +726,7 @@ function renderCart() {
       <div class="checkout-item">
         <img src="${p.images[0]}" alt="${p.name}" class="checkout-item-img">
         <div class="checkout-item-details">
-          <div class="checkout-item-name">${p.name}</div>
+          <div class="checkout-item-name">${p.name} <span class="deep-muted"> (${p.subtitle}) </span></div>
           <div class="checkout-item-qty">Qty: ${row.qty}</div>
         </div>
         <div class="checkout-item-price">${money(p.price * row.qty)}</div>

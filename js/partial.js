@@ -81,7 +81,7 @@ document
     localStorage.setItem(limitKey, JSON.stringify(orders));
 
     if (orders.length >= 5) {
-      toast("Order limit reached. Please try again in 20 minutes.", "warning");
+      toast("Order limit reached. Please try again later.", "warning");
       return;
     }
     axios
