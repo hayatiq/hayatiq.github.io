@@ -371,15 +371,39 @@ section {
 .product-body {
   padding: 0.8rem;
   background: var(--color-sand);
+  display: grid;
+  gap: 0.3rem;
 }
 .product-name {
   font-weight: 600;
   font-size: 0.98rem;
+  margin-bottom: 0;
   /* color: var(--color-seal-brown); */
 }
+
+/* Product subtitle styles */
+.product-subtitle {
+  font-family: 'Dancing Script', cursive;
+  font-size: .9rem;
+  color: var(--color-seal-brown);
+  margin: 0.3rem 0;
+  font-weight: 600;
+  line-height: 1.1;
+}
+
+.product-subtitle-detail {
+    font-family: 'Dancing Script', cursive;
+    font-size: 1.1rem;
+    color: var(--color-seal-brown);
+    margin-bottom: 0.3rem;
+    font-weight: 700;
+    line-height: 1.3;
+}
+
 .product-price {
   font-weight: 700;
   color: var(--color-seal-brown);
+  margin-top: 0.2rem;
 }
 .quick-view {
   font-size: 0.85rem;

@@ -80,12 +80,13 @@ function navigate() {
 window.addEventListener("hashchange", navigate);
 
 /* ==============================
-       Dummy Product Data
+       Product Data
        ============================== */
 const PRODUCTS = [
   {
     id: "1",
-    name: "Magnesium oil spray 100ml",
+    name: "Magnesium oil spray 100 ml",
+    subtitle: "30% Concentration",
     slug: "magnesium-oil",
     price: 360,
     category: "Wellness",
@@ -132,6 +133,54 @@ const PRODUCTS = [
   },
   {
     id: "2",
+    name: "Magnesium oil spray 100 ml",
+    subtitle: "50% Concentration",
+    slug: "magnesium-oil-50-concentration",
+    price: 500,
+    category: "Wellness",
+    images: [
+      "./images/magnesium-oil-50-concentration.jpeg",
+      "./images/hayatiq_magnesium_oil_2.jpg",
+      "./images/hayatiq_magnesium_oil_3.jpg",
+    ],
+    short: "Nature’s Calm in Every Spray",
+    ingredients: ["Magnesium Chloride Brine ", "Lavender Essential Oil"],
+    how: [
+      "Daily Supplement: <b>Where</b>: Spread across arms, legs, stomach.; <b>How much</b>: 15–20 sprays total.; <b>When</b>: Split between morning & evening.;",
+      "Muscle Cramps & Soreness:<b>Where</b>: Directly on cramped or sore muscles (calves, thighs, arms).; <b>How much</b>: 10–15 sprays.; <b>When</b>: During cramps, after workouts, or long days standing.; <b>Extra Tip</b>: Massage in for faster relief.;",
+      "Sleep & Relaxation:<b>Where</b>: Soles of feet, back of neck, shoulders.; <b>How much</b>: 5–10 sprays.; <b>When</b>: 30 minutes before bedtime.; <b>Extra Tip</b>: Massage gently into skin for deeper relaxation.;",
+      "Restless Legs Syndrome:<b>Where</b>: Calves, thighs.; <b>How much</b>: 10–15 sprays.; <b>When</b>: Before bedtime.;",
+      "Bone & Joint Health:<b>Where</b>: Knees, elbows, lower back, wrists.; <b>How much</b>: 8–12 sprays.; <b>When</b>: Daily, preferably evening.;",
+      "Headaches & Migraines:<b>Where</b>: Temples (lightly), back of neck, shoulders.; <b>How much</b>: 2–3 sprays.; <b>When</b>: At onset of headache/migraine.; <b>Extra Tip</b>: Soak feet in warm water + magnesium oil for additional relief. Spray on hand then rub it to temple.;",
+      "Hair & Scalp Health:<b>Where</b>: Spray directly onto scalp (part hair).; <b>How much</b>: 5–8 sprays.; <b>When</b>: 2–3 times per week, before shower.; <b>Extra Tip</b>: Massage scalp, leave for 30 minutes, then wash.;",
+      "Cramps & PMS Relief:<b>Where</b>: Lower abdomen, lower back.; <b>How much</b>: 8–12 sprays.; <b>When</b>: During cramps or PMS discomfort.; <b>Extra Tip</b>: Massage gently until absorbed.;",
+      "Energy Boost & Fatigue Relief:<b>Where</b>: Arms, legs, stomach.; <b>How much</b>: 5–10 sprays.; <b>When</b>: Morning or mid-day slump.; <b>Extra Tip</b>: Pair with light stretching or deep breathing.;",
+      "Deodorant:<b>Where</b>: Underarms (on clean, dry skin).; <b>How much</b>: 2–4 sprays per armpit.; <b>When</b>: Once daily (morning), reapply if needed.; <b>Extra Tip</b>: Wear clothing after fully absorbed.;",
+      "Stress & Anxiety:<b>Where</b>: Chest, shoulders, behind ears (not too close to eyes).; <b>How much</b>: 5–8 sprays.; <b>When</b>: During stress, after work, or before meditation.;",
+      "Exercise Recovery:<b>Where</b>: On exercised muscles (legs, arms, back).; <b>How much</b>: 10–15 sprays.; <b>When</b>: Right after workout or before bed.;",
+    ],
+
+
+    tips: [
+      "Apply on clean skin, make sure there are no dead skin",
+      "Consistent application is recommended for effective results",
+      "A mild tingling sensation is normal and fades with regular use",
+      "May dilute with water to ease tingling",
+    ],
+    
+    warns: [
+      "<b>Patch test first:</b>  Always test on a small area (inner wrist/leg) before first full use.", 
+      "<b>For external use only:</b>  Do not ingest unless specifically formulated for oral use.",
+      "<b>Avoid sensitive areas:</b>  Do not spray near eyes, mouth, broken skin, cuts, or freshly shaved skin.",
+      "<b>Skin sensitivity:</b>  A mild tingling, itching, or warmth is normal for first-time users. If irritation persists, rinse off and dilute with water before reapplying."
+    ],
+    storage: [
+      "Keep bottle tightly sealed. Store in a cool, dry placeaway from direct sunlight, heat, or children’s reach.",
+      "Use within 6 months of manufacture."
+    ],
+  },
+  {
+    id: "3",
     name: "Loofah Soap Bar (Neem + Moringa)",
     slug: "loofah-soap",
     price: "Coming Soon",
@@ -151,7 +200,7 @@ const PRODUCTS = [
     ],
   },
   {
-    id: "3",
+    id: "4",
     name: "RoseMintClove Scalp Elixir",
     slug: "scalp-elixir",
     price: "Coming Soon",
@@ -170,7 +219,7 @@ const PRODUCTS = [
     ],
   },
   {
-    id: "4",
+    id: "5",
     name: "Lash & Brow Serum",
     slug: "lash-brow-serum",
     price: "Coming Soon",
@@ -187,7 +236,45 @@ const PRODUCTS = [
       "Keep bottle tightly sealed. Store in a cool, dry placeaway from direct sunlight, heat, or children’s reach.",
       "Use within 6 months of manufacture."
     ],
-  }
+  },
+  {
+    id: "6",
+    name: "SilkRoot shampoo bar",
+    slug: "silkroot-shampoo-bar",
+    price: "Coming Soon",
+    category: "Haircare",
+    images: [
+      "./images/SilkRoot_shampoo_bar.jpeg",
+    ],
+    short: "Calming balm for pulse points & lips.",
+    ingredients: ["Shea butter", "Lavender", "Beeswax"],
+    how: ["Massage a small amount where needed."],
+    tips: ["Shake well before Use", "as deodorant", "muscle relief"],
+    warns: ["Avoid during allergy flare‐ups."],
+    storage: [
+      "Keep bottle tightly sealed. Store in a cool, dry placeaway from direct sunlight, heat, or children’s reach.",
+      "Use within 6 months of manufacture."
+    ],
+  },
+  {
+    id: "7",
+    name: "FollicleFuel Scalp Tonic",
+    slug: "folliclefuel-scalp-tonic",
+    price: "Coming Soon",
+    category: "Haircare",
+    images: [
+      "./images/FollicleFuel_Scalp_Tonic.jpeg",
+    ],
+    short: "Calming balm for pulse points & lips.",
+    ingredients: ["Shea butter", "Lavender", "Beeswax"],
+    how: ["Massage a small amount where needed."],
+    tips: ["Shake well before Use", "as deodorant", "muscle relief"],
+    warns: ["Avoid during allergy flare‐ups."],
+    storage: [
+      "Keep bottle tightly sealed. Store in a cool, dry placeaway from direct sunlight, heat, or children’s reach.",
+      "Use within 6 months of manufacture."
+    ],
+  },
 ];
 
 /* ==============================
@@ -223,6 +310,7 @@ function productCard(p) {
           </div>
           <div class="product-body">
             <div class="product-name">${p.name}</div>
+            ${p.subtitle ? `<div class="product-subtitle">${p.subtitle}</div>` : ''}
             <div class="product-price">${money(p.price)}</div>
             <a href="https://m.me/hayatiq.life?ref=${p.slug}"
               target="_blank" 
@@ -327,6 +415,7 @@ function renderDetail(id) {
         <div style="display:grid; gap:.8rem;">
           <div>
             <h2 style="margin-bottom:.2rem;">${p.name}</h2>
+            <span class="product-subtitle-detail">${p.subtitle}</span>
             <div class="product-price" style="font-size:1.1rem;">${money(
               p.price
             )}</div>
@@ -490,7 +579,7 @@ function setCart(list) {
   localStorage.setItem(CART_KEY, JSON.stringify(list));
   updateCartCount();
 }
-function addToCart(id) {
+function addToCart(id, redirect = "#/cart", showToast = true) {
   const cart = getCart();
   const item = cart.find((i) => i.id === id);
   if (item){
@@ -502,9 +591,9 @@ function addToCart(id) {
   }
   else cart.push({ id, qty: 1 });
   setCart(cart);
-  toast(`${PRODUCTS.find((x) => x.id === id)?.name || "Item"} added to cart`);
+  showToast && toast(`${PRODUCTS.find((x) => x.id === id)?.name || "Item"} added to cart`);
   setTimeout(() => {
-    window.location.href = "#/cart";
+    window.location.href = redirect;
   }, 1500);
 }
 function removeFromCart(id) {
@@ -651,7 +740,7 @@ function updateCartItemsData() {
   const cartItemsWithNames = cart.map(row => {
     const p = PRODUCTS.find(x => x.id === row.id);
     return {
-      name: p.name,
+      name: p.name + ' (' + p.subtitle + ')',
       qty: row.qty,
       unit_price: p.price
     };
