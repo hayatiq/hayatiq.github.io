@@ -44,9 +44,13 @@ function navigate() {
   Object.values(routes).forEach((v) => v.classList.remove("active"));
 
   if (hash.startsWith("#/product/")) {
-    routes.detail.classList.add("active");
-    const id = hash.split("/")[2];
-    renderDetail(id);
+        routes.detail.classList.add("active");
+        const id = hash.split("/")[2];
+        const product = PRODUCTS.find(p => p.id === id);
+        
+        // Track product detail views
+        trackProductView(id, product?.name);
+        renderDetail(id);
   } else if (hash.startsWith("#/products")) {
     routes.products.classList.add("active");
     const params = new URLSearchParams(hash.split("?")[1] || "");
