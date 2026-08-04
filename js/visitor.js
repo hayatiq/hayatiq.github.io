@@ -3,13 +3,6 @@ const USER_BEHAVIOR_KEY = "user_behavior";
 const VISIT_SESSION_KEY = "current_visit_data";
 
 // Dynamic timing variables (easily adjustable)
-const TIMING = {
-  productViewMinTime: 10000, // 10 seconds to show product alert
-  productAlertCooldown: 120000, // 2 minutes between product alerts
-  checkoutAlertCooldown: 300000, // 5 minutes between checkout alerts
-  checkoutAlertMaxCount: 2, // Max 2 checkout alerts
-};
-
 // Initialize visit session when page loads
 function initVisitSession() {
   const sessionData = {
@@ -436,23 +429,6 @@ window.addEventListener("hashchange", () => {
 
   // Track the page view
   trackPageView(currentView);
-
-  // Clear any running timers when leaving page
-  if (productViewTimer) {
-    clearTimeout(productViewTimer);
-    productViewTimer = null;
-  }
-  if (checkoutTimer) {
-    clearTimeout(checkoutTimer);
-    checkoutTimer = null;
-  }
-
-  // Set up timers for new view
-  if (currentView === "product") {
-    setupProductAlertTimer();
-  } else if (currentView === "checkout") {
-    setupCheckoutAlertTimer();
-  }
 });
 
 function setupSocialTracking() {
@@ -547,105 +523,6 @@ function setupActionTracking() {
       });
     }
   }
-}
-
-// Rest of the timer functions...
-let productViewTimer = null;
-let checkoutTimer = null;
-
-function setupProductAlertTimer() {
-  const behavior = getBehavior();
-  const lastProductAlert = behavior.lastProductAlert || 0;
-  const now = Date.now();
-
-  // Check cooldown period
-  if (now - lastProductAlert < TIMING.productAlertCooldown) {
-    return;
-  }
-
-  productViewTimer = setTimeout(() => {
-    showProductAlert();
-  }, TIMING.productViewMinTime);
-}
-
-function setupCheckoutAlertTimer() {
-  const behavior = getBehavior();
-  const checkoutAlerts = behavior.checkoutAlerts || [];
-  const now = Date.now();
-
-  // Filter alerts from last 5 minutes
-  const recentAlerts = checkoutAlerts.filter(
-    (alertTime) => now - alertTime < TIMING.checkoutAlertCooldown
-  );
-
-  // Check if we've shown max allowed alerts
-  if (recentAlerts.length >= TIMING.checkoutAlertMaxCount) {
-    return;
-  }
-
-  checkoutTimer = setTimeout(() => {
-    showCheckoutAlert();
-  }, 2000);
-}
-
-function showProductAlert() {
-  const behavior = getBehavior();
-  const sessionData = getVisitSession();
-
-  // Get current product ID from URL
-  const currentHash = window.location.hash;
-  const productId = currentHash.split("/product/")[1];
-
-  Swal.fire({
-    title: "Love this product? 👀",
-    text: "Why not give it a try? Go to checkout and I'll share a little secret!",
-    icon: "info",
-    confirmButtonText: "Maybe Later",
-    showCancelButton: true,
-    cancelButtonText: "Take me to Checkout",
-    background: "#EADED0",
-    confirmButtonColor: "#95714F",
-  }).then((result) => {
-    if (result.dismiss === "cancel") {
-      // Check if product is already in cart
-      const cart = getCart();
-      const isInCart = cart.some((item) => item.id === productId);
-
-      if (!isInCart && productId) {
-        addToCart(productId, "#/checkout", false);
-      }
-
-      window.location.hash = "#/checkout";
-    }
-  });
-
-  // Record that we showed this alert
-  behavior.lastProductAlert = Date.now();
-  sessionData.alertsShown.push("product_alert");
-  localStorage.setItem(USER_BEHAVIOR_KEY, JSON.stringify(behavior));
-  localStorage.setItem(VISIT_SESSION_KEY, JSON.stringify(sessionData));
-}
-
-function showCheckoutAlert() {
-  const behavior = getBehavior();
-  const sessionData = getVisitSession();
-  const checkoutAlerts = behavior.checkoutAlerts || [];
-
-  Swal.fire({
-    title: "Psst... here's your secret! 🤫",
-    html: 'In the <b>order note section</b>, write <br><code>"50% off on delivery charge"</code><br>to get half-price shipping!',
-    icon: "info",
-    confirmButtonText: "Got it!",
-    background: "#EADED0",
-    confirmButtonColor: "#95714F",
-  });
-
-  // Record this checkout alert
-  checkoutAlerts.push(Date.now());
-  behavior.checkoutAlerts = checkoutAlerts;
-  sessionData.alertsShown.push("checkout_alert");
-  localStorage.setItem(USER_BEHAVIOR_KEY, JSON.stringify(behavior));
-  localStorage.setItem(VISIT_SESSION_KEY, JSON.stringify(sessionData));
 }
 
 // Initialize everything when script loads
