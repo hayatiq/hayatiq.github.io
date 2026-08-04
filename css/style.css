@@ -459,7 +459,7 @@ header.site-header {
   display: flex;
   flex-wrap: nowrap;
   justify-content: center;
-  gap: 0.4rem;
+  gap: 1.1rem;
   margin-top: 0.7rem;
   overflow-x: auto;
   -webkit-overflow-scrolling: touch;
@@ -468,14 +468,15 @@ header.site-header {
   display: inline-flex;
   align-items: center;
   gap: 0.3rem;
-  padding: 0.3rem 0.6rem;
-  border-radius: 999px;
-  background: rgba(255, 255, 255, 0.55);
   font-size: 0.72rem;
   font-weight: 600;
   color: var(--color-seal-brown);
   white-space: nowrap;
   flex-shrink: 0;
+}
+.usp-badge i {
+  color: var(--color-earth); /* green line-art icons, matching the reference */
+  font-size: 0.9rem;
 }
 
 /* Category tiles */
@@ -1352,11 +1353,25 @@ footer {
 }
 
 @media (min-width: 800px) {
-  .cart-link {
+  /* Hide the mobile-only icons in .nav-right; the desktop copies live inside
+     .nav-links instead. Without this the nav-right wishlist heart showed as a
+     stray second heart floating in the middle of the bar. */
+  .cart-link,
+  .wishlist-link:not(.desktop-cart) {
     display: none;
   }
   .desktop-cart {
-    display: block;
+    display: inline-flex; /* keep icon centering from the shared rule above, not block */
+  }
+  /* Menu links sit on the green header here, so they must be light — the dark
+     default only suits the white mobile dropdown. */
+  .nav-links a[data-link] {
+    color: var(--color-white);
+  }
+  .nav-links a[data-link].active,
+  .nav-links a[data-link]:hover {
+    background: rgba(255, 255, 255, 0.16);
+    color: var(--color-white);
   }
 }
 
