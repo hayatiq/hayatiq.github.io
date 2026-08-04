@@ -1,29 +1,120 @@
 :root {
-  /* Consistent palette used across the file */
-  --color-silver: #a3922145; /* neutral surface */
-  --color-timberwolf: #f5f5f5; /* page bg */
-  --color-khaki: #aba69b; /* subtle hover */
-  --color-night: #100f0f; /* text */
-  --color-seal-brown: #57341e; /* brand primary */
-  --color-white: #ffffff; /* white */
-  --color-black: #000000; /* black */
-
-  --color-earth: #95714F; /* earth */
-  --color-moss: #8C916C; /* moss */
-  --color-moss: #8C916C; /* moss */
-  --color-almond: #EADED0; /* almond */
-  --color-sage: #ACB087; /* sage */
-  --color-sand: #C7AF94; /* sand */
-
+  /* Theme-independent layout tokens */
   --size-regular: 0.9rem;
-
-  /* Layout tokens */
   --radius: 16px;
   --radius-sm: 8px;
   --radius-lg: 20px;
   --shadow-soft: 0 6px 20px rgb(64 64 64 / 8%);
   --shadow-card: 0 10px 30px rgba(16, 15, 15, 0.1);
   --container: 1200px;
+
+  /* Fallback palette (same as [data-theme="sand"]) if no data-theme is set */
+  --color-silver: #a3922145;
+  --color-timberwolf: #f5f5f5;
+  --color-khaki: #aba69b;
+  --color-night: #100f0f;
+  --color-seal-brown: #57341e;
+  --color-white: #ffffff;
+  --color-black: #000000;
+  --color-earth: #95714F;
+  --color-moss: #8C916C;
+  --color-almond: #EADED0;
+  --color-sage: #ACB087;
+  --color-sand: #C7AF94;
+  --color-category-icon: #E4D3B8;
+}
+
+/* Theme: "sand" (current/default look) */
+[data-theme="sand"] {
+  --color-silver: #a3922145; /* neutral surface */
+  --color-timberwolf: #f5f5f5; /* page bg */
+  --color-khaki: #aba69b; /* subtle hover */
+  --color-night: #100f0f; /* text */
+  --color-seal-brown: #57341e; /* headings / brand primary */
+  --color-white: #ffffff;
+  --color-black: #000000;
+  --color-earth: #95714F; /* buttons / CTA / price */
+  --color-moss: #8C916C;
+  --color-almond: #EADED0; /* page bg */
+  --color-sage: #ACB087;
+  --color-sand: #C7AF94; /* card bg */
+  --color-category-icon: #E4D3B8; /* warm tan — category icon backdrop */
+}
+
+/* Theme: "cool" — clean whitish cards inspired by BD grocery/direct-order sites,
+   with a teal/emerald accent (deliberately not orange) instead of the sand theme's
+   earth-brown. Swap the html[data-theme] attribute to switch the whole site. */
+[data-theme="cool"] {
+  /* Core Brand Colors */
+  --color-primary: #2E6F57;        /* Forest Green */
+  --color-secondary: #DAF8DF;      /* Sage Green */
+  --color-accent: #D8C3A5;         /* Warm Sand */
+
+  /* Backgrounds */
+  --color-background: #FAF8F4;     /* Warm Ivory */
+  --color-surface: #FFFFFF;        /* Cards */
+  --color-surface-soft: #F7F4EF;   /* Slightly tinted sections */
+
+  /* Text */
+  --color-heading: #1F3F33;        /* Dark Green */
+  --color-text: #3F4A45;           /* Body text */
+  --color-text-light: #6D766F;     /* Secondary text */
+
+  /* Buttons */
+  --color-button: #1F6B52;         /* Deep Emerald */
+  --color-button-hover: #195742;
+  --color-button-text: #FFFFFF;
+
+  /* Borders & Hover */
+  --color-border: #E6DED3;
+  --color-hover: #EAF5EF;
+  --color-category-icon: #DAF8DF;
+
+  /* Utility */
+  --color-success: #2E6F57;
+  --color-white: #FFFFFF;
+  --color-black: #000000;
+
+  /* Aliased to the token names the rest of style.css actually reads (var(--color-earth)
+     etc.). Without these, every rule fell back to the sand theme's :root defaults —
+     except --color-category-icon (already the right name), which is exactly why the
+     category icons looked green while everything else rendered brown/tan. */
+  --color-silver: #1F6B5240; /* --color-button at ~25% alpha, translucent hover overlay */
+  --color-timberwolf: var(--color-surface-soft);
+  --color-khaki: var(--color-hover);
+  --color-night: var(--color-text);
+  --color-seal-brown: var(--color-heading);
+  --color-earth: var(--color-button);
+  --color-moss: var(--color-accent);
+  --color-almond: var(--color-background);
+  --color-sage: var(--color-secondary);
+  --color-sand: var(--color-surface);
+}
+
+/* Theme: "betterme" — palette pulled directly from hayatiq.github.io/BetterMe/'s
+   stylesheet (blush/sage/cream/gold/plum/ink). --color-earth is deepened from their
+   --gold-dark (#B8935A) for legibility, since it also has to work as white-on-color
+   button/header backgrounds and as price text on light cards — everything else is
+   their values as fetched. */
+[data-theme="betterme"] {
+  --color-silver: #E8B4B845; /* neutral surface (their --blush-dark, translucent) */
+  --color-timberwolf: #F7E4E4; /* drawer surface (their --blush, used verbatim) */
+  --color-khaki: #D8E2D3; /* subtle hover (their --sage, used verbatim) */
+  --color-night: #3E2E38; /* text (their --ink, exact) */
+  --color-seal-brown: #6B4E5C; /* headings / brand primary (their --plum, exact) */
+  --color-white: #ffffff;
+  --color-black: #000000;
+  --color-earth: #B8935A; /* buttons / CTA / price (their --gold-dark, exact) */
+  --color-moss: #A8C3A0; /* their --sage-dark, exact */
+  --color-almond: #FFF8F0; /* page bg (their --cream, exact) */
+  --color-sage: #D8E2D3; /* their --sage, exact */
+  --color-sand: #ffffff; /* card bg (their .card background is solid white, exact) */
+  --color-category-icon: #F7E4E4; /* their --blush — category icon backdrop */
+}
+/* Recreates their signature cream→blush vertical wash behind the page content,
+   instead of a flat --color-almond fill, for a closer match to the source design. */
+[data-theme="betterme"] body {
+  background: linear-gradient(180deg, #FFF8F0 0%, #F7E4E4 100%);
 }
 
 /* Reset & base */
@@ -92,6 +183,9 @@ img {
   font-weight: 600;
   transition: all 0.25s ease;
   cursor: pointer;
+}
+.btn:active {
+  transform: scale(0.97);
 }
 .close-btn {
   display: inline-flex;
@@ -163,7 +257,16 @@ header.site-header {
 .nav-right {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
+  gap: 1rem;
+}
+/* Explicit centering on the icon links themselves — anchors default to inline
+   layout, which left their effective box height inconsistent with each other and
+   with the hamburger button, throwing off the straight-line alignment. */
+.wishlist-link,
+.cart-link,
+.desktop-cart {
+  display: inline-flex;
+  align-items: center;
 }
 .desktop-cart {
   display: none;
@@ -208,55 +311,111 @@ header.site-header {
 
 .cart {
   position: relative;
+  display: inline-flex; /* flex-center the SVG so it aligns with the wishlist/hamburger boxes instead of sitting on the text baseline */
+  align-items: center;
+  justify-content: center;
+  color: var(--color-white); /* always white so it reads on any header/theme color */
 }
-.cart-count {
+/* Cart and wishlist counts are visually identical badges, but kept as two distinct
+   classes (never shared on one element) — updateCartCount()/updateWishlistCount()
+   each target their own class, and sharing a class caused the wishlist badge to get
+   overwritten with the cart's quantity total any time only the cart changed. */
+.cart-count,
+.wishlist-count {
   position: absolute;
-  top: -20px;
-  right: -16px;
+  top: -8px;
+  right: -10px;
   background: var(--color-seal-brown);
   color: var(--color-white);
   border-radius: 50%;
   font-size: 0.6rem;
-  padding: 0.1rem 0.15rem;
-  min-width: 18px;
+  line-height: 1;
+  padding: 0.15rem;
+  min-width: 16px;
+  height: 16px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   text-align: center;
+}
+.wishlist-icon-wrap {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  color: var(--color-white);
+  font-size: 1.3rem;
+}
+/* The heart glyph doesn't fill its box the way the cart SVG does, so the shared
+   badge offset above (tuned for the cart icon) sits too far away — pull it in closer. */
+.wishlist-icon-wrap .wishlist-count {
+  top: -8px;
+  right: -10px;
 }
 
 /* Mobile nav toggle */
 .mobile-nav-toggle {
   display: none;
-  margin-left: 0.5rem;
+  padding: 0;
+  margin: 0;
+  line-height: 0;
 }
 .hamburger {
-  width: 36px;
-  height: 36px;
-  border-radius: 10px;
-  border: 1px solid rgba(16, 15, 15, 0.12);
-  background: var(--color-white);
+  width: 38px;
+  height: 38px;
   display: grid;
   place-items: center;
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  background: rgba(255, 255, 255, 0.08);
+  transition: background 0.2s ease, border-color 0.2s ease, transform 0.1s ease;
+}
+.mobile-nav-toggle:hover .hamburger {
+  background: rgba(255, 255, 255, 0.16);
+  border-color: rgba(255, 255, 255, 0.3);
+}
+.mobile-nav-toggle:active .hamburger {
+  transform: scale(0.94);
 }
 .hamburger span {
   display: block;
-  width: 18px;
-  height: 2px;
-  background: var(--color-night);
+  width: 20px;
+  height: 1.5px;
+  border-radius: 2px;
+  background: var(--color-white);
   position: relative;
+  transition: background 0.2s ease;
 }
 .hamburger span::before,
 .hamburger span::after {
   content: "";
   position: absolute;
   left: 0;
-  width: 18px;
-  height: 2px;
-  background: var(--color-night);
+  width: 20px;
+  height: 1.5px;
+  border-radius: 2px;
+  background: var(--color-white);
+  transition: transform 0.25s ease, top 0.25s ease;
 }
 .hamburger span::before {
   top: -6px;
 }
 .hamburger span::after {
   top: 6px;
+}
+/* Morph the three lines into an X while the menu is open */
+.mobile-nav-toggle[aria-expanded="true"] .hamburger span {
+  background: transparent;
+}
+.mobile-nav-toggle[aria-expanded="true"] .hamburger span::before {
+  top: 0;
+  transform: rotate(45deg);
+}
+.mobile-nav-toggle[aria-expanded="true"] .hamburger span::after {
+  top: 0;
+  transform: rotate(-45deg);
 }
 
 /* Hero */
@@ -271,30 +430,108 @@ header.site-header {
   /* padding: 1.2rem 0 0 0; */
 }
 .hero-card {
-  background: var(--color-sand);
-  border: 1px solid rgb(16 14 14 / 8%);
-  border-radius: var(--radius-lg);
-  padding: 1.2rem;
-  box-shadow: var(--shadow-soft);
+  padding: 0.8rem 1rem 0.3rem;
   text-align: center;
 }
 .hero h1 {
   font-size: 2rem;
+  line-height: 1.15;
 }
 .hero p {
   font-size: 1rem;
+  margin-bottom: 0.5rem;
 }
 .hero-cta {
   display: flex;
   gap: 0.6rem;
   flex-wrap: wrap;
-  margin-top: 0.6rem;
+  margin-top: 0.4rem;
   justify-content: center;
   font-size: small;
 }
 
 .hero-cta a {
   border-radius: 30px;
+}
+
+/* USP strip — compact badges inline with the hero, not a separate section */
+.usp-strip {
+  display: flex;
+  flex-wrap: nowrap;
+  justify-content: center;
+  gap: 0.4rem;
+  margin-top: 0.7rem;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+.usp-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0.3rem 0.6rem;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.55);
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: var(--color-seal-brown);
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+/* Category tiles */
+.category-section {
+  padding-top: 0.3rem;
+}
+.category-tiles {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 0.5rem;
+}
+@media (min-width: 420px) {
+  .category-tiles {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
+.category-tile {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.7rem 0.4rem;
+  border-radius: var(--radius-lg);
+  background: var(--color-sand);
+  border: 1px solid rgba(16, 15, 15, 0.06);
+  box-shadow: var(--shadow-soft);
+  text-align: center;
+  font-weight: 600;
+  font-size: 0.85rem;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+.category-tile:hover {
+  transform: translateY(-3px);
+  box-shadow: var(--shadow-card);
+}
+/* Font Awesome icons instead of raster images — always crisp, and colored via
+   currentColor so they read clearly no matter what the active theme/background is. */
+.category-tile-icon {
+  width: 42px;
+  height: 42px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: var(--color-category-icon);
+  color: var(--color-seal-brown);
+  font-size: 1.15rem;
+}
+
+/* How It Works condensed grid */
+.how-it-works-grid {
+  grid-template-columns: repeat(2, 1fr);
+}
+@media (min-width: 700px) {
+  .how-it-works-grid {
+    grid-template-columns: repeat(4, 1fr);
+  }
 }
 
 /* Sections */
@@ -341,41 +578,50 @@ section {
   transition: transform 0.35s ease, filter 0.35s ease;
   filter: saturate(0.9) contrast(0.98);
 }
-.product-overlay {
-  position: absolute;
-  inset: 0;
-  display: flex;
-  align-items: flex-end;
-  justify-content: center;
-  padding: 0.6rem;
-  background: linear-gradient(
-    180deg,
-    rgba(16, 15, 15, 0) 35%,
-    rgba(16, 15, 15, 0.35)
-  );
-  opacity: 0;
-  transition: opacity 0.25s ease;
-}
-.product-actions {
-  display: flex;
-  gap: 0.4rem;
-}
-.product-card:hover {
-  transform: translateY(-4px);
-  box-shadow: var(--shadow-card);
-}
-.product-card:hover .product-media img {
-  transform: scale(1.06);
-  filter: saturate(1.05) contrast(1.02);
-}
-.product-card:hover .product-overlay {
-  opacity: 1;
+/* Desktop-only hover enhancement; add-to-cart lives in .product-footer, always visible */
+@media (min-width: 700px) {
+  .product-card:hover {
+    transform: translateY(-4px);
+    box-shadow: var(--shadow-card);
+  }
+  .product-card:hover .product-media img {
+    transform: scale(1.06);
+    filter: saturate(1.05) contrast(1.02);
+  }
 }
 .product-body {
-  padding: 0.8rem;
+  padding: 0.7rem 0.8rem;
   background: var(--color-sand);
   display: grid;
-  gap: 0.3rem;
+  gap: 0.25rem;
+}
+.product-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  margin-top: 0.2rem;
+}
+.btn-icon-add {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+  width: 40px;
+  height: 40px;
+  border-radius: 999px;
+  border: none;
+  background: var(--color-earth);
+  color: var(--color-white);
+  font-size: 1rem;
+  cursor: pointer;
+  transition: background 0.2s ease, transform 0.15s ease;
+}
+.btn-icon-add:hover {
+  background: var(--color-seal-brown);
+}
+.btn-icon-add:active {
+  transform: scale(0.92);
 }
 .product-name {
   font-weight: 600;
@@ -405,48 +651,12 @@ section {
 
 .product-price {
   font-weight: 700;
+  font-size: 1.05rem;
   color: var(--color-seal-brown);
-  margin-top: 0.2rem;
-}
-.quick-view {
-  font-size: 0.85rem;
 }
 
-/* messenger button */
-.messenger-btn {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background-color: #95714F;
-  border-top-width: 0;
-  height: 36px;
-  border-bottom-width: 0;
-  border-bottom-right-radius: 8px;
-  flex-wrap: nowrap;
-  box-sizing: border-box;
-  border-bottom-left-radius: 8px;
-  flex-direction: row;
-  position: relative;
-  z-index: 0;
-  border-top-right-radius: 8px;
-  border-top-left-radius: 8px;
-  border-left-width: 0;
-  border-right-width: 0;
-  color: #fff;
-  margin-top: 10px;
-}
-
-.messenger-btn i {
-  font-size: 1.1rem; /* Messenger icon size */
-}
-
-.messenger-btn:hover {
-  background-color: #755536;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.15);
-}
-
-
-/* Standardized icon/image utility for categories, badges, etc. */
+/* Standardized icon utility for categories, badges, etc. — Font Awesome icons
+   colored via currentColor so they stay crisp regardless of the active theme. */
 .icon-img {
   width: 64px;
   height: 64px;
@@ -454,14 +664,10 @@ section {
   display: grid;
   place-items: center;
   border-radius: 14px;
-  background: var(--color-white);
+  background: var(--color-category-icon);
+  color: var(--color-seal-brown);
   border: 1px solid rgba(16, 15, 15, 0.08);
-  overflow: hidden;
-}
-.icon-img img {
-  width: 100%;
-  height: 100%;
-  object-fit: contain;
+  font-size: 1.6rem;
 }
 
 /* About / How it works cards */
@@ -486,6 +692,25 @@ section {
 .gallery {
   display: grid;
   gap: 0.6rem;
+}
+/* Without this, the gallery spans the full page width on wide screens and the
+   4:3 main image gets huge + badly cropped. Switch to a two-column layout with a
+   capped, sticky gallery once there's room. */
+@media (min-width: 900px) {
+  .detail {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    align-items: start;
+    gap: 2rem;
+  }
+  .gallery {
+    position: sticky;
+    top: 1rem;
+  }
+}
+@media (min-width: 1100px) {
+  .detail {
+    grid-template-columns: minmax(0, 1.1fr) minmax(0, 0.9fr);
+  }
 }
 .gallery-main {
   border-radius: var(--radius-lg);
@@ -518,6 +743,54 @@ section {
 }
 .thumbs img.active {
   border-color: var(--color-seal-brown);
+}
+
+/* Accordion — native <details>/<summary>, no JS needed for open/close. Sections are
+   independent (no shared `name` grouping) on purpose: an exclusive accordion meant
+   opening one section could snap another one shut elsewhere on the page, jumping
+   the whole layout. Each section now only ever affects its own space. */
+.accordion-group {
+  display: grid;
+  gap: 0.6rem;
+}
+.accordion-item {
+  background: var(--color-sand);
+  border: 1px solid rgba(16, 15, 15, 0.06);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-soft);
+  overflow: hidden;
+}
+.accordion-item summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.9rem 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  list-style: none;
+  transition: background-color 0.2s ease;
+}
+.accordion-item summary:hover {
+  background-color: var(--color-khaki);
+}
+.accordion-item summary::-webkit-details-marker {
+  display: none;
+}
+.accordion-item summary::after {
+  content: "▾";
+  color: var(--color-seal-brown);
+  transition: transform 0.2s ease;
+}
+.accordion-item[open] summary::after {
+  transform: rotate(180deg);
+}
+.accordion-panel {
+  padding: 0 1rem 1rem;
+  font-size: var(--size-regular);
+}
+.accordion-panel ul {
+  margin: 0;
+  padding-left: 1.1rem;
 }
 
 /* Contact */
@@ -632,16 +905,33 @@ footer {
 /* Reviews */
 .reviews {
   display: grid;
-  gap: 0.6rem;
+  gap: 0.7rem;
+  margin-top: 0.6rem;
 }
 .review-item {
   border: 1px solid rgba(16, 15, 15, 0.08);
-  border-radius: 12px;
-  padding: 0.6rem 0.8rem;
+  border-radius: var(--radius-sm);
+  padding: 0.7rem 0.9rem;
   background: var(--color-white);
+  box-shadow: var(--shadow-soft);
+}
+.review-item-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.6rem;
+  flex-wrap: wrap;
+  margin-bottom: 0.3rem;
+}
+.review-item-head strong {
+  color: var(--color-seal-brown);
 }
 .stars {
-  letter-spacing: 2px;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.15rem;
+  color: var(--color-earth);
+  font-size: 0.85rem;
 }
 
 /* Simple view wrappers for routing */
@@ -650,6 +940,17 @@ footer {
 }
 .view.active {
   display: block;
+  animation: viewIn 0.25s ease;
+}
+@keyframes viewIn {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 /* how to use toggle */
 .how-to-use-container {
@@ -762,6 +1063,85 @@ footer {
   font-size: 1.1rem;
 }
 
+/* Product card badges (Hot/New/Sale/Popular) — fixed marketing colors on purpose,
+   not theme tokens, so they read the same regardless of the active site palette. */
+.product-badge {
+  position: absolute;
+  top: 0.5rem;
+  left: 0.5rem;
+  z-index: 1;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0.25rem 0.55rem;
+  border-radius: 999px;
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: #fff;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.25);
+  white-space: nowrap;
+}
+.product-badge.badge-hot {
+  background: #e8483c;
+}
+.product-badge.badge-new {
+  background: #2f80ed;
+}
+.product-badge.badge-sale {
+  background: #16a34a;
+}
+.product-badge.badge-popular {
+  background: #f59e0b;
+}
+@media (max-width: 380px) {
+  .product-badge {
+    font-size: 0.62rem;
+    padding: 0.2rem 0.45rem;
+  }
+  .usp-strip {
+    gap: 0.25rem;
+  }
+  .usp-badge {
+    font-size: 0.64rem;
+    padding: 0.25rem 0.45rem;
+    gap: 0.2rem;
+  }
+}
+
+/* Wishlist heart toggle — fixed "loved" red on purpose, like the badge colors above:
+   this reads the same regardless of the active site palette. */
+.wishlist-toggle {
+  position: absolute;
+  top: 0.5rem;
+  right: 0.5rem;
+  z-index: 1;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  border: none;
+  background: rgba(255, 255, 255, 0.85);
+  color: var(--color-seal-brown);
+  display: grid;
+  place-items: center;
+  font-size: 0.95rem;
+  cursor: pointer;
+  transition: transform 0.15s ease, color 0.2s ease;
+}
+.wishlist-toggle:active {
+  transform: scale(0.9);
+}
+.wishlist-toggle.active {
+  color: #e0245e;
+}
+.wishlist-toggle-inline {
+  position: static;
+  width: 44px;
+  height: 44px;
+  background: var(--color-white);
+  border: 1px solid rgba(16, 15, 15, 0.1);
+  font-size: 1.1rem;
+}
+
 /* Checkout Styles */
 .checkout-form {
   display: grid;
@@ -830,28 +1210,31 @@ footer {
   height: 50px;
   object-fit: cover;
   border-radius: 8px;
+  flex-shrink: 0;
 }
 
 .checkout-item-details {
   display: grid;
-  gap: 0.2rem;
+  gap: 0.3rem;
+  flex: 1;
+  min-width: 0;
 }
 
 .checkout-item-name {
   font-weight: 600;
 }
 
-.checkout-item-qty {
-  opacity: 0.85;
-  font-size: 0.9rem;
-}
-
 .checkout-item-price {
   font-weight: 600;
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0.4rem;
 }
 
 .checkout-summary {
-  background: #fff;
+  background: var(--color-white);
   border: 1px solid rgba(0,0,0,0.1);
   border-radius: 12px;
   padding: 1rem;
@@ -879,7 +1262,8 @@ footer {
 
 .note-chars {
   font-size: 0.8rem;
-  color: #f3eded;
+  color: var(--color-night);
+  opacity: 0.65;
 }
 .note-chars.warning {
   color: #c96c00; /* orange at ~150+ */
@@ -919,9 +1303,6 @@ footer {
   .footer-grid {
     grid-template-columns: 2fr 1fr 1fr 1fr;
     align-items: start;
-  }
-  .product-actions {
-    flex-direction: column;
   }
 }
 
@@ -970,23 +1351,168 @@ footer {
   }
 }
 
-/* messenger btn */
-@media (max-width: 600px) {
-  .messenger-btn {
-    width: 100%;
-    padding: 0.55rem;
-    font-size: 1rem;
-  }
-  .product-actions {
-    flex-direction: column;
-  }
-}
-
 @media (min-width: 800px) {
   .cart-link {
     display: none;
   }
   .desktop-cart {
     display: block;
+  }
+}
+
+/* Floating mobile cart button — replaces the old sticky bar so product cards get
+   more visible space; tapping it opens the same slide-in drawer. Vertically centered
+   on the right edge, showing the running total alongside the item count. */
+.floating-cart-btn {
+  display: none;
+}
+@media (max-width: 767px) {
+  .floating-cart-btn {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 0.15rem;
+    position: fixed;
+    right: 8px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 68px;
+    height: 68px;
+    padding: 0.4rem;
+    border-radius: var(--radius-lg);
+    border: none;
+    background: var(--color-earth);
+    color: var(--color-white);
+    font-size: 1.1rem;
+    box-shadow: 0 6px 18px rgba(16, 15, 15, 0.3);
+    z-index: 70;
+    cursor: pointer;
+    transition: transform 0.15s ease;
+    /* Always animated — a constant, gentle invitation to shop, not just once items
+       are in the cart. */
+    animation: floatingCartPulse 2.2s ease-in-out infinite;
+  }
+  .floating-cart-btn:active {
+    transform: translateY(-50%) scale(0.94);
+  }
+  .floating-cart-btn.hidden {
+    display: none;
+  }
+  .floating-cart-count {
+    position: absolute;
+    top: 4px;
+    right: 6px;
+    min-width: 18px;
+    padding: 0.05rem 0.3rem;
+    border-radius: 999px;
+    background: var(--color-seal-brown);
+    color: var(--color-white);
+    font-size: 0.65rem;
+    font-weight: 700;
+    text-align: center;
+    box-shadow: 0 0 0 2px var(--color-earth);
+  }
+  .floating-cart-total {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 100%;
+    font-size: 0.65rem;
+    font-weight: 700;
+    line-height: 1.1;
+  }
+  @keyframes floatingCartPulse {
+    0%, 100% {
+      transform: translateY(-50%) scale(1);
+      box-shadow: 0 6px 18px rgba(16, 15, 15, 0.3), 0 0 0 0 rgba(16, 15, 15, 0.25);
+    }
+    50% {
+      transform: translateY(-50%) scale(1.06);
+      box-shadow: 0 6px 18px rgba(16, 15, 15, 0.3), 0 0 0 8px rgba(16, 15, 15, 0);
+    }
+  }
+}
+
+/* Slide-in cart drawer */
+body.drawer-open {
+  overflow: hidden;
+}
+.cart-drawer-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(16, 15, 15, 0.45);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.25s ease;
+  z-index: 80;
+}
+.cart-drawer-overlay.open {
+  opacity: 1;
+  pointer-events: auto;
+}
+.cart-drawer {
+  position: fixed;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  width: min(400px, 92vw);
+  background: var(--color-timberwolf);
+  box-shadow: -8px 0 30px rgba(16, 15, 15, 0.2);
+  z-index: 85;
+  display: flex;
+  flex-direction: column;
+  transform: translateX(100%);
+  transition: transform 0.3s ease;
+}
+.cart-drawer.open {
+  transform: translateX(0);
+}
+.cart-drawer-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1rem;
+  border-bottom: 1px solid rgba(16, 15, 15, 0.08);
+}
+.cart-drawer-header h3 {
+  margin: 0;
+}
+.cart-drawer-items {
+  flex: 1;
+  overflow-y: auto;
+  padding: 0 1rem;
+}
+.cart-drawer-footer {
+  padding: 1rem;
+  border-top: 1px solid rgba(16, 15, 15, 0.08);
+  background: var(--color-white);
+}
+.cart-drawer-total {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 1.1rem;
+  margin-bottom: 0.8rem;
+}
+.cart-drawer-actions {
+  display: flex;
+  gap: 0.6rem;
+}
+.cart-drawer-actions .btn {
+  flex: 1;
+}
+
+/* Respect motion-sensitivity preferences — disable the view fade-in, button press
+   scale, and the floating cart's attention pulse. */
+@media (prefers-reduced-motion: reduce) {
+  .view.active {
+    animation: none;
+  }
+  .btn:active {
+    transform: none;
+  }
+  .floating-cart-btn {
+    animation: none;
   }
 }

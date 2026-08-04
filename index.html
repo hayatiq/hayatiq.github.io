@@ -1,5 +1,6 @@
 <!DOCTYPE html>
-<html lang="en">
+<!-- Palette: set data-theme to "sand" (current) or "cool" or 'betterme' to re-theme the whole site -->
+<html lang="en" data-theme="cool">
     <head>
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width,initial-scale=1">
@@ -29,9 +30,11 @@
         <!-- Canonical URL -->
         <link rel="canonical" href="https://hayatiq.netlify.app">
         <title>Hayatiq — Handcrafted with Intention</title>
-        <meta name="description" content="Hayatiq — Handmade beauty products with a calming, premium aesthetic.">
+        <!-- Product structured data (schema.org), populated per product view by renderDetail() in js/script.js -->
+        <script type="application/ld+json" id="productJsonLd">{}</script>
         <link rel="preconnect" href="https://fonts.googleapis.com">
         <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="preconnect" href="https://cdnjs.cloudflare.com" crossorigin>
         <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600&family=Dancing+Script:wght@600;700&display=swap" rel="stylesheet">
         <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/7.0.0/css/all.min.css" integrity="sha512-DxV+EoADOkOygM4IR9yXP8Sb2qwgidEmeqAEmDKIOfPRQZOWbXCzLC6vjbZyy0vPisbH2SyW27+ddLVCN+OMzQ==" crossorigin="anonymous" referrerpolicy="no-referrer">
         <link rel="stylesheet" href="./css/style.css">
@@ -44,7 +47,13 @@
                 <span class="brand-name">HAYATIQ</span>
                 </a>
                 <div class="nav-right">
-                <a href="#/cart" aria-label="Cart" class="cart-link">
+                <a href="#/wishlist" aria-label="Wishlist" class="wishlist-link">
+                    <span class="wishlist-icon-wrap">
+                    <i class="fa-solid fa-heart" aria-hidden="true"></i>
+                    <span class="wishlist-count" id="wishlistCount">0</span>
+                    </span>
+                </a>
+                <a href="#/cart" aria-label="Cart" class="cart-link" onclick="event.preventDefault(); openCartDrawer();">
                     <span class="cart">
                     <svg width="26" height="26" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
                         <path d="M6 6h15l-2 9H8L6 2H2" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
@@ -66,7 +75,13 @@
                 <a href="#/categories" data-link>Categories</a>
                 <a href="#/about" data-link>About</a>
                 <a href="#/contact" data-link>Contact</a>
-                <a href="#/cart" aria-label="Cart" class="desktop-cart">
+                <a href="#/wishlist" aria-label="Wishlist" class="wishlist-link desktop-cart">
+                    <span class="wishlist-icon-wrap">
+                    <i class="fa-solid fa-heart" aria-hidden="true"></i>
+                    <span class="wishlist-count" id="wishlistCount">0</span>
+                    </span>
+                </a>
+                <a href="#/cart" aria-label="Cart" class="desktop-cart" onclick="event.preventDefault(); openCartDrawer();">
                     <span class="cart">
                     <svg width="26" height="26" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
                         <path d="M6 6h15l-2 9H8L6 2H2" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
@@ -84,14 +99,48 @@
                 <div class="hero">
                     <div class="hero-wrap">
                         <div class="hero-card">
-                            <h1>HAYATIQ</h1>
-                            <p class="muted">Handcrafted with intention. Natural wellness products for your everyday rituals, gentle, mindful, and designed to nurture over time, because true wellness is a lifestyle, not a rush.</p>
+                            <h1>Natural Self-Care for Everyday You</h1>
+                            <p class="muted">Handcrafted wellness rituals made with natural ingredients to nourish your hair, skin, and well-being.</p>
                             <div class="hero-cta">
-                                <a href="#/products" class="btn button-primary">Discover our products</a>
+                                <a href="#bestSellerGrid" class="btn button-primary" onclick="event.preventDefault(); document.getElementById('bestSellerGrid').scrollIntoView({behavior: 'smooth', block: 'start'});">Shop Best Sellers</a>
+                            </div>
+                            <div class="usp-strip">
+                                <div class="usp-badge"><span aria-hidden="true">✋</span> Handmade</div>
+                                <div class="usp-badge"><span aria-hidden="true">🌿</span> Natural</div>
+                                <div class="usp-badge"><span aria-hidden="true">✅</span> Quality Checked</div>
                             </div>
                         </div>
                     </div>
                 </div>
+                <section aria-label="Shop by category" class="category-section">
+                    <div class="section-title">
+                        <h2>Shop by Category</h2>
+                    </div>
+                    <div class="category-tiles">
+                        <a class="category-tile" href="#/products?cat=Skincare">
+                            <span class="category-tile-icon" aria-hidden="true"><i class="fa-solid fa-pump-soap"></i></span>
+                            <span>Skincare</span>
+                        </a>
+                        <a class="category-tile" href="#/products?cat=Haircare">
+                            <span class="category-tile-icon" aria-hidden="true"><i class="fa-solid fa-scissors"></i></span>
+                            <span>Haircare</span>
+                        </a>
+                        <a class="category-tile" href="#/products?cat=Wellness">
+                            <span class="category-tile-icon" aria-hidden="true"><i class="fa-solid fa-spa"></i></span>
+                            <span>Wellness</span>
+                        </a>
+                        <a class="category-tile" href="#/products">
+                            <span class="category-tile-icon" aria-hidden="true"><i class="fa-solid fa-bag-shopping"></i></span>
+                            <span>All Products</span>
+                        </a>
+                    </div>
+                </section>
+                <section aria-label="Best Sellers">
+                    <div class="section-title">
+                        <h2>Best Sellers</h2>
+                    </div>
+                    <div class="products-grid" id="bestSellerGrid"></div>
+                </section>
                 <section aria-label="Featured Products">
                     <div class="section-title">
                         <h2>Featured Products</h2>
@@ -111,7 +160,7 @@
                     <div class="section-title">
                         <h2>How It Works</h2>
                     </div>
-                    <div class="grid" style="grid-template-columns:repeat(1,minmax(0,1fr));gap:.9rem">
+                    <div class="grid how-it-works-grid">
                         <div class="soft-card">
                             <strong>1. Source</strong>
                             <p>We select premium natural ingredients from trusted partners.</p>
@@ -155,8 +204,8 @@
                 <div class="grid" style="grid-template-columns:repeat(1,minmax(0,1fr))">
                     <a class="soft-card" href="#/products?cat=Skincare">
                         <div style="display:flex;align-items:center;gap:.8rem">
-                            <span class="icon-img">
-                                <img alt="Skincare icon" src="./images/skincare.png">
+                            <span class="icon-img" aria-hidden="true">
+                                <i class="fa-solid fa-pump-soap"></i>
                             </span>
                             <div>
                                 <strong>Skincare</strong>
@@ -166,8 +215,8 @@
                     </a>
                     <a class="soft-card" href="#/products?cat=Haircare">
                         <div style="display:flex;align-items:center;gap:.8rem">
-                            <span class="icon-img">
-                                <img alt="Haircare icon" src="./images/hair.png">
+                            <span class="icon-img" aria-hidden="true">
+                                <i class="fa-solid fa-scissors"></i>
                             </span>
                             <div>
                                 <strong>Haircare</strong>
@@ -177,8 +226,8 @@
                     </a>
                     <a class="soft-card" href="#/products?cat=Wellness">
                         <div style="display:flex;align-items:center;gap:.8rem">
-                            <span class="icon-img">
-                                <img alt="Wellness icon" src="./images/meditation.png">
+                            <span class="icon-img" aria-hidden="true">
+                                <i class="fa-solid fa-spa"></i>
                             </span>
                             <div>
                                 <strong>Wellness</strong>
@@ -220,6 +269,12 @@
                     </form>
                     <div id="formMessage" style="margin-top:1rem;display:none"></div>
                 </div>
+            </section>
+            <section id="view-wishlist" class="view" aria-label="Wishlist">
+                <div class="section-title">
+                    <h2>Your Wishlist</h2>
+                </div>
+                <div class="products-grid" id="wishlistGrid"></div>
             </section>
             <section id="view-cart" class="view" aria-label="Cart">
                 <div class="soft-card">
@@ -346,7 +401,30 @@
             </div>
             <div class="container" style="padding-bottom:1rem;font-size:.85rem;text-align:center">© <span id="year"></span> HAYATIQ. All rights reserved. Handcrafted with Intention. </div>
         </footer>
-        <a href='https://www.free-counters.org/'> .</a> 
+        <a href='https://www.free-counters.org/'> .</a>
+        <button id="floatingCartBtn" class="floating-cart-btn" aria-label="Open cart" onclick="openCartDrawer();">
+            <i class="fa-solid fa-cart-shopping" aria-hidden="true"></i>
+            <span id="floatingCartCount" class="floating-cart-count">0</span>
+            <span id="floatingCartTotal" class="floating-cart-total">৳0.00</span>
+        </button>
+        <div id="cartDrawerOverlay" class="cart-drawer-overlay" onclick="closeCartDrawer()"></div>
+        <aside id="cartDrawer" class="cart-drawer" aria-label="Your cart" aria-hidden="true">
+            <div class="cart-drawer-header">
+                <h3>Your Cart</h3>
+                <button class="close-btn" onclick="closeCartDrawer()" aria-label="Close cart">✕</button>
+            </div>
+            <div id="drawerCartItems" class="cart-drawer-items"></div>
+            <div class="cart-drawer-footer">
+                <div class="cart-drawer-total">
+                    <span>Total</span>
+                    <strong id="drawerCartTotal">৳0.00</strong>
+                </div>
+                <div class="cart-drawer-actions">
+                    <a href="#/cart" class="btn button-ghost" onclick="closeCartDrawer()">View Full Cart</a>
+                    <a href="#/checkout" class="btn button-primary" onclick="closeCartDrawer()">Checkout</a>
+                </div>
+            </div>
+        </aside>
         <script src="./js/visitor.js"></script>
         <script src="./js/script.js"></script>
         <!-- sweetalert -->

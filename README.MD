@@ -182,3 +182,67 @@ Add a new object with all the required keys. Example:
 
 ✅ That’s it! You can now safely add new products to the site.
 
+---
+
+# 🌟 Adding Customer Reviews
+
+The site has no backend, so reviews aren't submitted through a form — they're added
+manually by editing each product's `reviews` array in `script.js`, the same way you'd
+edit any other product field.
+
+## 1. Find the Product
+
+Locate the product in the `PRODUCTS` array and find its `reviews` key (it ships empty):
+
+```js
+reviews: [],
+```
+
+## 2. Add a Real Review
+
+Add one object per review, using only genuine feedback you've actually received
+(e.g. from a customer over Messenger or Facebook):
+
+```js
+reviews: [
+  { name: "Nusrat A.", rating: 5, text: "Absorbs fast and the tingling fades within a minute. Repurchasing!" },
+  { name: "Rafiul H.", rating: 4, text: "Good product, wish the bottle were a bit bigger." },
+],
+```
+
+* `name` — the reviewer's name (or however they'd like to be credited).
+* `rating` — a whole number from 1–5.
+* `text` — the review text.
+
+## 3. Test
+
+1. Save `script.js`.
+2. Reload the site and open that product's detail page.
+3. Confirm the average rating/star count and each review card display correctly.
+4. An empty `reviews: []` array correctly shows "No reviews yet." — that's expected
+   for products you haven't added reviews to yet.
+
+✅ That's it! Reviews you add here show up for every visitor immediately.
+
+---
+
+# 🏷️ Adding Product Card Badges
+
+Every product has a `badge` field in `script.js` (ships as `null` — no badge shown).
+Set it to one of the following to show a small colored badge on that product's card
+in the shop grid:
+
+```js
+badge: "hot",      // 🔥 red "Hot" badge
+badge: "new",      // ⚡ blue "New" badge
+badge: "sale",     // 🏷️ green "Sale" badge
+badge: "popular",  // 👑 amber "Popular" badge
+badge: null,       // no badge (default)
+```
+
+Badges don't show on "Coming Soon" products (the coming-soon overlay already covers
+the image). The colors are fixed regardless of which theme (`sand`/`cool`/`betterme`)
+is active — shoppers expect "Hot"/"Sale" to look the same everywhere.
+
+✅ That's it! Save `script.js` and reload to see the badge on that product's card.
+
