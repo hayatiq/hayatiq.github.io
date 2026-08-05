@@ -70,10 +70,12 @@ function navigate() {
     routes.products.classList.add("active");
     const params = new URLSearchParams(hash.split("?")[1] || "");
     const cat = params.get("cat");
-    renderProducts(cat);
+    const concern = params.get("concern");
+    renderProducts(cat, concern);
+    const topic = concern || cat;
     setPageMeta(
-      `${cat ? cat + " " : ""}Products — Hayatiq`,
-      `Shop ${cat ? cat.toLowerCase() + " " : ""}products from Hayatiq — handcrafted natural wellness essentials.`
+      `${topic ? topic + " " : ""}Products — Hayatiq`,
+      `Shop ${topic ? topic.toLowerCase() + " " : ""}products from Hayatiq — handcrafted natural wellness essentials.`
     );
     resetProductJsonLd();
   } else if (hash === "#/categories") {
@@ -105,8 +107,9 @@ function navigate() {
     resetProductJsonLd();
   } else {
     routes.home.classList.add("active");
-    renderBestSellers();
+    renderTopProducts();
     renderFeatured();
+    renderTestimonials();
     setPageMeta(
       "Hayatiq — Handcrafted with Intention",
       "Hayatiq - Handcrafted natural wellness products. Premium magnesium oil, organic soaps, hair care serums, and skincare products made with intention in Bangladesh."
@@ -174,10 +177,17 @@ const PRODUCTS = [
       "Keep bottle tightly sealed. Store in a cool, dry placeaway from direct sunlight, heat, or children’s reach.",
       "Use within 6 months of manufacture."
     ],
-    // Demo reviews — replace with real customer feedback as it comes in, see README.MD.
+    // "Shop by Need" tags — drawn from this product's own `how` entries above (Sleep &
+    // Relaxation, Muscle Cramps & Soreness, Stress & Anxiety), not invented. Powers the
+    // homepage "Find the Right Product" tiles (see NEED_TILES). Leave [] if a product
+    // doesn't clearly fit a listed need yet.
+    concerns: ["Better Sleep", "Muscle Recovery"],
+    // DEMO PREVIEW DATA — for layout preview only, replace with real reviews before
+    // launch (see README.MD "Adding Customer Reviews"). Remove this comment and the
+    // two entries below once real feedback is added.
     reviews: [
-      { name: "Nusrat Jahan", rating: 5, text: "This has genuinely improved my sleep. A few sprays on my feet before bed and I feel so much more relaxed — the scent is mild too, no irritation at all. Highly recommend!" },
-      { name: "Rakibul Islam", rating: 4.5, text: "Using this for muscle cramps after workouts and it really helps. Had a bit of tingling the first couple of days but that faded quickly. Would love a bigger bottle option." },
+      { name: "Nusrat A.", rating: 5, text: "This has genuinely improved my sleep. A few sprays on my feet before bed and I feel so much more relaxed — the scent is mild too, no irritation at all. Highly recommend!" },
+      { name: "Rakibul H.", rating: 4.5, text: "Using this for muscle cramps after workouts and it really helps. Had a bit of tingling the first couple of days but that faded quickly. Would love a bigger bottle option." },
     ],
     // Set to true to feature this product in the homepage "Best Sellers" section.
     bestSeller: true,
@@ -231,6 +241,8 @@ const PRODUCTS = [
       "Keep bottle tightly sealed. Store in a cool, dry placeaway from direct sunlight, heat, or children’s reach.",
       "Use within 6 months of manufacture."
     ],
+    // See NEED_TILES — same usage guidance as the 30% variant above.
+    concerns: ["Better Sleep", "Muscle Recovery"],
     // Fill in real customer reviews here as they come in — see README.MD.
     reviews: [],
     // Set to true to feature this product in the homepage "Best Sellers" section.
@@ -367,10 +379,84 @@ const PRODUCTS = [
 ];
 
 /* ==============================
+       Site-wide testimonials (Customer Love)
+       ============================== */
+// Separate from per-product `reviews` because testimonials — especially Messenger/
+// Facebook screenshots — are often about the overall ordering experience, not one
+// specific product. Ships empty, like `reviews`/`bestSeller`: the owner adds entries
+// here manually as real customer-generated content comes in (see README.MD). The
+// homepage "Customer Love" section hides itself entirely while this is empty — an
+// empty section would look worse than no section at all (see
+// TRUST_AND_CONVERSION_STRATEGY.md §D volume thresholds).
+//
+// Each entry: { type: "text"|"photo"|"screenshot", customerName, rating (optional),
+// content, image (required for photo/screenshot), relatedProductId (optional), source
+// (optional, e.g. "Messenger", "Facebook") }.
+//
+// DEMO PREVIEW DATA below — for layout preview only. Replace with real
+// testimonials/screenshots before launch (see README.MD "Adding Site-Wide
+// Testimonials"); the placeholder image is reused from images/placeholder.webp just
+// to preview the photo layout, it is not a real customer photo.
+const TESTIMONIALS = [
+  { type: "text", customerName: "Farhana S.", rating: 5, content: "Ordered on a Wednesday, arrived exactly as described — will be reordering the magnesium oil.", source: "Facebook" },
+  { type: "text", customerName: "Imran K.", rating: 5, content: "Really appreciated how quickly they replied to my questions on Messenger before I ordered.", source: "Messenger" },
+  { type: "photo", customerName: "Sadia R.", rating: 4.5, content: "Loved the packaging, felt very premium for a small brand.", image: "./images/placeholder.webp" },
+];
+
+function initials(name) {
+  return (name || "?").trim().split(/\s+/).map((w) => w[0]).join("").slice(0, 2).toUpperCase();
+}
+
+function renderTestimonials() {
+  const grid = document.getElementById("testimonialGrid");
+  const section = document.getElementById("testimonialSection");
+  if (!grid || !section) return;
+  if (!TESTIMONIALS.length) {
+    section.style.display = "none";
+    return;
+  }
+  section.style.display = "";
+  grid.innerHTML = TESTIMONIALS.map(
+    (t) => `<div class="testimonial-card testimonial-card-modern">
+        <i class="fa-solid fa-quote-left testimonial-quote-icon" aria-hidden="true"></i>
+        <div class="testimonial-header">
+          <span class="testimonial-avatar" aria-hidden="true">${initials(t.customerName)}</span>
+          <div>
+            <strong>${t.customerName}</strong>
+            ${t.rating ? `<div class="stars">${stars(t.rating)}</div>` : ""}
+          </div>
+        </div>
+        ${t.content ? `<p class="muted testimonial-content">${t.content}</p>` : ""}
+        ${t.image ? `<img src="${t.image}" alt="${t.type === "screenshot" ? "Customer conversation screenshot" : "Photo shared by " + t.customerName}" class="review-item-img" onclick="openImageLightbox('${t.image}')">` : ""}
+        ${t.source ? `<span class="review-source">via ${t.source}</span>` : ""}
+      </div>`
+  ).join("");
+}
+
+// Plain CSS scroll-snap carousel (see .testimonial-carousel/.product-carousel in
+// style.css) — swipe already works on touch devices without any JS; these buttons are
+// only needed for mouse/keyboard users where click-drag-scroll isn't discoverable.
+// Shared by both the Customer Love and Top Selling Products carousels.
+function scrollCarousel(containerId, direction, itemSelector) {
+  const track = document.getElementById(containerId);
+  if (!track) return;
+  const item = track.querySelector(itemSelector);
+  const amount = item ? item.getBoundingClientRect().width + 16 : track.clientWidth * 0.8;
+  const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  track.scrollBy({ left: direction * amount, behavior: reduceMotion ? "auto" : "smooth" });
+}
+function scrollTestimonials(direction) {
+  scrollCarousel("testimonialGrid", direction, ".testimonial-card");
+}
+function scrollTopProducts(direction) {
+  scrollCarousel("topProductsGrid", direction, ".product-card-carousel");
+}
+
+/* ==============================
        Rendering helpers
        ============================== */
 const featuredGrid = document.getElementById("featuredGrid");
-const bestSellerGrid = document.getElementById("bestSellerGrid");
+const topProductsGrid = document.getElementById("topProductsGrid");
 const productsGrid = document.getElementById("productsGrid");
 const productCount = document.getElementById("productCount");
 const detailWrap = document.getElementById("detailWrap");
@@ -390,19 +476,32 @@ const BADGE_TYPES = {
   new: { label: "New", icon: "fa-bolt" },
   sale: { label: "Sale", icon: "fa-tag" },
   popular: { label: "Popular", icon: "fa-crown" },
+  // Auto-applied from `bestSeller: true` (see productCard()) rather than set via the
+  // `badge` field directly — this is what replaces the old separate "Best Sellers"
+  // grid: one unified product grid, with best sellers surfaced via badge instead of
+  // a duplicate section (see TRUST_AND_CONVERSION_STRATEGY.md §C / IMPLEMENTATION_LOG.md).
+  bestseller: { label: "Best Seller", icon: "fa-star" },
 };
 
-function productCard(p) {
+function productCard(p, opts = {}) {
   const isComingSoon = typeof p.price === 'string' && p.price.toLowerCase().includes('coming soon');
-  const badge = !isComingSoon && p.badge && BADGE_TYPES[p.badge];
+  // An explicit `badge` field always wins; otherwise a bestSeller product is auto-badged.
+  const badgeKey = p.badge || (p.bestSeller ? "bestseller" : null);
+  const badge = !isComingSoon && badgeKey && BADGE_TYPES[badgeKey];
+  // opts.carousel adds a sizing class for horizontal scroll-snap carousels (e.g. Top
+  // Selling Products) — the card markup/behavior is identical either way.
+  const cardClass = opts.carousel ? "product-card product-card-carousel" : "product-card";
 
   return `
-      <article class="product-card" aria-label="${p.name}">
+      <article class="${cardClass}" aria-label="${p.name}">
         <a href="#/product/${p.id}">
           <div class="product-media">
             <img loading="lazy" src="${p.images[0]}" alt="${p.name}">
-            ${isComingSoon ? `<div class="coming-soon-overlay">Coming Soon</div>` : ''}
-            ${badge ? `<span class="product-badge badge-${p.badge}"><i class="fa-solid ${badge.icon}" aria-hidden="true"></i> ${badge.label}</span>` : ''}
+            ${isComingSoon ? `<div class="coming-soon-overlay">
+              <span>Coming Soon</span>
+              <button class="coming-soon-ask" onclick="event.preventDefault(); event.stopPropagation(); window.open('https://m.me/hayatiq.life?ref=${p.slug}', '_blank');"><i class="fa-brands fa-facebook-messenger" aria-hidden="true"></i> Ask about this</button>
+            </div>` : ''}
+            ${badge ? `<span class="product-badge badge-${badgeKey}"><i class="fa-solid ${badge.icon}" aria-hidden="true"></i> ${badge.label}</span>` : ''}
             ${!isComingSoon ? `<button class="wishlist-toggle ${isWishlisted(p.id) ? 'active' : ''}" data-id="${p.id}" aria-label="Add to wishlist" onclick="event.preventDefault(); event.stopPropagation(); toggleWishlist('${p.id}');"><i class="fa-solid fa-heart"></i></button>` : ''}
           </div>
           <div class="product-body">
@@ -422,27 +521,109 @@ function renderFeatured() {
   featuredGrid.innerHTML = PRODUCTS.slice(0, 8).map(productCard).join("");
 }
 
-function renderBestSellers() {
-  if (!bestSellerGrid) return;
-  const section = bestSellerGrid.closest("section");
-  const items = PRODUCTS.filter((p) => p.bestSeller);
-  if (!items.length) {
-    // Hide the whole section until the owner marks at least one product
-    // bestSeller: true — an empty "Best Sellers" grid would look broken.
-    if (section) section.style.display = "none";
-    return;
-  }
-  if (section) section.style.display = "";
-  bestSellerGrid.innerHTML = items.map(productCard).join("");
+// Curated homepage highlight, shown immediately after the Trust Bar so a first-time
+// visitor sees real products right away — see TRUST_AND_CONVERSION_STRATEGY.md /
+// IMPLEMENTATION_LOG.md. Best sellers lead, live (purchasable) products fill any
+// remaining slots, and "Coming Soon" items only appear if there aren't enough live
+// products yet — this scales automatically as more products go live, no code change
+// needed as the catalog grows.
+function topProducts(limit = 4) {
+  const bestSellers = PRODUCTS.filter((p) => p.bestSeller);
+  const otherLive = PRODUCTS.filter((p) => typeof p.price === "number" && !p.bestSeller);
+  const pool = [...bestSellers, ...otherLive];
+  return (pool.length ? pool : PRODUCTS).slice(0, limit);
 }
 
-function renderProducts(category) {
+function renderTopProducts() {
+  if (!topProductsGrid) return;
+  topProductsGrid.innerHTML = topProducts().map((p) => productCard(p, { carousel: true })).join("");
+}
+
+// "Find the Right Product" — a small, hand-curated list of needs (not derived
+// automatically from the catalog) so the tile set stays meaningful even with very few
+// products. Add a new entry here as the catalog grows into more needs; nothing else
+// needs to change — the tile renders, filters, and shows honest availability status
+// automatically. `concern` matches a product's `concerns` tag; `category` reuses the
+// existing category filter for broader needs (e.g. Hair Care = the Haircare category).
+const NEED_TILES = [
+  { label: "Better Sleep", icon: "fa-moon", concern: "Better Sleep" },
+  { label: "Muscle Recovery", icon: "fa-dumbbell", concern: "Muscle Recovery" },
+  { label: "Hair Care", icon: "fa-scissors", category: "Haircare" },
+  { label: "Skin Care", icon: "fa-pump-soap", category: "Skincare" },
+];
+
+function needTileTopic(tile) {
+  return tile.category || tile.concern;
+}
+function needTileLiveCount(tile) {
+  if (tile.category) return liveProductCount(tile.category);
+  return PRODUCTS.filter((p) => typeof p.price === "number" && (p.concerns || []).includes(tile.concern)).length;
+}
+function needTileHref(tile) {
+  return tile.category
+    ? `#/products?cat=${encodeURIComponent(tile.category)}`
+    : `#/products?concern=${encodeURIComponent(tile.concern)}`;
+}
+
+function renderNeedTiles() {
+  const grid = document.getElementById("needTilesGrid");
+  if (!grid) return;
+  grid.innerHTML = NEED_TILES.map((tile) => {
+    const count = needTileLiveCount(tile);
+    return `<a class="category-tile" href="${needTileHref(tile)}">
+        <span class="category-tile-icon" aria-hidden="true"><i class="fa-solid ${tile.icon}"></i></span>
+        <span>${tile.label}</span>
+        <span class="category-status${count === 0 ? " category-status-empty" : ""}">${count > 0 ? count + " available" : "Coming Soon"}</span>
+      </a>`;
+  }).join("");
+}
+
+// Category availability — a category with 0 live products today is a temporary
+// growth-stage state, not a permanent site structure decision, so categories are
+// never hidden; they're labeled honestly instead (see TRUST_AND_CONVERSION_STRATEGY.md §C).
+function liveProductCount(category) {
+  return PRODUCTS.filter((p) => p.category === category && typeof p.price === "number").length;
+}
+
+function notifyMeLink(topic) {
+  const slug = topic.toLowerCase().replace(/\s+/g, "-");
+  return `https://m.me/hayatiq.life?ref=notify-${slug}`;
+}
+
+function renderCategoryAvailability() {
+  document.querySelectorAll(".category-status[data-cat]").forEach((el) => {
+    const count = liveProductCount(el.dataset.cat);
+    el.textContent = count > 0 ? `${count} available` : "Coming Soon";
+    el.classList.toggle("category-status-empty", count === 0);
+  });
+  document.querySelectorAll(".category-notify[data-cat]").forEach((el) => {
+    const cat = el.dataset.cat;
+    const empty = liveProductCount(cat) === 0;
+    el.hidden = !empty;
+    el.innerHTML = empty
+      ? `<a href="${notifyMeLink(cat)}" target="_blank" rel="noopener">New ${cat} products launching soon — notify me →</a>`
+      : "";
+  });
+}
+
+function renderProducts(category, concern) {
   let items = PRODUCTS;
   if (category) items = items.filter((p) => p.category === category);
+  if (concern) items = items.filter((p) => (p.concerns || []).includes(concern));
   productsGrid.innerHTML = items.map(productCard).join("");
   productCount.textContent = `${items.length} item${
     items.length !== 1 ? "s" : ""
   }`;
+
+  const banner = document.getElementById("categoryNotifyBanner");
+  if (banner) {
+    const topic = category || concern;
+    const empty = topic && !items.some((p) => typeof p.price === "number");
+    banner.hidden = !empty;
+    banner.innerHTML = empty
+      ? `<strong>${topic} is launching soon.</strong><p class="muted" style="margin:.3rem 0 0;">New products are on the way — <a href="${notifyMeLink(topic)}" target="_blank" rel="noopener">message us on Messenger</a> to be notified the moment they're live.</p>`
+      : "";
+  }
 }
 
 function accordionItem(title, arr, { open = false } = {}) {
@@ -528,7 +709,7 @@ function renderDetail(id) {
         <div class="gallery">
           <div class="gallery-main"><img id="mainImg" src="${main}" fetchpriority="high" alt="${
     p.name
-  }"></div>
+  }" onclick="openImageLightbox(this.src)"></div>
           <div class="thumbs" id="thumbs">
             ${p.images
               .map(
@@ -560,7 +741,7 @@ function renderDetail(id) {
           </div>
           <div style="display:flex; gap:.6rem; flex-wrap:wrap; align-items:center;">
             <button class="btn button-primary" onclick="event.preventDefault(); addToCart('${p.id}');">Add to Cart</button>
-            <a class="btn button-ghost" href="https://m.me/hayatiq.life" target="_blank"><i class="fa-brands fa-facebook-messenger"></i> Message</a>
+            <a class="btn button-ghost" href="https://m.me/hayatiq.life?ref=${p.slug}" target="_blank" rel="noopener"><i class="fa-brands fa-facebook-messenger"></i> Ask a Question</a>
             <button class="wishlist-toggle wishlist-toggle-inline ${isWishlisted(p.id) ? 'active' : ''}" data-id="${p.id}" aria-label="Add to wishlist" onclick="event.preventDefault(); toggleWishlist('${p.id}');"><i class="fa-solid fa-heart"></i></button>
           </div>
           <div class="usp-strip">
@@ -569,6 +750,7 @@ function renderDetail(id) {
             <div class="usp-badge"><span aria-hidden="true">✅</span> Quality Checked</div>
             <div class="usp-badge"><span aria-hidden="true">💵</span> Cash on Delivery</div>
           </div>
+          <p class="hero-trust-line">100% Cash on Delivery — inspect your order before you pay.</p>
           <p class="muted" style="font-size:.85rem;">🚚 Delivery: Inside Dhaka ৳${
             SHIPPING_RATES.inside_dhaka
           } · Outside Dhaka ৳${SHIPPING_RATES.outside_dhaka}</p>
@@ -593,7 +775,9 @@ function renderDetail(id) {
                       (r) =>
                         `<div class="review-item">
                           <div class="review-item-head"><strong>${r.name}</strong><span class="stars">${stars(r.rating)}</span></div>
+                          ${r.image ? `<img src="${r.image}" alt="Photo shared by ${r.name}" class="review-item-img" onclick="openImageLightbox('${r.image}')">` : ''}
                           <p class="muted">${r.text}</p>
+                          ${r.source ? `<span class="review-source">via ${r.source}</span>` : ''}
                         </div>`
                     )
                     .join("")
@@ -614,20 +798,12 @@ function renderDetail(id) {
       mainImg.src = img.dataset.src;
     });
   });
-
-  // Image zoom functionality
-  mainImg.addEventListener('click', (e) => {
-    e.stopPropagation();
-    mainImg.parentElement.classList.toggle('zoomed');
-  });
-
-  // Close zoom when clicking outside
-  document.addEventListener('click', (e) => {
-    if (mainImg.parentElement.classList.contains('zoomed') && 
-        !e.target.closest('.gallery-main')) {
-      mainImg.parentElement.classList.remove('zoomed');
-    }
-  });
+  // Main gallery image opens the same review/testimonial lightbox (see its
+  // `onclick="openImageLightbox(this.src)"` above and index.html's #imageLightbox),
+  // replacing the old inline zoom toggle — that approach added a new document-level
+  // click listener on every renderDetail() call without ever removing the previous
+  // one (a listener leak across product navigations) and had no visible close
+  // affordance.
 
   // How to use tabs functionality
   document.querySelectorAll('.how-to-use-tab').forEach(tab => {
@@ -902,8 +1078,35 @@ function closeCartDrawer() {
 }
 
 document.addEventListener("keydown", (e) => {
-  if (e.key === "Escape") closeCartDrawer();
+  if (e.key === "Escape") {
+    closeCartDrawer();
+    closeImageLightbox();
+  }
 });
+
+/* ==============================
+       Review/testimonial image lightbox
+       ============================== */
+// Any review or testimonial photo (a customer's own image, or a screenshot) opens
+// full-size in this shared modal instead of just sitting inline at its small card
+// size — clicking the backdrop, the image itself, the close button, or pressing
+// Escape all close it.
+function openImageLightbox(src) {
+  const modal = document.getElementById("imageLightbox");
+  const img = document.getElementById("imageLightboxImg");
+  if (!modal || !img) return;
+  img.src = src;
+  modal.classList.add("open");
+  modal.setAttribute("aria-hidden", "false");
+  document.body.classList.add("drawer-open");
+}
+function closeImageLightbox() {
+  const modal = document.getElementById("imageLightbox");
+  if (!modal) return;
+  modal.classList.remove("open");
+  modal.setAttribute("aria-hidden", "true");
+  document.body.classList.remove("drawer-open");
+}
   // toggle expand for how to use
   function renderHowToUseTags(howToUseItems) {
     if (!howToUseItems || howToUseItems.length === 0) return '';
@@ -1110,4 +1313,6 @@ document.getElementById("year").textContent = new Date().getFullYear();
 updateCartCount();
 updateWishlistCount();
 renderFeatured();
+renderCategoryAvailability();
+renderNeedTiles();
 navigate();

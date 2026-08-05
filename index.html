@@ -102,16 +102,49 @@
                             <h1>Natural Self-Care for Everyday You</h1>
                             <p class="muted">Handcrafted wellness rituals made with natural ingredients to nourish your hair, skin, and well-being.</p>
                             <div class="hero-cta">
-                                <a href="#bestSellerGrid" class="btn button-primary" onclick="event.preventDefault(); document.getElementById('bestSellerGrid').scrollIntoView({behavior: 'smooth', block: 'start'});">Shop Best Sellers</a>
+                                <a href="#topProductsGrid" class="btn button-primary" onclick="event.preventDefault(); document.getElementById('topProductsGrid').scrollIntoView({behavior: 'smooth', block: 'start'});">Shop Now</a>
                             </div>
-                            <div class="usp-strip">
-                                <div class="usp-badge"><i class="fa-regular fa-hand" aria-hidden="true"></i> Handmade</div>
-                                <div class="usp-badge"><i class="fa-solid fa-seedling" aria-hidden="true"></i> Natural</div>
-                                <div class="usp-badge"><i class="fa-regular fa-circle-check" aria-hidden="true"></i> Quality Checked</div>
-                            </div>
+                            <p class="hero-messenger-hint">Not sure where to start? <a href="https://m.me/hayatiq.life?ref=hero-help" target="_blank" rel="noopener"><i class="fa-brands fa-facebook-messenger" aria-hidden="true"></i> Chat with us</a></p>
                         </div>
                     </div>
                 </div>
+                <section aria-label="Trust Bar" class="trust-bar-section">
+                    <div class="trust-bar">
+                        <div class="trust-item"><span aria-hidden="true">🚚</span> Nationwide Delivery</div>
+                        <div class="trust-item"><span aria-hidden="true">💵</span> Cash on Delivery</div>
+                        <div class="trust-item"><span aria-hidden="true">⭐</span> Real Customer Reviews</div>
+                        <div class="trust-item"><span aria-hidden="true">💬</span> Messenger Support</div>
+                        <div class="trust-item"><span aria-hidden="true">🌿</span> Handmade Small Batch</div>
+                    </div>
+                </section>
+                <section aria-label="Top Selling Products">
+                    <div class="section-title">
+                        <h2>Top Selling Products</h2>
+                        <a href="https://m.me/hayatiq.life?ref=featured-help" target="_blank" rel="noopener" class="ask-advice-link"><i class="fa-brands fa-facebook-messenger" aria-hidden="true"></i> Need Help Choosing?</a>
+                    </div>
+                    <div class="product-carousel-wrap">
+                        <button class="carousel-nav carousel-prev" aria-label="Previous product" onclick="scrollTopProducts(-1)"><i class="fa-solid fa-chevron-left" aria-hidden="true"></i></button>
+                        <div class="product-carousel" id="topProductsGrid"></div>
+                        <button class="carousel-nav carousel-next" aria-label="Next product" onclick="scrollTopProducts(1)"><i class="fa-solid fa-chevron-right" aria-hidden="true"></i></button>
+                    </div>
+                </section>
+                <section aria-label="Customer Love" id="testimonialSection">
+                    <div class="section-title">
+                        <h2>Customer Love</h2>
+                    </div>
+                    <div class="testimonial-carousel-wrap">
+                        <button class="carousel-nav carousel-prev" aria-label="Previous testimonial" onclick="scrollTestimonials(-1)"><i class="fa-solid fa-chevron-left" aria-hidden="true"></i></button>
+                        <div class="testimonial-carousel" id="testimonialGrid"></div>
+                        <button class="carousel-nav carousel-next" aria-label="Next testimonial" onclick="scrollTestimonials(1)"><i class="fa-solid fa-chevron-right" aria-hidden="true"></i></button>
+                    </div>
+                </section>
+                <section aria-label="Shop Our Products">
+                    <div class="section-title">
+                        <h2>Shop Our Products</h2>
+                        <a href="#/products" class="button-ghost btn">View All</a>
+                    </div>
+                    <div class="products-grid" id="featuredGrid"></div>
+                </section>
                 <section aria-label="Shop by category" class="category-section">
                     <div class="section-title">
                         <h2>Shop by Category</h2>
@@ -120,14 +153,17 @@
                         <a class="category-tile" href="#/products?cat=Skincare">
                             <span class="category-tile-icon" aria-hidden="true"><i class="fa-solid fa-pump-soap"></i></span>
                             <span>Skincare</span>
+                            <span class="category-status" data-cat="Skincare"></span>
                         </a>
                         <a class="category-tile" href="#/products?cat=Haircare">
                             <span class="category-tile-icon" aria-hidden="true"><i class="fa-solid fa-scissors"></i></span>
                             <span>Haircare</span>
+                            <span class="category-status" data-cat="Haircare"></span>
                         </a>
                         <a class="category-tile" href="#/products?cat=Wellness">
                             <span class="category-tile-icon" aria-hidden="true"><i class="fa-solid fa-spa"></i></span>
                             <span>Wellness</span>
+                            <span class="category-status" data-cat="Wellness"></span>
                         </a>
                         <a class="category-tile" href="#/products">
                             <span class="category-tile-icon" aria-hidden="true"><i class="fa-solid fa-bag-shopping"></i></span>
@@ -135,48 +171,79 @@
                         </a>
                     </div>
                 </section>
-                <section aria-label="Best Sellers">
+                <section aria-label="Find the Right Product" class="category-section">
                     <div class="section-title">
-                        <h2>Best Sellers</h2>
+                        <h2>Find the Right Product</h2>
                     </div>
-                    <div class="products-grid" id="bestSellerGrid"></div>
+                    <div class="category-tiles" id="needTilesGrid"></div>
                 </section>
-                <section aria-label="Featured Products">
+                <section aria-label="How to Order">
                     <div class="section-title">
-                        <h2>Featured Products</h2>
-                        <a href="#/products" class="button-ghost btn">View All</a>
+                        <h2>How to Order</h2>
                     </div>
-                    <div class="products-grid" id="featuredGrid"></div>
+                    <div class="grid how-it-works-grid">
+                        <div class="soft-card">
+                            <strong>1. Browse & Choose</strong>
+                            <p>Explore our products by category and pick what fits your routine.</p>
+                        </div>
+                        <div class="soft-card">
+                            <strong>2. Add to Cart</strong>
+                            <p>Tap the cart icon on any product — no account needed.</p>
+                        </div>
+                        <div class="soft-card">
+                            <strong>3. Confirm Your Order</strong>
+                            <p>Enter your name, phone, and address, and choose Cash on Delivery.</p>
+                        </div>
+                        <div class="soft-card">
+                            <strong>4. Receive & Pay</strong>
+                            <p>Check your order when it arrives, then pay the courier in cash.</p>
+                        </div>
+                    </div>
+                </section>
+                <section aria-label="What Happens After Ordering">
+                    <div class="soft-card">
+                        <h2>What Happens After You Order</h2>
+                        <ul>
+                            <li>Your order goes straight to our team — no accounts, no waiting on hold.</li>
+                            <li>We prepare and dispatch it for delivery, Inside or Outside Dhaka.</li>
+                            <li>Pay by cash when it arrives — you can check your order before you pay.</li>
+                            <li>Questions anytime? Message us on <a href="https://facebook.com/hayatiq.life" target="_blank" rel="noopener">Facebook</a> — we reply directly.</li>
+                        </ul>
+                    </div>
+                </section>
+                <section aria-label="Frequently Asked Questions">
+                    <div class="section-title">
+                        <h2>Frequently Asked Questions</h2>
+                    </div>
+                    <div class="accordion-group">
+                        <details class="accordion-item">
+                            <summary>Is Cash on Delivery really available?</summary>
+                            <div class="accordion-panel"><p>Yes — every order is Cash on Delivery. You can check your item when the courier arrives and pay in cash right then, no advance payment needed.</p></div>
+                        </details>
+                        <details class="accordion-item">
+                            <summary>Do I need to create an account to order?</summary>
+                            <div class="accordion-panel"><p>No account needed. Add items to your cart, fill in your name, phone number, and delivery address at checkout, and place your order.</p></div>
+                        </details>
+                        <details class="accordion-item">
+                            <summary>Which areas do you deliver to?</summary>
+                            <div class="accordion-panel"><p>We deliver nationwide — Inside Dhaka (৳80) and Outside Dhaka (৳130).</p></div>
+                        </details>
+                        <details class="accordion-item">
+                            <summary>Is the Magnesium Oil Spray safe for sensitive skin?</summary>
+                            <div class="accordion-panel"><p>We recommend a patch test on a small area first. A mild tingling on first use is normal and fades with regular use — you can dilute it with water if needed. Avoid the eyes, mouth, broken skin, and freshly shaved skin, and it's for external use only.</p></div>
+                        </details>
+                        <details class="accordion-item">
+                            <summary>How do I get in touch if I have a question?</summary>
+                            <div class="accordion-panel"><p>Message us on <a href="https://facebook.com/hayatiq.life" target="_blank" rel="noopener">Facebook</a>, or use the <a href="#/contact">Contact</a> page.</p></div>
+                        </details>
+                    </div>
                 </section>
                 <section aria-label="About Hayatiq">
 					<div>
 						<div class="soft-card">
 							<h2>Why HAYATIQ?</h2>
-							<p>We believe wellness should be gentle, honest, and effective. Each product is handcrafted in small batches using thoughtfully sourced ingredients. We create products we love to use ourselves, minimal formulas that let your natural glow shine.</p>
+							<p>We believe wellness should be gentle, honest, and effective. Each product is handcrafted in small batches using thoughtfully sourced ingredients, and every batch is tested for quality, stability, and safety before it reaches you. We create products we love to use ourselves, minimal formulas that let your natural glow shine.</p>
 						</div>
-                    </div>
-                </section>
-                <section aria-label="How It Works">
-                    <div class="section-title">
-                        <h2>How It Works</h2>
-                    </div>
-                    <div class="grid how-it-works-grid">
-                        <div class="soft-card">
-                            <strong>1. Source</strong>
-                            <p>We select premium natural ingredients from trusted partners.</p>
-                        </div>
-                        <div class="soft-card">
-                            <strong>2. Craft</strong>
-                            <p>Small‑batch production preserves potency and reduces waste.</p>
-                        </div>
-                        <div class="soft-card">
-                            <strong>3. Test</strong>
-                            <p>Each batch is tested for quality, stability, and safety.</p>
-                        </div>
-                        <div class="soft-card">
-                            <strong>4. Wrap</strong>
-                            <p>Minimalistic packaging keeps it simple and beautiful.</p>
-                        </div>
                     </div>
                 </section>
                 <section aria-label="Contact teaser">
@@ -192,6 +259,7 @@
                     <h2>Products</h2>
                     <div class="pill" id="productCount">0 items</div>
                 </div>
+                <div class="soft-card" id="categoryNotifyBanner" hidden></div>
                 <div class="products-grid" id="productsGrid"></div>
             </section>
             <section id="view-detail" class="view" aria-label="Product Detail">
@@ -202,39 +270,42 @@
                     <h2>Categories</h2>
                 </div>
                 <div class="grid" style="grid-template-columns:repeat(1,minmax(0,1fr))">
-                    <a class="soft-card" href="#/products?cat=Skincare">
-                        <div style="display:flex;align-items:center;gap:.8rem">
+                    <div class="soft-card category-card">
+                        <a href="#/products?cat=Skincare" class="category-card-link">
                             <span class="icon-img" aria-hidden="true">
                                 <i class="fa-solid fa-pump-soap"></i>
                             </span>
                             <div>
-                                <strong>Skincare</strong>
+                                <strong>Skincare</strong> <span class="category-status" data-cat="Skincare"></span>
                                 <p class="muted">Cleansers, serums, moisturizers</p>
                             </div>
-                        </div>
-                    </a>
-                    <a class="soft-card" href="#/products?cat=Haircare">
-                        <div style="display:flex;align-items:center;gap:.8rem">
+                        </a>
+                        <span class="category-notify" data-cat="Skincare" hidden></span>
+                    </div>
+                    <div class="soft-card category-card">
+                        <a href="#/products?cat=Haircare" class="category-card-link">
                             <span class="icon-img" aria-hidden="true">
                                 <i class="fa-solid fa-scissors"></i>
                             </span>
                             <div>
-                                <strong>Haircare</strong>
+                                <strong>Haircare</strong> <span class="category-status" data-cat="Haircare"></span>
                                 <p class="muted">Oils, masks, scalp care</p>
                             </div>
-                        </div>
-                    </a>
-                    <a class="soft-card" href="#/products?cat=Wellness">
-                        <div style="display:flex;align-items:center;gap:.8rem">
+                        </a>
+                        <span class="category-notify" data-cat="Haircare" hidden></span>
+                    </div>
+                    <div class="soft-card category-card">
+                        <a href="#/products?cat=Wellness" class="category-card-link">
                             <span class="icon-img" aria-hidden="true">
                                 <i class="fa-solid fa-spa"></i>
                             </span>
                             <div>
-                                <strong>Wellness</strong>
+                                <strong>Wellness</strong> <span class="category-status" data-cat="Wellness"></span>
                                 <p class="muted">Balms, bath, aromas</p>
                             </div>
-                        </div>
-                    </a>
+                        </a>
+                        <span class="category-notify" data-cat="Wellness" hidden></span>
+                    </div>
                 </div>
             </section>
             <section id="view-about" class="view" aria-label="About">
@@ -288,11 +359,13 @@
                         <button class="btn button-ghost" onclick="clearCart()">Clear Cart</button>
                         <a class="btn button-primary" href="#/checkout">Checkout</a>
                     </div>
+                    <p class="messenger-hint">Need help before you order? <a href="https://m.me/hayatiq.life?ref=cart-help" target="_blank" rel="noopener"><i class="fa-brands fa-facebook-messenger" aria-hidden="true"></i> Chat with us</a></p>
                 </div>
             </section>
             <section id="view-checkout" class="view" aria-label="Checkout">
                 <div class="soft-card">
                     <h2>Checkout</h2>
+                    <p class="messenger-hint">Questions about your order? <a href="https://m.me/hayatiq.life?ref=checkout-help" target="_blank" rel="noopener"><i class="fa-brands fa-facebook-messenger" aria-hidden="true"></i> Chat before you order</a> — Messenger is here to help, checkout still happens right here.</p>
                     <form action="https://formsubmit.co/hayatiq.life@gmail.com" method="POST" id="checkoutForm" class="checkout-form">
                         <input type="hidden" name="_captcha" value="true">
                         <input type="hidden" name="_template" value="table">
@@ -359,6 +432,7 @@
                             <textarea id="orderNote" name="order_note" rows="2" maxlength="200" placeholder="Any special instructions?"></textarea>
                         </div>
 
+                        <p class="checkout-trust-note"><i class="fa-solid fa-money-bill-wave" aria-hidden="true"></i> Pay in cash when your order arrives — inspect it before you pay. No advance payment required.</p>
                         <button class="btn button-primary checkout-submit" style="margin-top: 10px;" type="submit">Place Order</button>
                     </form>
                 </div>
@@ -423,8 +497,13 @@
                     <a href="#/cart" class="btn button-ghost" onclick="closeCartDrawer()">View Full Cart</a>
                     <a href="#/checkout" class="btn button-primary" onclick="closeCartDrawer()">Checkout</a>
                 </div>
+                <p class="messenger-hint">Need help before you order? <a href="https://m.me/hayatiq.life?ref=cart-help" target="_blank" rel="noopener"><i class="fa-brands fa-facebook-messenger" aria-hidden="true"></i> Chat with us</a></p>
             </div>
         </aside>
+        <div id="imageLightbox" class="image-lightbox" aria-hidden="true" onclick="closeImageLightbox()">
+            <button class="image-lightbox-close" aria-label="Close image" onclick="closeImageLightbox()">✕</button>
+            <img id="imageLightboxImg" src="" alt="Enlarged review photo">
+        </div>
         <script src="./js/visitor.js"></script>
         <script src="./js/script.js"></script>
         <!-- sweetalert -->

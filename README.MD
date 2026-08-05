@@ -2,6 +2,12 @@
 
 Set up auto-replies for products when users click a Messenger link (`m.me/username?ref=product-slug`).
 
+**Also used for category "Notify Me" links:** any category page with zero live products shows a
+"Notify Me" Messenger link using `ref=notify-{category}` (e.g. `ref=notify-skincare`) — see
+`renderCategoryAvailability()`/`renderProducts()` in `script.js`. Follow the same steps below to set up
+a ManyChat automation for each `notify-*` ref if you want an automated reply; until you do, the link
+still works (it opens a normal Messenger conversation), it just won't auto-reply.
+
 ---
 
 ## Steps
@@ -168,6 +174,14 @@ Add a new object with all the required keys. Example:
 
   * Categories are listed in `index.html` around line 130.
   * Add new category names there to match your product’s `category` field.
+* **"Shop by Need" tags** (`concerns`, optional): an array of need/concern tags this
+  product genuinely helps with, e.g. `concerns: ["Better Sleep", "Muscle Recovery"]`.
+  Base these on the product's own real usage guidance (its `how`/`tips` fields), not
+  guesswork. Leave `concerns: []` if none clearly apply yet. This powers the homepage
+  "Find the Right Product" tiles — see `NEED_TILES` in `script.js` to add a new tile
+  for a tag you've started using (e.g. once a few products are tagged "Stress Relief",
+  add `{ label: "Stress Relief", icon: "fa-...", concern: "Stress Relief" }` there so a
+  tile appears for it).
 
 ---
 
@@ -214,13 +228,52 @@ reviews: [
 * `rating` — a whole number from 1–5.
 * `text` — the review text.
 
-## 3. Test
+Two more optional fields are supported on any review:
+
+```js
+{ name: "Nusrat A.", rating: 5, text: "...", image: "./images/reviews/nusrat-1.jpg", source: "Messenger" }
+```
+
+* `image` — a photo the customer shared (their own photo of the product, or a screenshot of their
+  conversation with you). Before publishing any screenshot, crop out phone numbers or other personal
+  details, and confirm the customer is okay with it being shared.
+* `source` — where the feedback came from (e.g. `"Messenger"`, `"Facebook"`). Shown as a small "via ..."
+  label under the review.
+
+Leave both out for a plain text review — nothing changes for existing reviews.
+
+## 3. Adding Site-Wide Testimonials (Customer Love)
+
+Some customer feedback isn't about one specific product — a Messenger screenshot praising the whole
+ordering experience, for example. That kind of content goes in the separate `TESTIMONIALS` array in
+`script.js` (ships empty, same pattern as `reviews`), not into a single product's `reviews` list:
+
+```js
+const TESTIMONIALS = [
+  {
+    type: "screenshot",      // "text" | "photo" | "screenshot"
+    customerName: "Farhana S.",
+    rating: 5,               // optional
+    content: "Ordered on Wednesday, arrived exactly as described!", // optional
+    image: "./images/testimonials/farhana-screenshot.jpg", // required for photo/screenshot
+    source: "Messenger",     // optional
+  },
+];
+```
+
+The homepage "Customer Love" section shows these automatically once at least one entry exists, and
+hides itself entirely while the array is empty — so there's nothing else to wire up. Same privacy rule
+as review screenshots: redact personal details and get the customer's okay before publishing.
+
+## 4. Test
 
 1. Save `script.js`.
 2. Reload the site and open that product's detail page.
 3. Confirm the average rating/star count and each review card display correctly.
 4. An empty `reviews: []` array correctly shows "No reviews yet." — that's expected
    for products you haven't added reviews to yet.
+5. Add an entry to `TESTIMONIALS` and confirm the homepage "Customer Love" section
+   appears; empty it back out and confirm the section disappears again.
 
 ✅ That's it! Reviews you add here show up for every visitor immediately.
 
@@ -243,6 +296,18 @@ badge: null,       // no badge (default)
 Badges don't show on "Coming Soon" products (the coming-soon overlay already covers
 the image). The colors are fixed regardless of which theme (`sand`/`cool`/`betterme`)
 is active — shoppers expect "Hot"/"Sale" to look the same everywhere.
+
+There's a fifth, automatic badge: setting `bestSeller: true` on a product shows a gold
+"⭐ Best Seller" badge without needing to also set `badge: "popular"` — an explicit
+`badge` field always takes priority if both are set on the same product. This is the
+mechanism that replaced the old separate homepage "Best Sellers" grid: there's now one
+unified product grid, and best sellers are surfaced by badge instead of a duplicate
+section.
+
+**New Arrival convention:** when a "Coming Soon" product goes live (switch its `price`
+from `"Coming Soon"` to a number), consider also setting `badge: "new"` for the first
+2–4 weeks to flag it as a fresh arrival to returning visitors, then clear it back to
+`null` once that window passes.
 
 ✅ That's it! Save `script.js` and reload to see the badge on that product's card.
 

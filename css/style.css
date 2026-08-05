@@ -454,6 +454,84 @@ header.site-header {
   border-radius: 30px;
 }
 
+/* Trust reassurance line — used on the product detail page's USP strip and the
+   checkout page, so the same explicit COD promise reads consistently everywhere. On
+   the homepage itself this content now lives in the dedicated .trust-bar below the
+   hero instead (see TRUST_AND_CONVERSION_STRATEGY.md). No text-align is set here on
+   purpose: left-aligned in the flow of the detail page/checkout. */
+.hero-trust-line {
+  margin: 0.4rem 0 0;
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--color-seal-brown);
+}
+.hero-trust-line i {
+  color: var(--color-earth);
+}
+
+/* Hero Messenger hint — small, secondary text link under the primary CTA. Deliberately
+   subtle so it supports the primary "Shop Now" action instead of competing with it. */
+.hero-messenger-hint {
+  margin: 0.6rem 0 0;
+  font-size: 0.8rem;
+  color: var(--color-seal-brown);
+  text-align: center;
+}
+.hero-messenger-hint a {
+  font-weight: 600;
+  text-decoration: underline;
+}
+
+/* Dedicated Trust Bar, directly below the hero — consolidates what used to be
+   in-hero USP badges + a COD line into one compact, mobile-friendly row so trust
+   signals land within the first few seconds (see
+   TRUST_AND_CONVERSION_STRATEGY.md §B / IMPLEMENTATION_LOG.md). Same visual language
+   as .usp-strip/.usp-badge on purpose — this is a repositioning, not a new style. */
+.trust-bar-section {
+  padding-top: 0;
+  padding-bottom: 0.4rem;
+}
+.trust-bar {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  row-gap: 0.5rem;
+  column-gap: 1.2rem;
+  padding: 0.6rem 0.2rem;
+}
+.trust-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--color-seal-brown);
+  white-space: nowrap;
+}
+@media (max-width: 480px) {
+  .trust-bar {
+    column-gap: 0.7rem;
+    row-gap: 0.45rem;
+  }
+  .trust-item {
+    font-size: 0.68rem;
+  }
+}
+
+/* Shared low-friction Messenger hint — cart, cart drawer, and checkout. Support role
+   only: Messenger helps before/around an order, it never replaces the checkout form
+   itself (see TRUST_AND_CONVERSION_STRATEGY.md Messenger conversion strategy). */
+.messenger-hint {
+  margin-top: 0.8rem;
+  font-size: 0.85rem;
+  color: var(--color-night);
+  opacity: 0.85;
+}
+.messenger-hint a {
+  color: var(--color-earth);
+  font-weight: 600;
+}
+
 /* USP strip — compact badges inline with the hero, not a separate section */
 .usp-strip {
   display: flex;
@@ -525,6 +603,35 @@ header.site-header {
   font-size: 1.15rem;
 }
 
+/* Category availability status — never hides a category, only labels it honestly
+   (see TRUST_AND_CONVERSION_STRATEGY.md §C). Used on both the homepage tiles and the
+   full Categories page. */
+.category-status {
+  font-size: 0.68rem;
+  font-weight: 600;
+  color: var(--color-earth);
+  opacity: 0.85;
+}
+.category-status-empty {
+  color: var(--color-seal-brown);
+  opacity: 0.55;
+}
+.category-card-link {
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+}
+.category-notify {
+  display: block;
+  margin-top: 0.5rem;
+  font-size: 0.85rem;
+}
+.category-notify a {
+  color: var(--color-earth);
+  font-weight: 600;
+  text-decoration: underline;
+}
+
 /* How It Works condensed grid */
 .how-it-works-grid {
   grid-template-columns: repeat(2, 1fr);
@@ -541,13 +648,33 @@ section {
 }
 .section-title {
   display: flex;
+  flex-wrap: wrap;
   align-items: baseline;
   justify-content: space-between;
-  gap: 0.8rem;
+  gap: 0.5rem 0.8rem;
   margin-bottom: 0.8rem;
 }
 .section-title h2 {
   font-size: 1.6rem;
+}
+/* Compact "ask for help" link used next to a section heading — deliberately NOT the
+   full .btn style (that's sized for primary/secondary actions); a longer label like
+   "Need Help Choosing?" inside a full .btn would wrap and grow as tall as the heading
+   next to it, competing with it instead of staying a light secondary hint. */
+.ask-advice-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0.35rem 0.7rem;
+  border-radius: 999px;
+  border: 1px solid var(--color-seal-brown);
+  color: var(--color-seal-brown);
+  font-size: 0.75rem;
+  font-weight: 600;
+  white-space: nowrap;
+}
+.ask-advice-link:hover {
+  background: var(--color-silver);
 }
 
 /* Product grid */
@@ -934,6 +1061,166 @@ footer {
   color: var(--color-earth);
   font-size: 0.85rem;
 }
+/* Optional photo/screenshot support on a review or testimonial card — hidden
+   automatically when a review has no `image` field, so existing text-only reviews
+   are unaffected. */
+.review-item-img {
+  width: 100%;
+  max-width: 320px;
+  border-radius: var(--radius-sm);
+  margin: 0.5rem 0;
+  cursor: zoom-in;
+}
+.review-source {
+  display: inline-block;
+  font-size: 0.75rem;
+  opacity: 0.6;
+  margin-top: 0.2rem;
+}
+
+/* Customer Love carousel — plain CSS scroll-snap, no JS/library needed for the core
+   swipe behavior (matches the existing .thumbs/.usp-strip horizontal-scroll pattern
+   already used elsewhere on the site). The prev/next buttons are a mouse/keyboard
+   affordance layered on top, not a replacement for native touch scrolling. */
+.testimonial-carousel-wrap {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+.testimonial-carousel {
+  display: flex;
+  align-items: stretch;
+  gap: 1rem;
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  -webkit-overflow-scrolling: touch;
+  padding: 0.1rem 0.1rem 0.6rem;
+  flex: 1;
+  min-width: 0;
+}
+.testimonial-card {
+  flex: 0 0 82%;
+  scroll-snap-align: start;
+}
+@media (min-width: 700px) {
+  .testimonial-card {
+    flex: 0 0 320px;
+  }
+}
+.carousel-nav {
+  display: none;
+}
+@media (min-width: 700px) {
+  .carousel-nav {
+    flex: 0 0 auto;
+    display: grid;
+    place-items: center;
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    border: 1px solid rgba(16, 15, 15, 0.12);
+    background: var(--color-white);
+    color: var(--color-seal-brown);
+    cursor: pointer;
+  }
+  .carousel-nav:hover {
+    background: var(--color-silver);
+  }
+}
+
+/* Top Selling Products carousel — same scroll-snap mechanism as .testimonial-carousel
+   above (shares .carousel-nav for the prev/next buttons); "Shop Our Products" further
+   down the page stays a plain grid, this section only. */
+.product-carousel-wrap {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+.product-carousel {
+  display: flex;
+  gap: 0.9rem;
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  -webkit-overflow-scrolling: touch;
+  padding: 0.1rem 0.1rem 0.6rem;
+  flex: 1;
+  min-width: 0;
+}
+.product-card-carousel {
+  flex: 0 0 58%;
+  scroll-snap-align: start;
+}
+@media (min-width: 480px) {
+  .product-card-carousel {
+    flex: 0 0 42%;
+  }
+}
+@media (min-width: 700px) {
+  .product-card-carousel {
+    flex: 0 0 220px;
+  }
+}
+
+/* Modern testimonial card — quote-icon accent, initials avatar, roomier type. Scoped
+   to .testimonial-card-modern only; per-product reviews on the detail page keep their
+   existing .review-item look unchanged. */
+.testimonial-card-modern {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  background: var(--color-white);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-card);
+  padding: 1.5rem 1.1rem 1.1rem;
+  height: 100%;
+  min-height: 200px;
+}
+.testimonial-quote-icon {
+  position: absolute;
+  top: 1rem;
+  right: 1.1rem;
+  font-size: 1.5rem;
+  color: var(--color-category-icon);
+}
+.testimonial-header {
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+  margin-bottom: 0.7rem;
+  padding-right: 1.6rem;
+}
+.testimonial-avatar {
+  flex: 0 0 auto;
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  background: var(--color-earth);
+  color: var(--color-white);
+  font-weight: 700;
+  font-size: 0.85rem;
+}
+.testimonial-content {
+  font-size: 0.9rem;
+  line-height: 1.6;
+  margin-bottom: 0.4rem;
+}
+/* Caps the optional photo/screenshot at a fixed height with object-fit: cover instead
+   of the detail-page review default (auto height from the source image's own aspect
+   ratio) — without this, a testimonial with an image ends up far taller than one
+   without, breaking the carousel's row alignment (see IMPLEMENTATION_LOG.md). */
+.testimonial-card-modern .review-item-img {
+  width: 100%;
+  max-width: 100%;
+  height: 130px;
+  object-fit: cover;
+  margin: 0.3rem 0 0.5rem;
+}
+.testimonial-card-modern .review-source {
+  margin-top: auto;
+  padding-top: 0.4rem;
+}
 
 /* Simple view wrappers for routing */
 .view {
@@ -1015,29 +1302,11 @@ footer {
   color: var(--color-white);
 }
 
-/* zoom image */
+/* Main gallery image opens the shared #imageLightbox on click (see script.js) —
+   just needs the zoom-in cursor hint here; the modal styling itself lives with
+   .image-lightbox further down. */
 .gallery-main {
   cursor: zoom-in;
-}
-
-.gallery-main.zoomed {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  z-index: 1000;
-  background: rgba(0,0,0,0.95);
-  display: grid;
-  place-items: center;
-  cursor: zoom-out;
-}
-
-.gallery-main.zoomed img {
-  width: 95%;
-  height: 95%;
-  object-fit: contain;
-  transform: scale(1.1);
 }
 
 /* coming soon container */
@@ -1057,11 +1326,31 @@ footer {
   position: absolute;
   inset: 0;
   background: rgba(66, 64, 64, 0.7);
-  display: grid;
-  place-items: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  text-align: center;
+  padding: 0.5rem;
   color: white;
   font-weight: bold;
   font-size: 1.1rem;
+}
+/* Low-friction Messenger escape hatch on cards that have no purchasable action yet —
+   see TRUST_AND_CONVERSION_STRATEGY.md Messenger conversion strategy. */
+.coming-soon-ask {
+  font-size: 0.68rem;
+  font-weight: 600;
+  padding: 0.3rem 0.6rem;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.6);
+  background: rgba(255, 255, 255, 0.15);
+  color: #fff;
+  cursor: pointer;
+}
+.coming-soon-ask:hover {
+  background: rgba(255, 255, 255, 0.3);
 }
 
 /* Product card badges (Hot/New/Sale/Popular) — fixed marketing colors on purpose,
@@ -1093,6 +1382,9 @@ footer {
 }
 .product-badge.badge-popular {
   background: #f59e0b;
+}
+.product-badge.badge-bestseller {
+  background: #b8860b;
 }
 @media (max-width: 380px) {
   .product-badge {
@@ -1259,6 +1551,17 @@ footer {
 
 .checkout-submit {
   width: 100%;
+}
+
+.checkout-trust-note {
+  margin: 0.8rem 0 0;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--color-seal-brown);
+  text-align: center;
+}
+.checkout-trust-note i {
+  color: var(--color-earth);
 }
 
 .note-chars {
@@ -1518,6 +1821,52 @@ body.drawer-open {
   flex: 1;
 }
 
+/* Review/testimonial image lightbox — full-size view with a dark backdrop, opened by
+   clicking any review/testimonial photo. Closing works three ways: the ✕ button, the
+   backdrop itself (clicking the image also bubbles up to the same handler, which is
+   fine — tap-anywhere-to-close is the simplest, most discoverable behavior here), and
+   Escape (see the shared keydown handler in script.js). */
+.image-lightbox {
+  position: fixed;
+  inset: 0;
+  z-index: 95;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem;
+  background: rgba(16, 15, 15, 0.85);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.25s ease;
+}
+.image-lightbox.open {
+  opacity: 1;
+  pointer-events: auto;
+}
+.image-lightbox img {
+  max-width: 100%;
+  max-height: 100%;
+  border-radius: var(--radius-sm);
+  box-shadow: var(--shadow-card);
+  cursor: default;
+}
+.image-lightbox-close {
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  border: none;
+  background: rgba(255, 255, 255, 0.15);
+  color: var(--color-white);
+  font-size: 1.1rem;
+  cursor: pointer;
+}
+.image-lightbox-close:hover {
+  background: rgba(255, 255, 255, 0.3);
+}
+
 /* Respect motion-sensitivity preferences — disable the view fade-in, button press
    scale, and the floating cart's attention pulse. */
 @media (prefers-reduced-motion: reduce) {
@@ -1529,5 +1878,8 @@ body.drawer-open {
   }
   .floating-cart-btn {
     animation: none;
+  }
+  .image-lightbox {
+    transition: none;
   }
 }
