@@ -14,7 +14,7 @@
         <meta property="og:description" content="Premium handmade natural products for your everyday wellness rituals. Magnesium oil, hair care, salves & balms, bath bombs, and more.">
         <meta property="og:type" content="website">
         <meta property="og:url" content="https://hayatiq.netlify.app">
-        <meta property="og:image" content="./images/logo.jpg">
+        <meta property="og:image" content="./images/logo.webp">
 
         <!-- Twitter Card Meta Tags -->
         <meta name="twitter:card" content="summary_large_image">
@@ -35,7 +35,7 @@
         <link rel="preconnect" href="https://fonts.googleapis.com">
         <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
         <link rel="preconnect" href="https://cdnjs.cloudflare.com" crossorigin>
-        <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600&family=Dancing+Script:wght@600;700&display=swap" rel="stylesheet">
+        <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600&family=Lora:wght@400;500;600&display=swap" rel="stylesheet">
         <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/7.0.0/css/all.min.css" integrity="sha512-DxV+EoADOkOygM4IR9yXP8Sb2qwgidEmeqAEmDKIOfPRQZOWbXCzLC6vjbZyy0vPisbH2SyW27+ddLVCN+OMzQ==" crossorigin="anonymous" referrerpolicy="no-referrer">
         <link rel="stylesheet" href="./css/style.css">
     </head>
@@ -114,7 +114,7 @@
                         <div class="trust-item"><span aria-hidden="true">💵</span> Cash on Delivery</div>
                         <div class="trust-item"><span aria-hidden="true">⭐</span> Real Customer Reviews</div>
                         <div class="trust-item"><span aria-hidden="true">💬</span> Messenger Support</div>
-                        <div class="trust-item"><span aria-hidden="true">🌿</span> Handmade Small Batch</div>
+                        <div class="trust-item"><span aria-hidden="true">🌿</span> Handmade in Small Batch</div>
                     </div>
                 </section>
                 <section aria-label="Top Selling Products">
@@ -144,6 +144,9 @@
                         <a href="#/products" class="button-ghost btn">View All</a>
                     </div>
                     <div class="products-grid" id="featuredGrid"></div>
+                    <div style="display:flex;justify-content:center;margin-top:2rem;">
+                        <a href="#/products" class="btn button-primary">View More Products</a>
+                    </div>
                 </section>
                 <section aria-label="Shop by category" class="category-section">
                     <div class="section-title">
@@ -275,9 +278,24 @@
                 </section>
             </section>
             <section id="view-products" class="view" aria-label="Product Listing">
-                <div class="section-title">
+                <div class="section-title products-title-row">
                     <h2>Products</h2>
-                    <div class="pill" id="productCount">0 items</div>
+                    <div style="display:flex;align-items:center;gap:.6rem;white-space:nowrap;">
+                        <div class="pill pill-small" id="productCount">0 items</div>
+                        <select id="categoryFilter" class="category-filter-header" aria-label="Filter by category">
+                            <option value="">All Categories</option>
+                            <option value="Hair Care">Hair Care</option>
+                            <option value="Magnesium Oil Spray">Magnesium Oil Spray</option>
+                            <option value="Salves & Balms">Salves & Balms</option>
+                            <option value="Bath Bombs">Bath Bombs</option>
+                            <option value="Footsoaks">Footsoaks</option>
+                            <option value="Oral Care">Oral Care</option>
+                            <option value="Cleaning Supply">Cleaning Supply</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="products-search-bar">
+                    <input type="text" id="searchInput" class="search-input" placeholder="Search products..." aria-label="Search products">
                 </div>
                 <div class="soft-card" id="categoryNotifyBanner" hidden></div>
                 <div class="products-grid" id="productsGrid"></div>

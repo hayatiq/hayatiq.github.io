@@ -70,6 +70,7 @@ function navigate() {
     const cat = params.get("cat");
     const concern = params.get("concern");
     renderProducts(cat, concern);
+    setupProductFilters();
     const topic = concern || cat;
     setPageMeta(
       `${topic ? topic + " " : ""}Products — Hayatiq`,
@@ -163,7 +164,7 @@ function renderTestimonials() {
           </div>
         </div>
         ${t.content ? `<p class="muted testimonial-content">${t.content}</p>` : ""}
-        ${t.image ? `<img src="${t.image}" alt="${t.type === "screenshot" ? "Customer conversation screenshot" : "Photo shared by " + t.customerName}" class="review-item-img" onclick="openImageLightbox('${t.image}')">` : ""}
+        ${t.image ? `<img loading="lazy" src="${t.image}" alt="${t.type === "screenshot" ? "Customer conversation screenshot" : "Photo shared by " + t.customerName}" class="review-item-img" onclick="openImageLightbox('${t.image}')">` : ""}
         ${t.source ? `<span class="review-source">via ${t.source}</span>` : ""}
       </div>`
   ).join("");
@@ -336,10 +337,18 @@ function renderCategoryAvailability() {
   });
 }
 
-function renderProducts(category, concern) {
+function renderProducts(category, concern, searchQuery = "") {
   let items = PRODUCTS;
   if (category) items = items.filter((p) => p.category === category);
   if (concern) items = items.filter((p) => (p.concerns || []).includes(concern));
+  if (searchQuery) {
+    const query = searchQuery.toLowerCase().trim();
+    items = items.filter((p) =>
+      p.name.toLowerCase().includes(query) ||
+      (p.subtitle && p.subtitle.toLowerCase().includes(query)) ||
+      (p.short && p.short.toLowerCase().includes(query))
+    );
+  }
   productsGrid.innerHTML = items.map(productCard).join("");
   productCount.textContent = `${items.length} item${
     items.length !== 1 ? "s" : ""
@@ -354,6 +363,44 @@ function renderProducts(category, concern) {
       ? `<strong>${topic} is launching soon.</strong><p class="muted" style="margin:.3rem 0 0;">New products are on the way — <a href="${notifyMeLink(topic)}" target="_blank" rel="noopener">message us on Messenger</a> to be notified the moment they're live.</p>`
       : "";
   }
+}
+
+function setupProductFilters() {
+  const searchInput = document.getElementById("searchInput");
+  const categoryFilter = document.getElementById("categoryFilter");
+
+  if (!searchInput || !categoryFilter) return;
+
+  const updateFilters = () => {
+    const params = new URLSearchParams(location.hash.split("?")[1] || "");
+    const category = params.get("cat");
+    const concern = params.get("concern");
+    const searchQuery = searchInput.value;
+
+    categoryFilter.value = category || "";
+    renderProducts(category, concern, searchQuery);
+  };
+
+  const onSearchInput = () => {
+    const params = new URLSearchParams(location.hash.split("?")[1] || "");
+    const category = params.get("cat");
+    const concern = params.get("concern");
+    const searchQuery = searchInput.value;
+    renderProducts(category, concern, searchQuery);
+  };
+
+  searchInput.addEventListener("input", onSearchInput);
+  categoryFilter.addEventListener("change", () => {
+    searchInput.value = "";
+    const selectedCategory = categoryFilter.value;
+    if (selectedCategory) {
+      window.location.hash = `#/products?cat=${encodeURIComponent(selectedCategory)}`;
+    } else {
+      window.location.hash = "#/products";
+    }
+  });
+
+  updateFilters();
 }
 
 function accordionItem(title, arr, { open = false } = {}) {
@@ -422,7 +469,7 @@ function renderDetail(id) {
     const [main] = p.images || ["./images/placeholder.webp"];
     detailWrap.innerHTML = `
       <div class="coming-soon-container">
-        ${main ? `<img src="${main}" alt="${p.name}" class="coming-soon-image">` : ''}
+        ${main ? `<img src="${main}" alt="${p.name}" class="coming-soon-image" loading="lazy">` : ''}
         <h2>${p.name}</h2>
         <div style="font-size:1.2rem; color:var(--color-earth); margin:1rem 0; font-weight:600;">Coming Soon</div>
         <p class="muted">This product will be available shortly. Check back soon!</p>
@@ -442,7 +489,7 @@ function renderDetail(id) {
             ${p.images
               .map(
                 (src, i) =>
-                  `<img src="${src}" alt="${p.name} ${i + 1}" class="${
+                  `<img loading="lazy" src="${src}" alt="${p.name} ${i + 1}" class="${
                     i === 0 ? "active" : ""
                   }" data-src="${src}">`
               )
@@ -503,7 +550,7 @@ function renderDetail(id) {
                       (r) =>
                         `<div class="review-item">
                           <div class="review-item-head"><strong>${r.name}</strong><span class="stars">${stars(r.rating)}</span></div>
-                          ${r.image ? `<img src="${r.image}" alt="Photo shared by ${r.name}" class="review-item-img" onclick="openImageLightbox('${r.image}')">` : ''}
+                          ${r.image ? `<img loading="lazy" src="${r.image}" alt="Photo shared by ${r.name}" class="review-item-img" onclick="openImageLightbox('${r.image}')">` : ''}
                           <p class="muted">${r.text}</p>
                           ${r.source ? `<span class="review-source">via ${r.source}</span>` : ''}
                         </div>`
@@ -712,7 +759,7 @@ function qtyControlsHTML(id, qty) {
 
 function cartRowHTML(row, p) {
   return `<div style="display:grid; grid-template-columns: 64px 1fr auto; gap:.6rem; align-items:center; padding:.5rem 0; border-bottom:1px solid rgba(16,15,15,.06);">
-      <img src="${p.images[0]}" alt="${
+      <img loading="lazy" src="${p.images[0]}" alt="${
     p.name
   }" style="width:64px; height:64px; object-fit:cover; border-radius:10px;">
       <div>
@@ -868,7 +915,7 @@ function closeImageLightbox() {
 
     return `
       <div class="checkout-item">
-        <img src="${p.images[0]}" alt="${p.name}" class="checkout-item-img">
+        <img loading="lazy" src="${p.images[0]}" alt="${p.name}" class="checkout-item-img">
         <div class="checkout-item-details">
           <div class="checkout-item-name">${p.name} <span class="deep-muted"> (${p.subtitle}) </span></div>
           ${qtyControlsHTML(row.id, row.qty)}
