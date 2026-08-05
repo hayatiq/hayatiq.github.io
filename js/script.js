@@ -62,8 +62,6 @@ function navigate() {
         routes.detail.classList.add("active");
         const id = hash.split("/")[2];
         const product = PRODUCTS.find(p => p.id === id);
-        
-        // Track product detail views
         trackProductView(id, product?.name);
         renderDetail(id);
   } else if (hash.startsWith("#/products")) {
@@ -80,7 +78,7 @@ function navigate() {
     resetProductJsonLd();
   } else if (hash === "#/categories") {
     routes.categories.classList.add("active");
-    setPageMeta("Shop by Category — Hayatiq", "Browse Hayatiq's Skincare, Haircare, and Wellness product categories.");
+    setPageMeta("Shop by Category — Hayatiq", "Browse Hayatiq's Hair Care, Magnesium Oil Spray, Salves & Balms, Bath Bombs, Footsoaks, Oral Care, and Cleaning Supply product categories.");
     resetProductJsonLd();
   } else if (hash === "#/contact") {
     routes.contact.classList.add("active");
@@ -112,7 +110,7 @@ function navigate() {
     renderTestimonials();
     setPageMeta(
       "Hayatiq — Handcrafted with Intention",
-      "Hayatiq - Handcrafted natural wellness products. Premium magnesium oil, organic soaps, hair care serums, and skincare products made with intention in Bangladesh."
+      "Hayatiq - Handcrafted natural wellness products. Magnesium oil spray, hair care, salves & balms, bath bombs, footsoaks, oral care, and non-toxic cleaning supplies made with intention in Bangladesh."
     );
     resetProductJsonLd();
   }
@@ -127,276 +125,14 @@ function navigate() {
 window.addEventListener("hashchange", navigate);
 
 /* ==============================
-       Product Data
-       ============================== */
-const PRODUCTS = [
-  {
-    id: "1",
-    name: "Magnesium oil spray 100 ml",
-    subtitle: "30% Concentration",
-    slug: "magnesium-oil",
-    price: 360,
-    category: "Wellness",
-    images: [
-      "./images/hayatiq_magnesium_oil.jpg",
-      "./images/hayatiq_magnesium_oil_2.jpg",
-      "./images/hayatiq_magnesium_oil_3.jpg",
-    ],
-    short: "Nature’s Calm in Every Spray",
-    ingredients: ["Magnesium Chloride Brine ", "Lavender Essential Oil"],
-    how: [
-      "Daily Supplement: <b>Where</b>: Spread across arms, legs, stomach.; <b>How much</b>: 15–20 sprays total.; <b>When</b>: Split between morning & evening.;",
-      "Muscle Cramps & Soreness:<b>Where</b>: Directly on cramped or sore muscles (calves, thighs, arms).; <b>How much</b>: 10–15 sprays.; <b>When</b>: During cramps, after workouts, or long days standing.; <b>Extra Tip</b>: Massage in for faster relief.;",
-      "Sleep & Relaxation:<b>Where</b>: Soles of feet, back of neck, shoulders.; <b>How much</b>: 5–10 sprays.; <b>When</b>: 30 minutes before bedtime.; <b>Extra Tip</b>: Massage gently into skin for deeper relaxation.;",
-      "Restless Legs Syndrome:<b>Where</b>: Calves, thighs.; <b>How much</b>: 10–15 sprays.; <b>When</b>: Before bedtime.;",
-      "Bone & Joint Health:<b>Where</b>: Knees, elbows, lower back, wrists.; <b>How much</b>: 8–12 sprays.; <b>When</b>: Daily, preferably evening.;",
-      "Headaches & Migraines:<b>Where</b>: Temples (lightly), back of neck, shoulders.; <b>How much</b>: 2–3 sprays.; <b>When</b>: At onset of headache/migraine.; <b>Extra Tip</b>: Soak feet in warm water + magnesium oil for additional relief. Spray on hand then rub it to temple.;",
-      "Hair & Scalp Health:<b>Where</b>: Spray directly onto scalp (part hair).; <b>How much</b>: 5–8 sprays.; <b>When</b>: 2–3 times per week, before shower.; <b>Extra Tip</b>: Massage scalp, leave for 30 minutes, then wash.;",
-      "Cramps & PMS Relief:<b>Where</b>: Lower abdomen, lower back.; <b>How much</b>: 8–12 sprays.; <b>When</b>: During cramps or PMS discomfort.; <b>Extra Tip</b>: Massage gently until absorbed.;",
-      "Energy Boost & Fatigue Relief:<b>Where</b>: Arms, legs, stomach.; <b>How much</b>: 5–10 sprays.; <b>When</b>: Morning or mid-day slump.; <b>Extra Tip</b>: Pair with light stretching or deep breathing.;",
-      "Deodorant:<b>Where</b>: Underarms (on clean, dry skin).; <b>How much</b>: 2–4 sprays per armpit.; <b>When</b>: Once daily (morning), reapply if needed.; <b>Extra Tip</b>: Wear clothing after fully absorbed.;",
-      "Stress & Anxiety:<b>Where</b>: Chest, shoulders, behind ears (not too close to eyes).; <b>How much</b>: 5–8 sprays.; <b>When</b>: During stress, after work, or before meditation.;",
-      "Exercise Recovery:<b>Where</b>: On exercised muscles (legs, arms, back).; <b>How much</b>: 10–15 sprays.; <b>When</b>: Right after workout or before bed.;",
-    ],
-
-
-    tips: [
-      "Apply on clean skin, make sure there are no dead skin",
-      "Consistent application is recommended for effective results",
-      "A mild tingling sensation is normal and fades with regular use",
-      "May dilute with water to ease tingling",
-    ],
-    
-    warns: [
-      "<b>Patch test first:</b>  Always test on a small area (inner wrist/leg) before first full use.", 
-      "<b>For external use only:</b>  Do not ingest unless specifically formulated for oral use.",
-      "<b>Avoid sensitive areas:</b>  Do not spray near eyes, mouth, broken skin, cuts, or freshly shaved skin.",
-      "<b>Skin sensitivity:</b>  A mild tingling, itching, or warmth is normal for first-time users. If irritation persists, rinse off and dilute with water before reapplying."
-    ],
-    storage: [
-      "Keep bottle tightly sealed. Store in a cool, dry placeaway from direct sunlight, heat, or children’s reach.",
-      "Use within 6 months of manufacture."
-    ],
-    // "Shop by Need" tags — drawn from this product's own `how` entries above (Sleep &
-    // Relaxation, Muscle Cramps & Soreness, Stress & Anxiety), not invented. Powers the
-    // homepage "Find the Right Product" tiles (see NEED_TILES). Leave [] if a product
-    // doesn't clearly fit a listed need yet.
-    concerns: ["Better Sleep", "Muscle Recovery"],
-    // DEMO PREVIEW DATA — for layout preview only, replace with real reviews before
-    // launch (see README.MD "Adding Customer Reviews"). Remove this comment and the
-    // two entries below once real feedback is added.
-    reviews: [
-      { name: "Nusrat A.", rating: 5, text: "This has genuinely improved my sleep. A few sprays on my feet before bed and I feel so much more relaxed — the scent is mild too, no irritation at all. Highly recommend!" },
-      { name: "Rakibul H.", rating: 4.5, text: "Using this for muscle cramps after workouts and it really helps. Had a bit of tingling the first couple of days but that faded quickly. Would love a bigger bottle option." },
-    ],
-    // Set to true to feature this product in the homepage "Best Sellers" section.
-    bestSeller: true,
-    // Set to "hot" / "new" / "sale" / "popular" (or leave null) — see README.MD.
-    badge: null,
-  },
-  {
-    id: "2",
-    name: "Magnesium oil spray 100 ml",
-    subtitle: "50% Concentration",
-    slug: "magnesium-oil-50-concentration",
-    price: 500,
-    category: "Wellness",
-    images: [
-      "./images/magnesium-oil-50-concentration.jpeg",
-      "./images/hayatiq_magnesium_oil_2.jpg",
-      "./images/hayatiq_magnesium_oil_3.jpg",
-    ],
-    short: "Nature’s Calm in Every Spray",
-    ingredients: ["Magnesium Chloride Brine ", "Lavender Essential Oil"],
-    how: [
-      "Daily Supplement: <b>Where</b>: Spread across arms, legs, stomach.; <b>How much</b>: 15–20 sprays total.; <b>When</b>: Split between morning & evening.;",
-      "Muscle Cramps & Soreness:<b>Where</b>: Directly on cramped or sore muscles (calves, thighs, arms).; <b>How much</b>: 10–15 sprays.; <b>When</b>: During cramps, after workouts, or long days standing.; <b>Extra Tip</b>: Massage in for faster relief.;",
-      "Sleep & Relaxation:<b>Where</b>: Soles of feet, back of neck, shoulders.; <b>How much</b>: 5–10 sprays.; <b>When</b>: 30 minutes before bedtime.; <b>Extra Tip</b>: Massage gently into skin for deeper relaxation.;",
-      "Restless Legs Syndrome:<b>Where</b>: Calves, thighs.; <b>How much</b>: 10–15 sprays.; <b>When</b>: Before bedtime.;",
-      "Bone & Joint Health:<b>Where</b>: Knees, elbows, lower back, wrists.; <b>How much</b>: 8–12 sprays.; <b>When</b>: Daily, preferably evening.;",
-      "Headaches & Migraines:<b>Where</b>: Temples (lightly), back of neck, shoulders.; <b>How much</b>: 2–3 sprays.; <b>When</b>: At onset of headache/migraine.; <b>Extra Tip</b>: Soak feet in warm water + magnesium oil for additional relief. Spray on hand then rub it to temple.;",
-      "Hair & Scalp Health:<b>Where</b>: Spray directly onto scalp (part hair).; <b>How much</b>: 5–8 sprays.; <b>When</b>: 2–3 times per week, before shower.; <b>Extra Tip</b>: Massage scalp, leave for 30 minutes, then wash.;",
-      "Cramps & PMS Relief:<b>Where</b>: Lower abdomen, lower back.; <b>How much</b>: 8–12 sprays.; <b>When</b>: During cramps or PMS discomfort.; <b>Extra Tip</b>: Massage gently until absorbed.;",
-      "Energy Boost & Fatigue Relief:<b>Where</b>: Arms, legs, stomach.; <b>How much</b>: 5–10 sprays.; <b>When</b>: Morning or mid-day slump.; <b>Extra Tip</b>: Pair with light stretching or deep breathing.;",
-      "Deodorant:<b>Where</b>: Underarms (on clean, dry skin).; <b>How much</b>: 2–4 sprays per armpit.; <b>When</b>: Once daily (morning), reapply if needed.; <b>Extra Tip</b>: Wear clothing after fully absorbed.;",
-      "Stress & Anxiety:<b>Where</b>: Chest, shoulders, behind ears (not too close to eyes).; <b>How much</b>: 5–8 sprays.; <b>When</b>: During stress, after work, or before meditation.;",
-      "Exercise Recovery:<b>Where</b>: On exercised muscles (legs, arms, back).; <b>How much</b>: 10–15 sprays.; <b>When</b>: Right after workout or before bed.;",
-    ],
-
-
-    tips: [
-      "Apply on clean skin, make sure there are no dead skin",
-      "Consistent application is recommended for effective results",
-      "A mild tingling sensation is normal and fades with regular use",
-      "May dilute with water to ease tingling",
-    ],
-    
-    warns: [
-      "<b>Patch test first:</b>  Always test on a small area (inner wrist/leg) before first full use.", 
-      "<b>For external use only:</b>  Do not ingest unless specifically formulated for oral use.",
-      "<b>Avoid sensitive areas:</b>  Do not spray near eyes, mouth, broken skin, cuts, or freshly shaved skin.",
-      "<b>Skin sensitivity:</b>  A mild tingling, itching, or warmth is normal for first-time users. If irritation persists, rinse off and dilute with water before reapplying."
-    ],
-    storage: [
-      "Keep bottle tightly sealed. Store in a cool, dry placeaway from direct sunlight, heat, or children’s reach.",
-      "Use within 6 months of manufacture."
-    ],
-    // See NEED_TILES — same usage guidance as the 30% variant above.
-    concerns: ["Better Sleep", "Muscle Recovery"],
-    // Fill in real customer reviews here as they come in — see README.MD.
-    reviews: [],
-    // Set to true to feature this product in the homepage "Best Sellers" section.
-    bestSeller: false,
-    // Set to "hot" / "new" / "sale" / "popular" (or leave null) — see README.MD.
-    badge: null,
-  },
-  {
-    id: "3",
-    name: "Loofah Soap Bar (Neem + Moringa)",
-    slug: "loofah-soap",
-    price: "Coming Soon",
-    category: "Skincare",
-    images: [
-      "./images/hayatiq_loofah_soap.jpg",
-      "https://images.unsplash.com/photo-1603921326210-6edd2d60ca68?q=80&w=1200&auto=format&fit=crop",
-    ],
-    short: "Calming balm for pulse points & lips.",
-    ingredients: ["Shea butter", "Lavender", "Beeswax"],
-    how: ["Massage a small amount where needed."],
-    tips: ["Shake well before Use", "as deodorant", "muscle relief"],
-    warns: ["Avoid during allergy flare‑ups."],
-    storage: [
-      "Keep bottle tightly sealed. Store in a cool, dry placeaway from direct sunlight, heat, or children’s reach.",
-      "Use within 6 months of manufacture."
-    ],
-    // Fill in real customer reviews here as they come in — see README.MD.
-    reviews: [],
-    // Set to true to feature this product in the homepage "Best Sellers" section.
-    bestSeller: false,
-    // Set to "hot" / "new" / "sale" / "popular" (or leave null) — see README.MD.
-    badge: null,
-  },
-  {
-    id: "4",
-    name: "RoseMintClove Scalp Elixir",
-    slug: "scalp-elixir",
-    price: "Coming Soon",
-    category: "Haircare",
-    images: [
-      "./images/rose_mint_clove_scalp_elixir.jpeg",
-    ],
-    short: "Calming balm for pulse points & lips.",
-    ingredients: ["Shea butter", "Lavender", "Beeswax"],
-    how: ["Massage a small amount where needed."],
-    tips: ["Shake well before Use", "as deodorant", "muscle relief"],
-    warns: ["Avoid during allergy flare‐ups."],
-    storage: [
-      "Keep bottle tightly sealed. Store in a cool, dry placeaway from direct sunlight, heat, or children’s reach.",
-      "Use within 6 months of manufacture."
-    ],
-    // Fill in real customer reviews here as they come in — see README.MD.
-    reviews: [],
-    // Set to true to feature this product in the homepage "Best Sellers" section.
-    bestSeller: false,
-    // Set to "hot" / "new" / "sale" / "popular" (or leave null) — see README.MD.
-    badge: null,
-  },
-  {
-    id: "5",
-    name: "Lash & Brow Serum",
-    slug: "lash-brow-serum",
-    price: "Coming Soon",
-    category: "Skincare",
-    images: [
-      "./images/lash&brow_serum.jpeg",
-    ],
-    short: "Calming balm for pulse points & lips.",
-    ingredients: ["Shea butter", "Lavender", "Beeswax"],
-    how: ["Massage a small amount where needed."],
-    tips: ["Shake well before Use", "as deodorant", "muscle relief"],
-    warns: ["Avoid during allergy flare‐ups."],
-    storage: [
-      "Keep bottle tightly sealed. Store in a cool, dry placeaway from direct sunlight, heat, or children’s reach.",
-      "Use within 6 months of manufacture."
-    ],
-    // Fill in real customer reviews here as they come in — see README.MD.
-    reviews: [],
-    // Set to true to feature this product in the homepage "Best Sellers" section.
-    bestSeller: false,
-    // Set to "hot" / "new" / "sale" / "popular" (or leave null) — see README.MD.
-    badge: null,
-  },
-  {
-    id: "6",
-    name: "SilkRoot shampoo bar",
-    slug: "silkroot-shampoo-bar",
-    price: "Coming Soon",
-    category: "Haircare",
-    images: [
-      "./images/SilkRoot_shampoo_bar.jpeg",
-    ],
-    short: "Calming balm for pulse points & lips.",
-    ingredients: ["Shea butter", "Lavender", "Beeswax"],
-    how: ["Massage a small amount where needed."],
-    tips: ["Shake well before Use", "as deodorant", "muscle relief"],
-    warns: ["Avoid during allergy flare‐ups."],
-    storage: [
-      "Keep bottle tightly sealed. Store in a cool, dry placeaway from direct sunlight, heat, or children’s reach.",
-      "Use within 6 months of manufacture."
-    ],
-    // Fill in real customer reviews here as they come in — see README.MD.
-    reviews: [],
-    // Set to true to feature this product in the homepage "Best Sellers" section.
-    bestSeller: false,
-    // Set to "hot" / "new" / "sale" / "popular" (or leave null) — see README.MD.
-    badge: null,
-  },
-  {
-    id: "7",
-    name: "FollicleFuel Scalp Tonic",
-    slug: "folliclefuel-scalp-tonic",
-    price: "Coming Soon",
-    category: "Haircare",
-    images: [
-      "./images/FollicleFuel_Scalp_Tonic.jpeg",
-    ],
-    short: "Calming balm for pulse points & lips.",
-    ingredients: ["Shea butter", "Lavender", "Beeswax"],
-    how: ["Massage a small amount where needed."],
-    tips: ["Shake well before Use", "as deodorant", "muscle relief"],
-    warns: ["Avoid during allergy flare‐ups."],
-    storage: [
-      "Keep bottle tightly sealed. Store in a cool, dry placeaway from direct sunlight, heat, or children’s reach.",
-      "Use within 6 months of manufacture."
-    ],
-    // Fill in real customer reviews here as they come in — see README.MD.
-    reviews: [],
-    // Set to true to feature this product in the homepage "Best Sellers" section.
-    bestSeller: false,
-    // Set to "hot" / "new" / "sale" / "popular" (or leave null) — see README.MD.
-    badge: null,
-  },
-];
-
-/* ==============================
        Site-wide testimonials (Customer Love)
        ============================== */
-// Separate from per-product `reviews` because testimonials — especially Messenger/
-// Facebook screenshots — are often about the overall ordering experience, not one
-// specific product. Ships empty, like `reviews`/`bestSeller`: the owner adds entries
-// here manually as real customer-generated content comes in (see README.MD). The
-// homepage "Customer Love" section hides itself entirely while this is empty — an
-// empty section would look worse than no section at all (see
-// TRUST_AND_CONVERSION_STRATEGY.md §D volume thresholds).
-//
-// Each entry: { type: "text"|"photo"|"screenshot", customerName, rating (optional),
-// content, image (required for photo/screenshot), relatedProductId (optional), source
-// (optional, e.g. "Messenger", "Facebook") }.
-//
-// DEMO PREVIEW DATA below — for layout preview only. Replace with real
-// testimonials/screenshots before launch (see README.MD "Adding Site-Wide
-// Testimonials"); the placeholder image is reused from images/placeholder.webp just
-// to preview the photo layout, it is not a real customer photo.
+// Separate from per-product `reviews` — screenshots/testimonials here are usually
+// about the overall experience, not one SKU. Ships empty; renderTestimonials() hides
+// the homepage section entirely until populated. Entry shape: { type:
+// "text"|"photo"|"screenshot", customerName, rating (optional), content, image
+// (required for photo/screenshot), relatedProductId (optional), source (optional) }.
+// DEMO PREVIEW DATA below — replace with real testimonials before launch.
 const TESTIMONIALS = [
   { type: "text", customerName: "Farhana S.", rating: 5, content: "Ordered on a Wednesday, arrived exactly as described — will be reordering the magnesium oil.", source: "Facebook" },
   { type: "text", customerName: "Imran K.", rating: 5, content: "Really appreciated how quickly they replied to my questions on Messenger before I ordered.", source: "Messenger" },
@@ -476,17 +212,15 @@ const BADGE_TYPES = {
   new: { label: "New", icon: "fa-bolt" },
   sale: { label: "Sale", icon: "fa-tag" },
   popular: { label: "Popular", icon: "fa-crown" },
-  // Auto-applied from `bestSeller: true` (see productCard()) rather than set via the
-  // `badge` field directly — this is what replaces the old separate "Best Sellers"
-  // grid: one unified product grid, with best sellers surfaced via badge instead of
-  // a duplicate section (see TRUST_AND_CONVERSION_STRATEGY.md §C / IMPLEMENTATION_LOG.md).
+  // Auto-applied from `topSelling: true` rather than set via `badge` directly — same
+  // flag that puts the product in the Top Selling Products carousel.
   bestseller: { label: "Best Seller", icon: "fa-star" },
 };
 
 function productCard(p, opts = {}) {
   const isComingSoon = typeof p.price === 'string' && p.price.toLowerCase().includes('coming soon');
-  // An explicit `badge` field always wins; otherwise a bestSeller product is auto-badged.
-  const badgeKey = p.badge || (p.bestSeller ? "bestseller" : null);
+  // An explicit `badge` field always wins; otherwise a topSelling product is auto-badged.
+  const badgeKey = p.badge || (p.topSelling ? "bestseller" : null);
   const badge = !isComingSoon && badgeKey && BADGE_TYPES[badgeKey];
   // opts.carousel adds a sizing class for horizontal scroll-snap carousels (e.g. Top
   // Selling Products) — the card markup/behavior is identical either way.
@@ -521,35 +255,33 @@ function renderFeatured() {
   featuredGrid.innerHTML = PRODUCTS.slice(0, 8).map(productCard).join("");
 }
 
-// Curated homepage highlight, shown immediately after the Trust Bar so a first-time
-// visitor sees real products right away — see TRUST_AND_CONVERSION_STRATEGY.md /
-// IMPLEMENTATION_LOG.md. Best sellers lead, live (purchasable) products fill any
-// remaining slots, and "Coming Soon" items only appear if there aren't enough live
-// products yet — this scales automatically as more products go live, no code change
-// needed as the catalog grows.
-function topProducts(limit = 4) {
-  const bestSellers = PRODUCTS.filter((p) => p.bestSeller);
-  const otherLive = PRODUCTS.filter((p) => typeof p.price === "number" && !p.bestSeller);
-  const pool = [...bestSellers, ...otherLive];
-  return (pool.length ? pool : PRODUCTS).slice(0, limit);
+// Opt-in only via `topSelling: true` — no automatic fallback to other live products.
+function topProducts(limit = Infinity) {
+  return PRODUCTS.filter((p) => p.topSelling).slice(0, limit);
 }
 
 function renderTopProducts() {
   if (!topProductsGrid) return;
-  topProductsGrid.innerHTML = topProducts().map((p) => productCard(p, { carousel: true })).join("");
+  const section = topProductsGrid.closest("section");
+  const items = topProducts();
+  if (!items.length) {
+    // Hide the whole section until at least one product is marked topSelling: true —
+    // an empty "Top Selling Products" row would look broken.
+    if (section) section.style.display = "none";
+    return;
+  }
+  if (section) section.style.display = "";
+  topProductsGrid.innerHTML = items.map((p) => productCard(p, { carousel: true })).join("");
 }
 
-// "Find the Right Product" — a small, hand-curated list of needs (not derived
-// automatically from the catalog) so the tile set stays meaningful even with very few
-// products. Add a new entry here as the catalog grows into more needs; nothing else
-// needs to change — the tile renders, filters, and shows honest availability status
-// automatically. `concern` matches a product's `concerns` tag; `category` reuses the
-// existing category filter for broader needs (e.g. Hair Care = the Haircare category).
+// "Find the Right Product" — small, hand-curated list of needs (not auto-derived) so
+// it stays meaningful with few products. `concern` matches a product's `concerns`
+// tag; `category` reuses the category filter for broader needs.
 const NEED_TILES = [
   { label: "Better Sleep", icon: "fa-moon", concern: "Better Sleep" },
   { label: "Muscle Recovery", icon: "fa-dumbbell", concern: "Muscle Recovery" },
-  { label: "Hair Care", icon: "fa-scissors", category: "Haircare" },
-  { label: "Skin Care", icon: "fa-pump-soap", category: "Skincare" },
+  { label: "Hair Care", icon: "fa-scissors", category: "Hair Care" },
+  { label: "Oral Care", icon: "fa-tooth", category: "Oral Care" },
 ];
 
 function needTileTopic(tile) {
@@ -578,9 +310,7 @@ function renderNeedTiles() {
   }).join("");
 }
 
-// Category availability — a category with 0 live products today is a temporary
-// growth-stage state, not a permanent site structure decision, so categories are
-// never hidden; they're labeled honestly instead (see TRUST_AND_CONVERSION_STRATEGY.md §C).
+// Categories are never hidden, even at 0 live products — status is labeled honestly.
 function liveProductCount(category) {
   return PRODUCTS.filter((p) => p.category === category && typeof p.price === "number").length;
 }
@@ -627,10 +357,8 @@ function renderProducts(category, concern) {
 }
 
 function accordionItem(title, arr, { open = false } = {}) {
-  // No shared `name` grouping on purpose — an exclusive accordion (opening one
-  // auto-closes another) meant clicking a section far down the page could cause a
-  // large section elsewhere to snap shut instantly, jumping the whole layout. Each
-  // section now opens/closes independently, only ever affecting its own space.
+  // No shared `name` grouping on purpose — each section opens/closes independently
+  // instead of auto-closing others, so opening one can't jump the page layout.
   return `<details class="accordion-item" ${open ? "open" : ""}>
       <summary>${title}</summary>
       <div class="accordion-panel"><ul>${arr.map((i) => `<li>${i}</li>`).join("")}</ul></div>
@@ -756,14 +484,14 @@ function renderDetail(id) {
           } · Outside Dhaka ৳${SHIPPING_RATES.outside_dhaka}</p>
 
           <div class="accordion-group">
-            <details class="accordion-item" open>
+            ${p.how && p.how.length ? `<details class="accordion-item" open>
               <summary>How to Use</summary>
               <div class="accordion-panel">${renderHowToUseTags(p.how)}</div>
-            </details>
-            ${accordionItem("Ingredients", p.ingredients)}
-            ${accordionItem("Cautions", p.warns)}
-            ${accordionItem("For Optimal Benefits", p.tips)}
-            ${accordionItem("Storage", p.storage)}
+            </details>` : ''}
+            ${p.ingredients && p.ingredients.length ? accordionItem("Ingredients", p.ingredients) : ''}
+            ${p.warns && p.warns.length ? accordionItem("Cautions", p.warns) : ''}
+            ${p.tips && p.tips.length ? accordionItem("For Optimal Benefits", p.tips) : ''}
+            ${p.storage && p.storage.length ? accordionItem("Storage", p.storage) : ''}
           </div>
 
           <div class="soft-card">
@@ -798,13 +526,6 @@ function renderDetail(id) {
       mainImg.src = img.dataset.src;
     });
   });
-  // Main gallery image opens the same review/testimonial lightbox (see its
-  // `onclick="openImageLightbox(this.src)"` above and index.html's #imageLightbox),
-  // replacing the old inline zoom toggle — that approach added a new document-level
-  // click listener on every renderDetail() call without ever removing the previous
-  // one (a listener leak across product navigations) and had no visible close
-  // affordance.
-
   // How to use tabs functionality
   document.querySelectorAll('.how-to-use-tab').forEach(tab => {
     tab.addEventListener('click', () => {
@@ -862,16 +583,14 @@ function addToCart(id, redirect = null, showToast = true) {
   else cart.push({ id, qty: 1 });
   setCart(cart);
   if (redirect) {
-    // No drawer opens on this path (e.g. the marketing "take me to checkout" flow),
-    // so the toast is the only add-to-cart confirmation the user sees.
+    // No drawer on this path — the toast is the only add-to-cart confirmation shown.
     showToast && toast(`${PRODUCTS.find((x) => x.id === id)?.name || "Item"} added to cart`);
     setTimeout(() => {
       window.location.href = redirect;
     }, 1500);
   }
-  // Adding to cart no longer auto-opens the drawer — the floating cart button's
-  // live count/total (updated via setCart() above) is the confirmation. The drawer
-  // only opens when the user explicitly taps the floating button or a header cart icon.
+  // The drawer only opens when the user explicitly taps the floating cart button or a
+  // header cart icon — not automatically on every add.
 }
 function removeFromCart(id) {
   setCart(getCart().filter((i) => i.id !== id));
@@ -904,9 +623,9 @@ function isWishlisted(id) {
 function setWishlist(list) {
   localStorage.setItem(WISHLIST_KEY, JSON.stringify(list));
   updateWishlistCount();
-  // Sync every rendered heart button for this id (a product can appear in both
-  // Best Sellers and Featured Products on the home view at once) instead of
-  // re-rendering every grid, which would also blow away detail-page gallery state.
+  // Sync every rendered heart button for this id (a product can appear in more than
+  // one grid at once) instead of re-rendering every grid, which would also blow away
+  // detail-page gallery state.
   document.querySelectorAll(".wishlist-toggle").forEach((btn) => {
     btn.classList.toggle("active", isWishlisted(btn.dataset.id));
   });
@@ -960,7 +679,6 @@ function updateFloatingCartButton() {
   btn.classList.toggle("hidden", onCartOrCheckout);
 }
 
-// New: update quantity controls
 function updateQty(id, qty) {
   qty = Math.max(1, Math.min(99, Number(qty) || 1));
   const cart = getCart();
@@ -1107,7 +825,6 @@ function closeImageLightbox() {
   modal.setAttribute("aria-hidden", "true");
   document.body.classList.remove("drawer-open");
 }
-  // toggle expand for how to use
   function renderHowToUseTags(howToUseItems) {
     if (!howToUseItems || howToUseItems.length === 0) return '';
     

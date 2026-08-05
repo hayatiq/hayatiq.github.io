@@ -118,13 +118,13 @@ Example form:
 
 # 🛒 Adding a Product
 
-Developers can add products by editing `script.js`. Follow these steps carefully to avoid errors.
+Developers can add products by editing `products.js`. Follow these steps carefully to avoid errors.
 
 ---
 
 ## 1. Locate the Products Array
 
-Open `script.js` and find the constant:
+Open `products.js` and find the constant:
 
 ```js
 const PRODUCTS = [
@@ -144,7 +144,7 @@ Add a new object with all the required keys. Example:
   name: "Loofah Soap Bar (Neem + Moringa)",
   slug: "loofah-soap",
   price: "Coming Soon", // Use a number (e.g., 540) to auto-enable product
-  category: "Wellness",
+  category: "Salves & Balms",
   images: [
     "./images/hayatiq_loofah_soap.jpg",
     "https://images.unsplash.com/photo-1603921326210-6edd2d60ca68?q=80&w=1200&auto=format&fit=crop",
@@ -172,7 +172,10 @@ Add a new object with all the required keys. Example:
   * Numeric value (e.g., `540`) → product is live and visible to users.
 * **Category Management**:
 
-  * Categories are listed in `index.html` around line 130.
+  * Categories are listed twice in `index.html`: the homepage "Shop by Category" tiles
+    and the `#view-categories` page — both need a matching card/tile when you add a
+    new category. The current categories are Hair Care, Magnesium Oil Spray,
+    Salves & Balms, Bath Bombs, Footsoaks, Oral Care, and Cleaning Supply.
   * Add new category names there to match your product’s `category` field.
 * **"Shop by Need" tags** (`concerns`, optional): an array of need/concern tags this
   product genuinely helps with, e.g. `concerns: ["Better Sleep", "Muscle Recovery"]`.
@@ -182,12 +185,23 @@ Add a new object with all the required keys. Example:
   for a tag you've started using (e.g. once a few products are tagged "Stress Relief",
   add `{ label: "Stress Relief", icon: "fa-...", concern: "Stress Relief" }` there so a
   tile appears for it).
+* **Display order** (`display_order`, optional number): controls the order products
+  appear in **everywhere** a product list renders — Top Selling Products, Shop Our
+  Products, the full Products page, and every category/need filter of it. Lower
+  numbers show first (`1` before `2`). Leave it `null`/unset on any product you don't
+  care about ordering — it'll just sort after any product that does have a number, in
+  its normal position in the `PRODUCTS` array. If two products share the same number
+  (or both are left unset), which one shows first between just those two isn't
+  guaranteed — don't rely on that case to break a tie. Setting it works by re-sorting
+  the whole `PRODUCTS` array once when the site loads (see the `PRODUCTS.sort(...)`
+  call at the end of `products.js`), so you only ever need to set the field — no
+  other code to touch.
 
 ---
 
 ## 4. Test
 
-1. Save `script.js`.
+1. Save `products.js`.
 2. Reload the site.
 3. Check that the product appears correctly in its category.
 4. Confirm “Coming Soon” products do not have an active purchase button.
@@ -201,8 +215,8 @@ Add a new object with all the required keys. Example:
 # 🌟 Adding Customer Reviews
 
 The site has no backend, so reviews aren't submitted through a form — they're added
-manually by editing each product's `reviews` array in `script.js`, the same way you'd
-edit any other product field.
+manually by editing each product's `reviews` array in `products.js`, the same way
+you'd edit any other product field.
 
 ## 1. Find the Product
 
@@ -267,7 +281,7 @@ as review screenshots: redact personal details and get the customer's okay befor
 
 ## 4. Test
 
-1. Save `script.js`.
+1. Save `products.js` (per-product `reviews`) or `script.js` (`TESTIMONIALS`).
 2. Reload the site and open that product's detail page.
 3. Confirm the average rating/star count and each review card display correctly.
 4. An empty `reviews: []` array correctly shows "No reviews yet." — that's expected
@@ -281,7 +295,7 @@ as review screenshots: redact personal details and get the customer's okay befor
 
 # 🏷️ Adding Product Card Badges
 
-Every product has a `badge` field in `script.js` (ships as `null` — no badge shown).
+Every product has a `badge` field in `products.js` (ships as `null` — no badge shown).
 Set it to one of the following to show a small colored badge on that product's card
 in the shop grid:
 
@@ -297,17 +311,21 @@ Badges don't show on "Coming Soon" products (the coming-soon overlay already cov
 the image). The colors are fixed regardless of which theme (`sand`/`cool`/`betterme`)
 is active — shoppers expect "Hot"/"Sale" to look the same everywhere.
 
-There's a fifth, automatic badge: setting `bestSeller: true` on a product shows a gold
+There's a fifth, automatic badge: setting `topSelling: true` on a product shows a gold
 "⭐ Best Seller" badge without needing to also set `badge: "popular"` — an explicit
-`badge` field always takes priority if both are set on the same product. This is the
-mechanism that replaced the old separate homepage "Best Sellers" grid: there's now one
-unified product grid, and best sellers are surfaced by badge instead of a duplicate
-section.
+`badge` field always takes priority if both are set on the same product.
+
+That same `topSelling` field also controls the homepage "Top Selling Products"
+carousel (a different, carousel-sized card layout from the regular grid — see
+`.product-card-carousel` in `style.css`): a product only appears there once
+`topSelling` is set to `true`, and disappears the moment it's set back to `false`.
+There's no automatic fallback — if nothing is marked `topSelling: true`, the whole
+carousel section hides itself rather than showing an empty row.
 
 **New Arrival convention:** when a "Coming Soon" product goes live (switch its `price`
 from `"Coming Soon"` to a number), consider also setting `badge: "new"` for the first
 2–4 weeks to flag it as a fresh arrival to returning visitors, then clear it back to
 `null` once that window passes.
 
-✅ That's it! Save `script.js` and reload to see the badge on that product's card.
+✅ That's it! Save `products.js` and reload to see the badge on that product's card.
 
