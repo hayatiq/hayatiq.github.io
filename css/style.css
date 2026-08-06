@@ -210,6 +210,11 @@ img {
   background-color: var(--color-khaki);
   color: var(--color-night);
 }
+.button-primary:active,
+.button-primary:focus {
+  background-color: var(--color-earth);
+  color: var(--color-white);
+}
 .button-ghost {
   background: transparent;
   border-color: var(--color-seal-brown);
@@ -501,6 +506,7 @@ header.site-header {
   row-gap: 0.5rem;
   column-gap: 1.2rem;
   padding: 0.6rem 0.2rem;
+  overflow: visible;
 }
 .trust-item {
   display: inline-flex;
@@ -538,12 +544,11 @@ header.site-header {
 /* USP strip — compact badges inline with the hero, not a separate section */
 .usp-strip {
   display: flex;
-  flex-wrap: nowrap;
+  flex-wrap: wrap;
   justify-content: center;
   gap: 1.1rem;
   margin-top: 0.7rem;
-  overflow-x: auto;
-  -webkit-overflow-scrolling: touch;
+  overflow: visible;
 }
 .usp-badge {
   display: inline-flex;
@@ -553,11 +558,36 @@ header.site-header {
   font-weight: 600;
   color: var(--color-seal-brown);
   white-space: nowrap;
-  flex-shrink: 0;
+  flex: 0 0 auto;
 }
 .usp-badge i {
   color: var(--color-earth); /* green line-art icons, matching the reference */
   font-size: 0.9rem;
+}
+
+.detail-actions {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.35fr) 44px;
+  gap: 0.6rem;
+  align-items: center;
+}
+.detail-actions .btn {
+  width: 100%;
+  min-width: 0;
+  min-height: 44px;
+  white-space: nowrap;
+  padding-left: 0.65rem;
+  padding-right: 0.65rem;
+}
+.detail-actions .button-primary {
+  -webkit-tap-highlight-color: transparent;
+}
+.detail-actions .button-primary:hover {
+  background-color: var(--color-earth);
+  color: var(--color-white);
+}
+.detail-actions .button-primary:focus {
+  outline: none;
 }
 
 /* Category tiles */
@@ -694,6 +724,12 @@ section {
   box-shadow: var(--shadow-soft);
   transition: transform 0.25s ease, box-shadow 0.25s ease;
 }
+.product-card > a {
+  -webkit-tap-highlight-color: transparent;
+}
+.product-card > a:focus {
+  outline: none;
+}
 
 /* Consistent image aspect ratios to prevent layout shift */
 .product-media {
@@ -753,6 +789,31 @@ section {
 }
 .btn-icon-add:active {
   transform: scale(0.92);
+}
+.cart-flight-item {
+  position: fixed;
+  z-index: 200;
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  background: var(--color-earth);
+  color: var(--color-white);
+  box-shadow: var(--shadow-card);
+  pointer-events: none;
+  transform: translate3d(0, 0, 0) scale(1);
+  transition: transform 1.15s cubic-bezier(0.22, 0.8, 0.3, 1), opacity 1.15s ease;
+}
+.cart-flight-item.is-flying {
+  opacity: 0.2;
+  transform: translate3d(var(--cart-flight-x), var(--cart-flight-y), 0) scale(0.45);
+}
+.cart-arrival {
+  animation: cartArrival 0.45s ease;
+}
+@keyframes cartArrival {
+  50% { transform: scale(1.18); }
 }
 .product-name {
   font-weight: 600;
@@ -1764,6 +1825,8 @@ footer {
     box-shadow: 0 0 0 2px var(--color-earth);
   }
   .floating-cart-total {
+    margin-top: 0.2rem;
+    padding-top: 0.2rem;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -1921,6 +1984,12 @@ body.drawer-open {
   flex-wrap: nowrap;
   justify-content: space-between;
 }
+.products-title-row > div {
+  flex-wrap: nowrap;
+  flex: 0 1 auto;
+  min-width: 0;
+  max-width: 100%;
+}
 
 /* Products page pill size */
 .pill-small {
@@ -1947,6 +2016,8 @@ body.drawer-open {
   background-position: right 0.6rem center;
   background-size: 10px;
   transition: border-color 0.2s ease, box-shadow 0.2s ease;
+  width: clamp(120px, 34vw, 165px);
+  max-width: 100%;
 }
 .category-filter-header:hover,
 .category-filter-header:focus {
@@ -1956,28 +2027,4 @@ body.drawer-open {
 .category-filter-header option {
   background: var(--color-white);
   color: var(--color-night);
-}
-
-/* Full-width search bar */
-.products-search-bar {
-  margin: 1rem 0;
-  width: 100%;
-}
-.search-input {
-  width: 100%;
-  padding: 0.8rem 1rem;
-  border-radius: var(--radius);
-  border: 1px solid rgba(16, 15, 15, 0.15);
-  background: var(--color-white);
-  color: var(--color-night);
-  font-size: 0.95rem;
-  outline: none;
-  transition: border-color 0.2s ease, box-shadow 0.2s ease;
-}
-.search-input::placeholder {
-  color: rgba(16, 15, 15, 0.5);
-}
-.search-input:focus {
-  border-color: var(--color-seal-brown);
-  box-shadow: 0 0 0 4px rgba(31, 63, 51, 0.12);
 }

@@ -269,7 +269,7 @@ function productCard(p, opts = {}) {
              ${p.variants ? `<div class="product-subtitle">${p.variants.length} variants · ${display.label || display.subtitle}</div>` : (p.subtitle ? `<div class="product-subtitle">${p.subtitle}</div>` : '')}
             <div class="product-footer">
                <div class="product-price">${money(display.price)}</div>
-               ${!isComingSoon ? `<button class="btn-icon-add" aria-label="Add ${p.name} to cart" onclick="event.preventDefault(); event.stopPropagation(); addToCart('${p.id}', '${selectedId || ''}');"><i class="fa-solid fa-cart-plus"></i></button>` : ''}
+               ${!isComingSoon ? `<button class="btn-icon-add" aria-label="Add ${p.name} to cart" onclick="event.preventDefault(); event.stopPropagation(); addToCart('${p.id}', '${selectedId || ''}'); animateCartToCart(this);"><i class="fa-solid fa-cart-plus"></i></button>` : ''}
             </div>
           </div>
         </a>
@@ -362,19 +362,10 @@ function renderCategoryAvailability() {
   });
 }
 
-function renderProducts(category, concern, searchQuery = "") {
+function renderProducts(category, concern) {
   let items = PRODUCTS;
   if (category) items = items.filter((p) => p.category === category);
   if (concern) items = items.filter((p) => (p.concerns || []).includes(concern));
-  if (searchQuery) {
-    const query = searchQuery.toLowerCase().trim();
-    items = items.filter((p) =>
-      p.name.toLowerCase().includes(query) ||
-      (p.subtitle && p.subtitle.toLowerCase().includes(query)) ||
-      (p.short && p.short.toLowerCase().includes(query)) ||
-      (p.variants || []).some((v) => (v.label || "").toLowerCase().includes(query) || (v.subtitle || "").toLowerCase().includes(query))
-    );
-  }
   productsGrid.innerHTML = items.map(productCard).join("");
   productCount.textContent = `${items.length} item${
     items.length !== 1 ? "s" : ""
@@ -392,32 +383,19 @@ function renderProducts(category, concern, searchQuery = "") {
 }
 
 function setupProductFilters() {
-  const searchInput = document.getElementById("searchInput");
   const categoryFilter = document.getElementById("categoryFilter");
 
-  if (!searchInput || !categoryFilter) return;
+  if (!categoryFilter) return;
 
   const updateFilters = () => {
     const params = new URLSearchParams(location.hash.split("?")[1] || "");
     const category = params.get("cat");
     const concern = params.get("concern");
-    const searchQuery = searchInput.value;
-
     categoryFilter.value = category || "";
-    renderProducts(category, concern, searchQuery);
+    renderProducts(category, concern);
   };
 
-  const onSearchInput = () => {
-    const params = new URLSearchParams(location.hash.split("?")[1] || "");
-    const category = params.get("cat");
-    const concern = params.get("concern");
-    const searchQuery = searchInput.value;
-    renderProducts(category, concern, searchQuery);
-  };
-
-  searchInput.addEventListener("input", onSearchInput);
   categoryFilter.addEventListener("change", () => {
-    searchInput.value = "";
     const selectedCategory = categoryFilter.value;
     if (selectedCategory) {
       window.location.hash = `#/products?cat=${encodeURIComponent(selectedCategory)}`;
@@ -549,8 +527,8 @@ function renderDetail(id, variantId = null) {
                 : ""
             }
           </div>
-          <div style="display:flex; gap:.6rem; flex-wrap:wrap; align-items:center;">
-             <button class="btn button-primary" onclick="event.preventDefault(); addToCart('${p.id}', '${selectedId || ''}');">Add to Cart</button>
+          <div class="detail-actions">
+             <button class="btn button-primary" onclick="event.preventDefault(); addToCart('${p.id}', '${selectedId || ''}'); animateCartToCart(this);">Add to Cart</button>
             <a class="btn button-ghost" href="https://m.me/hayatiq.life?ref=${p.slug}" target="_blank" rel="noopener"><i class="fa-brands fa-facebook-messenger"></i> Ask a Question</a>
             <button class="wishlist-toggle wishlist-toggle-inline ${isWishlisted(p.id) ? 'active' : ''}" data-id="${p.id}" aria-label="Add to wishlist" onclick="event.preventDefault(); toggleWishlist('${p.id}');"><i class="fa-solid fa-heart"></i></button>
           </div>
@@ -696,12 +674,43 @@ function addToCart(id, variantId = null, redirect = null, showToast = true) {
   // The drawer only opens when the user explicitly taps the floating cart button or a
   // header cart icon — not automatically on every add.
 }
+function animateCartToCart(source) {
+  const floatingCart = document.getElementById("floatingCartBtn");
+  const target = [floatingCart, ...document.querySelectorAll(".cart-link, .desktop-cart")].find((el) => {
+    if (!el) return false;
+    const rect = el.getBoundingClientRect();
+    return !el.classList.contains("hidden") && getComputedStyle(el).display !== "none" && rect.width > 0 && rect.height > 0;
+  });
+  if (!source || !target) return;
+  if (source.classList.contains("btn-icon-add") || source.classList.contains("button-primary")) source.blur();
+
+  const sourceRect = source.getBoundingClientRect();
+  const targetRect = target.getBoundingClientRect();
+  const flyer = document.createElement("span");
+  flyer.className = "cart-flight-item";
+  flyer.innerHTML = '<i class="fa-solid fa-cart-shopping" aria-hidden="true"></i>';
+  flyer.style.left = `${sourceRect.left + sourceRect.width / 2 - 15}px`;
+  flyer.style.top = `${sourceRect.top + sourceRect.height / 2 - 15}px`;
+  flyer.style.setProperty("--cart-flight-x", `${targetRect.left + targetRect.width / 2 - sourceRect.left - sourceRect.width / 2}px`);
+  flyer.style.setProperty("--cart-flight-y", `${targetRect.top + targetRect.height / 2 - sourceRect.top - sourceRect.height / 2}px`);
+  document.body.appendChild(flyer);
+  requestAnimationFrame(() => flyer.classList.add("is-flying"));
+  target.classList.add("cart-arrival");
+  setTimeout(() => {
+    flyer.remove();
+    target.classList.remove("cart-arrival");
+  }, 1250);
+}
 function removeFromCart(id, variantId = null) {
   const p = PRODUCTS.find((x) => x.id === id);
-  const resolvedVariantId = p ? variantIdFor(p, variantId) : null;
+  if (!p) {
+    setCart(getCart().filter((i) => i.id !== id));
+    return;
+  }
+  const resolvedVariantId = variantIdFor(p, variantId);
   setCart(getCart().filter((i) => {
-    const itemProduct = PRODUCTS.find((x) => x.id === i.id);
-    return !(i.id === id && itemProduct && cartRowVariantId(i, itemProduct) === resolvedVariantId);
+    if (i.id !== id) return true;
+    return p.variants && cartRowVariantId(i, p) !== resolvedVariantId;
   }));
 }
 function clearCart() {
@@ -832,9 +841,15 @@ function qtyControlsHTML(id, variantId, qty) {
 
 function cartRowHTML(row, p) {
   const cartItem = cartProduct(row);
-  if (!cartItem) return "";
+  if (!cartItem) {
+    return `<div style="display:flex; align-items:center; justify-content:space-between; gap:.6rem; padding:.5rem 0; border-bottom:1px solid rgba(16,15,15,.06);">
+        <span class="muted">This product is no longer available.</span>
+        <button type="button" class="close-btn" title="Remove" onclick="event.preventDefault(); event.stopPropagation(); removeFromCart('${row.id}')">✕</button>
+      </div>`;
+  }
   const { display, variant } = cartItem;
-  const variantId = p.variants ? variant.id : "";
+  // Keep the stored variant ID so stale variants can still be removed.
+  const variantId = p.variants ? (row.variantId || variant.id) : "";
   return `<div style="display:grid; grid-template-columns: 64px 1fr auto; gap:.6rem; align-items:center; padding:.5rem 0; border-bottom:1px solid rgba(16,15,15,.06);">
       <img loading="lazy" src="${display.images[0]}" alt="${
     display.name
@@ -845,7 +860,7 @@ function cartRowHTML(row, p) {
       </div>
       <div style="display:flex; align-items:center; gap:.4rem;">
         <strong>${money(display.price * row.qty)}</strong>
-        <button class="close-btn" title="Remove" onclick="removeFromCart('${
+        <button type="button" class="close-btn" title="Remove" onclick="event.preventDefault(); event.stopPropagation(); removeFromCart('${
           row.id
         }', '${variantId}')">✕</button>
       </div>

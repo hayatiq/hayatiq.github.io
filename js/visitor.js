@@ -173,19 +173,6 @@ function trackCartAction(action, data = {}) {
   }
 }
 
-function trackProductSearch(query) {
-  const sessionData = getVisitSession();
-  const value = (query || "").trim();
-  const lastSearch = sessionData.searchActions[sessionData.searchActions.length - 1];
-  if (lastSearch && lastSearch.query === value) return;
-  sessionData.searchActions.push({
-    query: value || "cleared",
-    timestamp: Date.now(),
-    time: new Date().toLocaleString(),
-  });
-  localStorage.setItem(VISIT_SESSION_KEY, JSON.stringify(sessionData));
-}
-
 function trackProductFilter(type, value) {
   if (!value) return;
   const sessionData = getVisitSession();
@@ -553,19 +540,6 @@ function setupSocialTracking() {
 }
 
 function setupActionTracking() {
-  const searchInput = document.getElementById("searchInput");
-  let searchTimer;
-  if (searchInput) {
-    searchInput.addEventListener("input", () => {
-      clearTimeout(searchTimer);
-      searchTimer = setTimeout(() => trackProductSearch(searchInput.value), 600);
-    });
-    searchInput.addEventListener("blur", () => {
-      clearTimeout(searchTimer);
-      trackProductSearch(searchInput.value);
-    });
-  }
-
   // Cart actions with debouncing
   document.addEventListener("click", (e) => {
     if (e.target.closest('[onclick*="addToCart"]')) {
