@@ -15,6 +15,10 @@ function initVisitSession() {
     alertsShown: [],
     socialClicks: [],
     cartActions: [],
+    searchActions: [],
+    filterActions: [],
+    wishlistActions: [],
+    variantSelections: [],
     contactActions: [],
     checkoutActions: [],
     formFields: {}, // Store final field values instead of every keystroke
@@ -62,7 +66,7 @@ function saveVisitSession() {
 }
 
 function getVisitSession() {
-  return (
+  const sessionData =
     JSON.parse(localStorage.getItem(VISIT_SESSION_KEY)) || {
       startTime: new Date().toISOString(),
       startTimestamp: Date.now(),
@@ -73,11 +77,19 @@ function getVisitSession() {
       alertsShown: [],
       socialClicks: [],
       cartActions: [],
+      searchActions: [],
+      filterActions: [],
+      wishlistActions: [],
+      variantSelections: [],
       contactActions: [],
       checkoutActions: [],
       formFields: {},
     }
-  );
+  sessionData.searchActions ||= [];
+  sessionData.filterActions ||= [];
+  sessionData.wishlistActions ||= [];
+  sessionData.variantSelections ||= [];
+  return sessionData;
 }
 
 function saveSessionToHistory(sessionData) {
@@ -159,6 +171,52 @@ function trackCartAction(action, data = {}) {
     });
     localStorage.setItem(VISIT_SESSION_KEY, JSON.stringify(sessionData));
   }
+}
+
+function trackProductSearch(query) {
+  const sessionData = getVisitSession();
+  const value = (query || "").trim();
+  const lastSearch = sessionData.searchActions[sessionData.searchActions.length - 1];
+  if (lastSearch && lastSearch.query === value) return;
+  sessionData.searchActions.push({
+    query: value || "cleared",
+    timestamp: Date.now(),
+    time: new Date().toLocaleString(),
+  });
+  localStorage.setItem(VISIT_SESSION_KEY, JSON.stringify(sessionData));
+}
+
+function trackProductFilter(type, value) {
+  if (!value) return;
+  const sessionData = getVisitSession();
+  sessionData.filterActions.push({
+    type,
+    value,
+    timestamp: Date.now(),
+    time: new Date().toLocaleString(),
+  });
+  localStorage.setItem(VISIT_SESSION_KEY, JSON.stringify(sessionData));
+}
+
+function trackWishlistAction(action, data = {}) {
+  const sessionData = getVisitSession();
+  sessionData.wishlistActions.push({
+    action,
+    ...data,
+    timestamp: Date.now(),
+    time: new Date().toLocaleString(),
+  });
+  localStorage.setItem(VISIT_SESSION_KEY, JSON.stringify(sessionData));
+}
+
+function trackVariantSelection(data = {}) {
+  const sessionData = getVisitSession();
+  sessionData.variantSelections.push({
+    ...data,
+    timestamp: Date.now(),
+    time: new Date().toLocaleString(),
+  });
+  localStorage.setItem(VISIT_SESSION_KEY, JSON.stringify(sessionData));
 }
 
 function trackFormField(field, value) {
@@ -276,6 +334,29 @@ function summarizeSession(sessionData) {
     summary.push(`Cart Actions: ${actionSummary}`);
   }
 
+  if (sessionData.searchActions.length > 0) {
+    summary.push(`Product Searches: ${sessionData.searchActions.map((a) => a.query).join(", ")}`);
+  }
+
+  if (sessionData.filterActions.length > 0) {
+    const filters = sessionData.filterActions.map((a) => `${a.type}: ${a.value}`).join(", ");
+    summary.push(`Product Filters: ${filters}`);
+  }
+
+  if (sessionData.wishlistActions.length > 0) {
+    const wishlistSummary = sessionData.wishlistActions
+      .map((a) => `${a.action}${a.product ? ` (${a.product})` : ""}`)
+      .join(", ");
+    summary.push(`Wishlist: ${wishlistSummary}`);
+  }
+
+  if (sessionData.variantSelections.length > 0) {
+    const variants = sessionData.variantSelections
+      .map((v) => `${v.product || "Product"}: ${v.variant || "unknown"}`)
+      .join(", ");
+    summary.push(`Variant Choices: ${variants}`);
+  }
+
   if (sessionData.contactActions.length > 0) {
     const submitCount = sessionData.contactActions.filter(
       (a) => a.action === "form_submit"
@@ -295,6 +376,9 @@ function summarizeSession(sessionData) {
     const noteTyped = sessionData.checkoutActions.filter(
       (a) => a.action === "note_typed"
     ).length;
+    const formInputs = sessionData.checkoutActions.filter(
+      (a) => a.action === "form_input"
+    ).length;
     const submits = sessionData.checkoutActions.filter(
       (a) => a.action === "order_submit"
     ).length;
@@ -303,6 +387,7 @@ function summarizeSession(sessionData) {
     if (shippingChanges > 0)
       checkoutSummary.push(`shipping changes: ${shippingChanges}`);
     if (noteTyped > 0) checkoutSummary.push(`notes: ${noteTyped}`);
+    if (formInputs > 0) checkoutSummary.push(`fields filled: ${formInputs}`);
     if (submits > 0) checkoutSummary.push(`submits: ${submits}`);
 
     if (checkoutSummary.length > 0) {
@@ -352,6 +437,10 @@ ${summarizeSession(sessionData)}
 Key Interactions:
 - Social Clicks: ${sessionData.socialClicks.length}
 - Cart Actions: ${sessionData.cartActions.length}
+- Product Searches: ${sessionData.searchActions.length}
+- Product Filters: ${sessionData.filterActions.length}
+- Wishlist Actions: ${sessionData.wishlistActions.length}
+- Variant Choices: ${sessionData.variantSelections.length}
 - Contact Fields: ${
       Object.keys(sessionData.formFields).filter((k) => k.includes("contact"))
         .length
@@ -369,6 +458,16 @@ ${JSON.stringify(
       acc[action.action] = (acc[action.action] || 0) + 1;
       return acc;
     }, {}),
+    searches: sessionData.searchActions.map((action) => action.query),
+    filters: sessionData.filterActions.map((action) => `${action.type}: ${action.value}`),
+    wishlistActions: sessionData.wishlistActions.map((action) => ({
+      action: action.action,
+      product: action.product,
+    })),
+    variantSelections: sessionData.variantSelections.map((selection) => ({
+      product: selection.product,
+      variant: selection.variant,
+    })),
     formFields: sessionData.formFields,
     checkoutSummary: sessionData.checkoutActions.reduce((acc, action) => {
       acc[action.action] = (acc[action.action] || 0) + 1;
@@ -426,9 +525,12 @@ function setupExitTracking() {
 // Track page views and time spent
 window.addEventListener("hashchange", () => {
   const currentView = location.hash.split("/")[1] || "home";
+  const params = new URLSearchParams(location.hash.split("?")[1] || "");
 
   // Track the page view
   trackPageView(currentView);
+  if (params.get("cat")) trackProductFilter("category", params.get("cat"));
+  if (params.get("concern")) trackProductFilter("need", params.get("concern"));
 });
 
 function setupSocialTracking() {
@@ -451,6 +553,19 @@ function setupSocialTracking() {
 }
 
 function setupActionTracking() {
+  const searchInput = document.getElementById("searchInput");
+  let searchTimer;
+  if (searchInput) {
+    searchInput.addEventListener("input", () => {
+      clearTimeout(searchTimer);
+      searchTimer = setTimeout(() => trackProductSearch(searchInput.value), 600);
+    });
+    searchInput.addEventListener("blur", () => {
+      clearTimeout(searchTimer);
+      trackProductSearch(searchInput.value);
+    });
+  }
+
   // Cart actions with debouncing
   document.addEventListener("click", (e) => {
     if (e.target.closest('[onclick*="addToCart"]')) {
@@ -468,6 +583,7 @@ function setupActionTracking() {
     if (e.target.closest('[onclick*="clearCart"]')) {
       trackCartAction("clear_cart");
     }
+
   });
 
   // Form field tracking on blur (when user leaves the field)
@@ -476,10 +592,23 @@ function setupActionTracking() {
 
     const fields = form.querySelectorAll("input, textarea, select");
     fields.forEach((field) => {
-      field.addEventListener("blur", () => {
+      const recordField = () => {
         if (field.value && field.value.trim().length > 0) {
-          trackFormField(`${prefix}_${field.name || field.id}`, field.value);
+          const fieldName = `${prefix}_${field.name || field.id}`;
+          trackFormField(fieldName, field.value);
+          if (prefix === "checkout") {
+            trackCheckoutAction("form_input", {
+              field: fieldName,
+              value: field.value.length > 40 ? field.value.substring(0, 40) + "..." : field.value,
+            });
+          }
         }
+      };
+      field.addEventListener("blur", recordField);
+      let fieldTimer;
+      field.addEventListener("input", () => {
+        clearTimeout(fieldTimer);
+        fieldTimer = setTimeout(recordField, 700);
       });
     });
 

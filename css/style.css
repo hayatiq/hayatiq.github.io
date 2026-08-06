@@ -168,6 +168,9 @@ img {
   border: none;
   border-color: transparent;
 }
+#app:focus {
+  outline: none;
+}
 .grid {
   display: grid;
   gap: 1rem;
@@ -871,6 +874,35 @@ section {
 }
 .thumbs img.active {
   border-color: var(--color-seal-brown);
+}
+.variant-picker {
+  display: grid;
+  gap: 0.35rem;
+  margin: 0.35rem 0;
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+.variant-badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+.variant-badge {
+  padding: 0.55rem 0.85rem;
+  border: 1px solid rgba(16, 15, 15, 0.15);
+  border-radius: 999px;
+  background: var(--color-white);
+  color: var(--color-night);
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease;
+}
+.variant-badge:hover,
+.variant-badge.active {
+  border-color: var(--color-earth);
+  background: var(--color-earth);
+  color: var(--color-white);
 }
 
 /* Accordion — native <details>/<summary>, no JS needed for open/close. Sections are
@@ -1590,7 +1622,7 @@ footer {
 /* Responsive */
 @media (min-width: 700px) {
   .hero-wrap {
-    grid-template-columns: 1.1fr 0.9fr;
+    grid-template-columns: 1fr;
     gap: 1.2rem;
     /* padding-top: 1.4rem; */
   }

@@ -170,6 +170,18 @@ Add a new object with all the required keys. Example:
 
   * `"Coming Soon"` → product is not yet available for purchase.
   * Numeric value (e.g., `540`) → product is live and visible to users.
+* **Variants**: If one product has options with different prices, weights, or images, keep one
+  parent product and add a `variants` array. Each variant needs an `id`, `label`, `price`,
+  `subtitle`, and `images`; add `default: true` to one variant when it should be selected first.
+  If no variant is marked default, the first variant is selected. The selected variant is kept
+  separate in the cart, so customers can buy multiple options of the same product.
+
+  ```js
+  variants: [
+    { id: "bar", label: "Bar", subtitle: "83g+", price: 190, images: ["./images/bar.webp"] },
+    { id: "block", label: "Block", subtitle: "500g", price: 750, images: ["./images/block.webp"], default: true },
+  ],
+  ```
 * **Category Management**:
 
   * Categories are listed twice in `index.html`: the homepage "Shop by Category" tiles
@@ -328,4 +340,3 @@ from `"Coming Soon"` to a number), consider also setting `badge: "new"` for the 
 `null` once that window passes.
 
 ✅ That's it! Save `products.js` and reload to see the badge on that product's card.
-

@@ -205,6 +205,28 @@ function money(n) {
   return `৳${n.toFixed(2)}`;
 }
 
+function productVariants(p) {
+  return Array.isArray(p.variants) && p.variants.length ? p.variants : [p];
+}
+
+function selectedVariant(p, variantId) {
+  const variants = productVariants(p);
+  return variants.find((v) => v.id === variantId) || variants.find((v) => v.default === true) || variants[0];
+}
+
+function variantIdFor(p, variantId) {
+  return p.variants ? selectedVariant(p, variantId).id : null;
+}
+
+function productDisplay(p, variantId) {
+  const variant = selectedVariant(p, variantId);
+  return { ...p, ...variant, name: p.name };
+}
+
+function isLiveProduct(p) {
+  return productVariants(p).some((v) => typeof v.price === "number");
+}
+
 // Owner-assignable badge presets — set a product's `badge` field to one of these
 // keys (see README.MD). Fixed marketing colors, not theme tokens: shoppers expect
 // "Hot"/"New"/"Sale" to look the same regardless of which site palette is active.
@@ -219,7 +241,10 @@ const BADGE_TYPES = {
 };
 
 function productCard(p, opts = {}) {
-  const isComingSoon = typeof p.price === 'string' && p.price.toLowerCase().includes('coming soon');
+  const variant = selectedVariant(p);
+  const display = productDisplay(p, variant.id);
+  const selectedId = variantIdFor(p, variant.id);
+  const isComingSoon = typeof display.price === 'string' && display.price.toLowerCase().includes('coming soon');
   // An explicit `badge` field always wins; otherwise a topSelling product is auto-badged.
   const badgeKey = p.badge || (p.topSelling ? "bestseller" : null);
   const badge = !isComingSoon && badgeKey && BADGE_TYPES[badgeKey];
@@ -231,20 +256,20 @@ function productCard(p, opts = {}) {
       <article class="${cardClass}" aria-label="${p.name}">
         <a href="#/product/${p.id}">
           <div class="product-media">
-            <img loading="lazy" src="${p.images[0]}" alt="${p.name}">
+            <img loading="lazy" src="${display.images[0]}" alt="${p.name}">
             ${isComingSoon ? `<div class="coming-soon-overlay">
               <span>Coming Soon</span>
               <button class="coming-soon-ask" onclick="event.preventDefault(); event.stopPropagation(); window.open('https://m.me/hayatiq.life?ref=${p.slug}', '_blank');"><i class="fa-brands fa-facebook-messenger" aria-hidden="true"></i> Ask about this</button>
             </div>` : ''}
             ${badge ? `<span class="product-badge badge-${badgeKey}"><i class="fa-solid ${badge.icon}" aria-hidden="true"></i> ${badge.label}</span>` : ''}
-            ${!isComingSoon ? `<button class="wishlist-toggle ${isWishlisted(p.id) ? 'active' : ''}" data-id="${p.id}" aria-label="Add to wishlist" onclick="event.preventDefault(); event.stopPropagation(); toggleWishlist('${p.id}');"><i class="fa-solid fa-heart"></i></button>` : ''}
+             ${!isComingSoon ? `<button class="wishlist-toggle ${isWishlisted(p.id) ? 'active' : ''}" data-id="${p.id}" aria-label="Add to wishlist" onclick="event.preventDefault(); event.stopPropagation(); toggleWishlist('${p.id}');"><i class="fa-solid fa-heart"></i></button>` : ''}
           </div>
           <div class="product-body">
             <div class="product-name">${p.name}</div>
-            ${p.subtitle ? `<div class="product-subtitle">${p.subtitle}</div>` : ''}
+             ${p.variants ? `<div class="product-subtitle">${p.variants.length} variants · ${display.label || display.subtitle}</div>` : (p.subtitle ? `<div class="product-subtitle">${p.subtitle}</div>` : '')}
             <div class="product-footer">
-              <div class="product-price">${money(p.price)}</div>
-              ${!isComingSoon ? `<button class="btn-icon-add" aria-label="Add ${p.name} to cart" onclick="event.preventDefault(); event.stopPropagation(); addToCart('${p.id}');"><i class="fa-solid fa-cart-plus"></i></button>` : ''}
+               <div class="product-price">${money(display.price)}</div>
+               ${!isComingSoon ? `<button class="btn-icon-add" aria-label="Add ${p.name} to cart" onclick="event.preventDefault(); event.stopPropagation(); addToCart('${p.id}', '${selectedId || ''}');"><i class="fa-solid fa-cart-plus"></i></button>` : ''}
             </div>
           </div>
         </a>
@@ -290,7 +315,7 @@ function needTileTopic(tile) {
 }
 function needTileLiveCount(tile) {
   if (tile.category) return liveProductCount(tile.category);
-  return PRODUCTS.filter((p) => typeof p.price === "number" && (p.concerns || []).includes(tile.concern)).length;
+  return PRODUCTS.filter((p) => isLiveProduct(p) && (p.concerns || []).includes(tile.concern)).length;
 }
 function needTileHref(tile) {
   return tile.category
@@ -313,7 +338,7 @@ function renderNeedTiles() {
 
 // Categories are never hidden, even at 0 live products — status is labeled honestly.
 function liveProductCount(category) {
-  return PRODUCTS.filter((p) => p.category === category && typeof p.price === "number").length;
+  return PRODUCTS.filter((p) => p.category === category && isLiveProduct(p)).length;
 }
 
 function notifyMeLink(topic) {
@@ -346,7 +371,8 @@ function renderProducts(category, concern, searchQuery = "") {
     items = items.filter((p) =>
       p.name.toLowerCase().includes(query) ||
       (p.subtitle && p.subtitle.toLowerCase().includes(query)) ||
-      (p.short && p.short.toLowerCase().includes(query))
+      (p.short && p.short.toLowerCase().includes(query)) ||
+      (p.variants || []).some((v) => (v.label || "").toLowerCase().includes(query) || (v.subtitle || "").toLowerCase().includes(query))
     );
   }
   productsGrid.innerHTML = items.map(productCard).join("");
@@ -357,7 +383,7 @@ function renderProducts(category, concern, searchQuery = "") {
   const banner = document.getElementById("categoryNotifyBanner");
   if (banner) {
     const topic = category || concern;
-    const empty = topic && !items.some((p) => typeof p.price === "number");
+    const empty = topic && !items.some(isLiveProduct);
     banner.hidden = !empty;
     banner.innerHTML = empty
       ? `<strong>${topic} is launching soon.</strong><p class="muted" style="margin:.3rem 0 0;">New products are on the way — <a href="${notifyMeLink(topic)}" target="_blank" rel="noopener">message us on Messenger</a> to be notified the moment they're live.</p>`
@@ -431,9 +457,12 @@ function stars(n) {
   return html;
 }
 
-function renderDetail(id) {
+function renderDetail(id, variantId = null) {
   const p = PRODUCTS.find((x) => x.id === id) || PRODUCTS[0];
-  const isComingSoon = typeof p.price === 'string' && p.price.toLowerCase().includes('coming soon');
+  const variant = selectedVariant(p, variantId);
+  const display = productDisplay(p, variant.id);
+  const selectedId = variantIdFor(p, variant.id);
+  const isComingSoon = typeof display.price === 'string' && display.price.toLowerCase().includes('coming soon');
   const reviews = p.reviews || [];
   const avg = averageRating(reviews);
 
@@ -444,13 +473,13 @@ function renderDetail(id) {
       "@context": "https://schema.org/",
       "@type": "Product",
       name: p.name,
-      image: p.images,
+       image: display.images,
       description: p.short,
-      sku: p.id,
+       sku: selectedId ? `${p.id}-${selectedId}` : p.id,
       offers: {
         "@type": "Offer",
         priceCurrency: "BDT",
-        ...(typeof p.price === "number" ? { price: p.price } : {}),
+        ...(typeof display.price === "number" ? { price: display.price } : {}),
         availability: isComingSoon ? "https://schema.org/PreOrder" : "https://schema.org/InStock",
       },
       ...(reviews.length
@@ -466,7 +495,7 @@ function renderDetail(id) {
   }
 
   if (isComingSoon) {
-    const [main] = p.images || ["./images/placeholder.webp"];
+    const [main] = display.images || ["./images/placeholder.webp"];
     detailWrap.innerHTML = `
       <div class="coming-soon-container">
         ${main ? `<img src="${main}" alt="${p.name}" class="coming-soon-image" loading="lazy">` : ''}
@@ -479,14 +508,14 @@ function renderDetail(id) {
     return;
   }
   
-  const [main] = p.images;
+  const [main] = display.images;
   detailWrap.innerHTML = `
         <div class="gallery">
           <div class="gallery-main"><img id="mainImg" src="${main}" fetchpriority="high" alt="${
     p.name
   }" onclick="openImageLightbox(this.src)"></div>
           <div class="thumbs" id="thumbs">
-            ${p.images
+             ${display.images
               .map(
                 (src, i) =>
                   `<img loading="lazy" src="${src}" alt="${p.name} ${i + 1}" class="${
@@ -498,10 +527,16 @@ function renderDetail(id) {
         </div>
         <div style="display:grid; gap:.8rem;">
           <div>
-            <h2 style="margin-bottom:.2rem;">${p.name}</h2>
-            <span class="product-subtitle-detail">${p.subtitle}</span>
-            <div class="product-price" style="font-size:1.1rem;">${money(
-              p.price
+            <h2 style="margin-bottom:.2rem;">${p.name}${p.variants && display.label ? ` ${display.label}` : ""}</h2>
+             ${p.variants ? `<div class="variant-picker" role="group" aria-label="Choose ${p.name} option">
+                 <span>Choose an option</span>
+                 <div class="variant-badges">
+                   ${p.variants.map((v) => `<button type="button" class="variant-badge${v.id === selectedId ? " active" : ""}" aria-pressed="${v.id === selectedId}" onclick="chooseProductVariant('${p.id}', '${v.id}', '${v.label || v.subtitle}')">${v.label || v.subtitle}</button>`).join("")}
+                 </div>
+               </div>` : `<span class="product-subtitle-detail">${p.subtitle}</span>`}
+             ${p.variants ? `<span class="product-subtitle-detail">${display.subtitle}</span>` : ""}
+             <div class="product-price" style="font-size:1.1rem;">${money(
+               display.price
             )}</div>
             <p class="muted">${p.short}</p>
             ${
@@ -515,7 +550,7 @@ function renderDetail(id) {
             }
           </div>
           <div style="display:flex; gap:.6rem; flex-wrap:wrap; align-items:center;">
-            <button class="btn button-primary" onclick="event.preventDefault(); addToCart('${p.id}');">Add to Cart</button>
+             <button class="btn button-primary" onclick="event.preventDefault(); addToCart('${p.id}', '${selectedId || ''}');">Add to Cart</button>
             <a class="btn button-ghost" href="https://m.me/hayatiq.life?ref=${p.slug}" target="_blank" rel="noopener"><i class="fa-brands fa-facebook-messenger"></i> Ask a Question</a>
             <button class="wishlist-toggle wishlist-toggle-inline ${isWishlisted(p.id) ? 'active' : ''}" data-id="${p.id}" aria-label="Add to wishlist" onclick="event.preventDefault(); toggleWishlist('${p.id}');"><i class="fa-solid fa-heart"></i></button>
           </div>
@@ -593,6 +628,14 @@ function renderDetail(id) {
   });
 }
 
+function chooseProductVariant(productId, variantId, variantLabel) {
+  const product = PRODUCTS.find((x) => x.id === productId);
+  if (typeof trackVariantSelection === "function" && product) {
+    trackVariantSelection({ product: product.name, variant: variantLabel });
+  }
+  renderDetail(productId, variantId);
+}
+
 // Shared with the checkout shipping calculation and the product detail page's
 // delivery-transparency note, so both always agree.
 const SHIPPING_RATES = { inside_dhaka: 80, outside_dhaka: 130 };
@@ -617,9 +660,23 @@ function setCart(list) {
   renderCheckoutItems();
   updateCheckoutTotals();
 }
-function addToCart(id, redirect = null, showToast = true) {
+function cartProduct(row) {
+  const p = PRODUCTS.find((x) => x.id === row.id);
+  if (!p) return null;
+  const variant = selectedVariant(p, row.variantId);
+  return { p, variant, display: productDisplay(p, variant.id) };
+}
+
+function cartRowVariantId(row, p) {
+  return p.variants ? (row.variantId || selectedVariant(p).id) : null;
+}
+
+function addToCart(id, variantId = null, redirect = null, showToast = true) {
   const cart = getCart();
-  const item = cart.find((i) => i.id === id);
+  const p = PRODUCTS.find((x) => x.id === id);
+  if (!p) return;
+  const resolvedVariantId = variantIdFor(p, variantId);
+  const item = cart.find((i) => i.id === id && cartRowVariantId(i, p) === resolvedVariantId);
   if (item){
     if (item.qty >= 99) {
       toast("Maximum quantity reached");
@@ -627,11 +684,11 @@ function addToCart(id, redirect = null, showToast = true) {
     }
     item.qty += 1;
   }
-  else cart.push({ id, qty: 1 });
+  else cart.push({ id, ...(resolvedVariantId ? { variantId: resolvedVariantId } : {}), qty: 1 });
   setCart(cart);
   if (redirect) {
     // No drawer on this path — the toast is the only add-to-cart confirmation shown.
-    showToast && toast(`${PRODUCTS.find((x) => x.id === id)?.name || "Item"} added to cart`);
+    showToast && toast(`${p.name}${resolvedVariantId ? ` (${selectedVariant(p, resolvedVariantId).label || selectedVariant(p, resolvedVariantId).subtitle})` : ""} added to cart`);
     setTimeout(() => {
       window.location.href = redirect;
     }, 1500);
@@ -639,8 +696,13 @@ function addToCart(id, redirect = null, showToast = true) {
   // The drawer only opens when the user explicitly taps the floating cart button or a
   // header cart icon — not automatically on every add.
 }
-function removeFromCart(id) {
-  setCart(getCart().filter((i) => i.id !== id));
+function removeFromCart(id, variantId = null) {
+  const p = PRODUCTS.find((x) => x.id === id);
+  const resolvedVariantId = p ? variantIdFor(p, variantId) : null;
+  setCart(getCart().filter((i) => {
+    const itemProduct = PRODUCTS.find((x) => x.id === i.id);
+    return !(i.id === id && itemProduct && cartRowVariantId(i, itemProduct) === resolvedVariantId);
+  }));
 }
 function clearCart() {
   setCart([]);
@@ -682,8 +744,12 @@ function toggleWishlist(id) {
   const list = getWishlist();
   const i = list.indexOf(id);
   const added = i < 0;
+  const product = PRODUCTS.find((x) => x.id === id);
   added ? list.push(id) : list.splice(i, 1);
   setWishlist(list);
+  if (typeof trackWishlistAction === "function") {
+    trackWishlistAction(added ? "add" : "remove", { product: product?.name || id });
+  }
   toast(added ? "Added to wishlist" : "Removed from wishlist");
 }
 function updateWishlistCount() {
@@ -715,8 +781,8 @@ function updateFloatingCartButton() {
   const cart = getCart();
   const count = cart.reduce((n, i) => n + i.qty, 0);
   const total = cart.reduce((sum, row) => {
-    const p = PRODUCTS.find((x) => x.id === row.id);
-    return p ? sum + p.price * row.qty : sum;
+    const item = cartProduct(row);
+    return item ? sum + item.display.price * row.qty : sum;
   }, 0);
   countEl.textContent = count;
   totalEl.textContent = money(total);
@@ -726,51 +792,62 @@ function updateFloatingCartButton() {
   btn.classList.toggle("hidden", onCartOrCheckout);
 }
 
-function updateQty(id, qty) {
+function updateQty(id, variantId, qty) {
   qty = Math.max(1, Math.min(99, Number(qty) || 1));
   const cart = getCart();
-  const item = cart.find((i) => i.id === id);
+  const p = PRODUCTS.find((x) => x.id === id);
+  const resolvedVariantId = p ? variantIdFor(p, variantId) : null;
+  const item = cart.find((i) => i.id === id && cartRowVariantId(i, p) === resolvedVariantId);
   if (!item) return;
   item.qty = qty;
   setCart(cart);
 }
-function incQty(id) {
+function incQty(id, variantId = null) {
   const cart = getCart();
-  const item = cart.find((i) => i.id === id);
+  const p = PRODUCTS.find((x) => x.id === id);
+  const resolvedVariantId = p ? variantIdFor(p, variantId) : null;
+  const item = cart.find((i) => i.id === id && cartRowVariantId(i, p) === resolvedVariantId);
   if (!item) return;
   item.qty = Math.min(99, (item.qty || 1) + 1);
   setCart(cart);
 }
-function decQty(id) {
+function decQty(id, variantId = null) {
   const cart = getCart();
-  const item = cart.find((i) => i.id === id);
+  const p = PRODUCTS.find((x) => x.id === id);
+  const resolvedVariantId = p ? variantIdFor(p, variantId) : null;
+  const item = cart.find((i) => i.id === id && cartRowVariantId(i, p) === resolvedVariantId);
   if (!item) return;
   item.qty = Math.max(1, (item.qty || 1) - 1);
   setCart(cart);
 }
 
-function qtyControlsHTML(id, qty) {
+function qtyControlsHTML(id, variantId, qty) {
+  const variantArg = variantId || "";
   return `<div class="qty" aria-label="Quantity controls">
-      <button onclick="decQty('${id}')" aria-label="Decrease quantity">−</button>
-      <input type="number" min="1" max="99" value="${qty}" onchange="updateQty('${id}', this.value)" />
-      <button onclick="incQty('${id}')" aria-label="Increase quantity">+</button>
+      <button onclick="decQty('${id}', '${variantArg}')" aria-label="Decrease quantity">−</button>
+      <input type="number" min="1" max="99" value="${qty}" onchange="updateQty('${id}', '${variantArg}', this.value)" />
+      <button onclick="incQty('${id}', '${variantArg}')" aria-label="Increase quantity">+</button>
     </div>`;
 }
 
 function cartRowHTML(row, p) {
+  const cartItem = cartProduct(row);
+  if (!cartItem) return "";
+  const { display, variant } = cartItem;
+  const variantId = p.variants ? variant.id : "";
   return `<div style="display:grid; grid-template-columns: 64px 1fr auto; gap:.6rem; align-items:center; padding:.5rem 0; border-bottom:1px solid rgba(16,15,15,.06);">
-      <img loading="lazy" src="${p.images[0]}" alt="${
-    p.name
+      <img loading="lazy" src="${display.images[0]}" alt="${
+    display.name
   }" style="width:64px; height:64px; object-fit:cover; border-radius:10px;">
       <div>
-        <div style="font-weight:600;">${p.name} <span class="deep-muted"> (${p.subtitle}) </span></div>
-        ${qtyControlsHTML(row.id, row.qty)}
+        <div style="font-weight:600;">${display.name} <span class="deep-muted"> (${p.variants ? `${variant.label} · ` : ""}${display.subtitle}) </span></div>
+        ${qtyControlsHTML(row.id, variantId, row.qty)}
       </div>
       <div style="display:flex; align-items:center; gap:.4rem;">
-        <strong>${money(p.price * row.qty)}</strong>
+        <strong>${money(display.price * row.qty)}</strong>
         <button class="close-btn" title="Remove" onclick="removeFromCart('${
           row.id
-        }')">✕</button>
+        }', '${variantId}')">✕</button>
       </div>
     </div>`;
 }
@@ -787,8 +864,8 @@ function renderCart() {
     .map((row) => cartRowHTML(row, PRODUCTS.find((x) => x.id === row.id)))
     .join("");
   const total = list.reduce((sum, row) => {
-    const p = PRODUCTS.find((x) => x.id === row.id);
-    return sum + p.price * row.qty;
+    const item = cartProduct(row);
+    return item ? sum + item.display.price * row.qty : sum;
   }, 0);
   document.getElementById("cartTotal").textContent = money(total);
 }
@@ -811,8 +888,8 @@ function renderCartDrawer() {
     .map((row) => cartRowHTML(row, PRODUCTS.find((x) => x.id === row.id)))
     .join("");
   const total = list.reduce((sum, row) => {
-    const p = PRODUCTS.find((x) => x.id === row.id);
-    return sum + p.price * row.qty;
+    const item = cartProduct(row);
+    return item ? sum + item.display.price * row.qty : sum;
   }, 0);
   totalEl.textContent = money(total);
 }
@@ -912,17 +989,21 @@ function closeImageLightbox() {
   
   container.innerHTML = cart.map(row => {
     const p = PRODUCTS.find(x => x.id === row.id);
+    const item = cartProduct(row);
+    if (!item) return "";
+    const { display, variant } = item;
+    const variantId = p.variants ? variant.id : "";
 
     return `
       <div class="checkout-item">
-        <img loading="lazy" src="${p.images[0]}" alt="${p.name}" class="checkout-item-img">
+        <img loading="lazy" src="${display.images[0]}" alt="${display.name}" class="checkout-item-img">
         <div class="checkout-item-details">
-          <div class="checkout-item-name">${p.name} <span class="deep-muted"> (${p.subtitle}) </span></div>
-          ${qtyControlsHTML(row.id, row.qty)}
+          <div class="checkout-item-name">${display.name} <span class="deep-muted"> (${p.variants ? `${variant.label} · ` : ""}${display.subtitle}) </span></div>
+          ${qtyControlsHTML(row.id, variantId, row.qty)}
         </div>
         <div class="checkout-item-price">
-          <strong>${money(p.price * row.qty)}</strong>
-          <button class="close-btn" title="Remove" onclick="removeFromCart('${row.id}')">✕</button>
+          <strong>${money(display.price * row.qty)}</strong>
+          <button class="close-btn" title="Remove" onclick="removeFromCart('${row.id}', '${variantId}')">✕</button>
         </div>
       </div>
     `;
@@ -932,13 +1013,15 @@ function closeImageLightbox() {
 function updateCartItemsData() {
   const cart = getCart();
   const cartItemsWithNames = cart.map(row => {
-    const p = PRODUCTS.find(x => x.id === row.id);
+    const item = cartProduct(row);
+    if (!item) return null;
+    const { display, variant } = item;
     return {
-      name: p.name + ' (' + p.subtitle + ')',
+      name: display.name + ' (' + (variant.label ? variant.label + ' · ' : '') + display.subtitle + ')',
       qty: row.qty,
-      unit_price: p.price
+      unit_price: display.price
     };
-  });
+  }).filter(Boolean);
   
   document.getElementById('cartItemsData').value = JSON.stringify(cartItemsWithNames);
 }
@@ -946,8 +1029,8 @@ function updateCartItemsData() {
 function updateCheckoutTotals() {
   const cart = getCart();
   const subtotal = cart.reduce((sum, row) => {
-    const p = PRODUCTS.find(x => x.id === row.id);
-    return sum + p.price * row.qty;
+    const item = cartProduct(row);
+    return item ? sum + item.display.price * row.qty : sum;
   }, 0);
   
   const shippingMethod = document.querySelector('input[name="shipping_method"]:checked').value;
