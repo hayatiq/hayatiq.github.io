@@ -1,3 +1,16 @@
+// FormSubmit's free tier rate-limits how many submissions an inbox can receive in a
+// short window (429 Too Many Requests) — retry once against a fallback inbox instead
+// of losing the contact message/order outright when that happens.
+const FORMSUBMIT_PRIMARY_EMAIL = "hayatiq.life@gmail.com";
+const FORMSUBMIT_FALLBACK_EMAIL = "topukhan6364@gmail.com";
+
+function submitFormWithFallback(formData) {
+  return axios.post(`https://formsubmit.co/ajax/${FORMSUBMIT_PRIMARY_EMAIL}`, formData).catch((error) => {
+    if (error.response?.status !== 429) throw error;
+    return axios.post(`https://formsubmit.co/ajax/${FORMSUBMIT_FALLBACK_EMAIL}`, formData);
+  });
+}
+
 document.getElementById("contactForm").addEventListener("submit", function (e) {
   e.preventDefault();
   const form = e.target;
@@ -15,16 +28,12 @@ document.getElementById("contactForm").addEventListener("submit", function (e) {
     messageBox.textContent =
       "⚠️ You have reached your submission limit. Please try again later.";
     setTimeout(() => {
-      window.location.hash = "/products";
+      goTo("/products");
     }, 5000);
     return;
   }
   // === Send via FormSubmit AJAX ===
-  axios
-    .post(
-      "https://formsubmit.co/ajax/hayatiq.life@gmail.com",
-      new FormData(form)
-    )
+  submitFormWithFallback(new FormData(form))
     .then((response) => {
       // Record submission timestamp
       submissions.push(now);
@@ -38,7 +47,7 @@ document.getElementById("contactForm").addEventListener("submit", function (e) {
       setTimeout(() => {
         messageBox.textContent = "";
         messageBox.style.display = "none";
-        window.location.hash = "/products";
+        goTo("/products");
       }, 5000);
       form.reset();
     })
@@ -84,11 +93,7 @@ document
       toast("Order limit reached. Please try again later.", "warning");
       return;
     }
-    axios
-      .post(
-        "https://formsubmit.co/ajax/hayatiq.life@gmail.com",
-        new FormData(form)
-      )
+    submitFormWithFallback(new FormData(form))
       .then((response) => {
         // Save form data for next time
         saveFormData();
@@ -102,10 +107,11 @@ document
 
         setTimeout(() => {
           form.reset();
-          window.location.hash = "/products";
+          goTo("/products");
         }, 3000);
       })
       .catch((error) => {
         toast("Error placing order. Please try again.");
+        console.error(error);
       });
   });

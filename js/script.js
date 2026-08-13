@@ -17,8 +17,14 @@ document.addEventListener("click", (e) => {
 });
 
 /* ==============================
-       Minimal SPA Router (hash based)
+       Minimal SPA Router (History API / real paths)
        ============================== */
+// Real, crawlable per-page URLs (e.g. /product/conditioner-bar) instead of hash
+// fragments — see _redirects for the Netlify rule that makes deep links to these
+// paths resolve (Netlify has no server-side routing, so every path has to fall
+// back to index.html and let this router take over client-side).
+const SITE_URL = "https://hayatiq.netlify.app";
+
 const routes = {
   home: document.getElementById("view-home"),
   products: document.getElementById("view-products"),
@@ -29,24 +35,62 @@ const routes = {
   cart: document.getElementById("view-cart"),
   checkout: document.getElementById("view-checkout"),
   wishlist: document.getElementById("view-wishlist"),
+  notfound: document.getElementById("view-notfound"),
 };
 
-function setActiveNav(hash) {
+function setActiveNav(path) {
   document.querySelectorAll(".nav-links a[data-link]").forEach((a) => {
-    a.classList.toggle("active", a.getAttribute("href") === hash);
+    a.classList.toggle("active", a.getAttribute("href") === path);
   });
   // Close mobile menu after navigation
   primaryNav.classList.remove("open");
   navToggle.setAttribute("aria-expanded", "false");
 }
 
-// SEO: keep <title> and the description meta tag current for each route. Hash
-// fragments aren't distinctly indexable/shareable, but this still helps the browser
-// tab/history and any crawler that does execute the JS.
-function setPageMeta(title, description) {
+// Site-wide defaults, read once from index.html, so a product page's keywords/image
+// don't linger once you navigate away from it.
+const SITE_KEYWORDS = document.querySelector('meta[name="keywords"]')?.getAttribute("content") || "";
+// Open Graph/Twitter images need an absolute URL (relative ones aren't reliably
+// resolved by social crawlers) — index.html's tag ships a "./"-relative path since
+// it's also read by the browser itself (which resolves it fine via <base href="/">).
+const SITE_IMAGE_RAW = document.querySelector('meta[property="og:image"]')?.getAttribute("content") || "";
+const SITE_IMAGE = SITE_IMAGE_RAW ? `${SITE_URL}${SITE_IMAGE_RAW.replace(/^\./, "")}` : "";
+const SITE_ROBOTS = document.querySelector('meta[name="robots"]')?.getAttribute("content") || "index, follow";
+
+// SEO: keep <title>, meta description/keywords, canonical, and Open Graph/Twitter
+// tags current for each route — now that every route has its own real URL, each
+// needs its own canonical link (otherwise every page would tell crawlers to treat
+// it as a duplicate of whichever page set it last).
+function setPageMeta(title, description, opts = {}) {
   document.title = title;
+  const { path = location.pathname, keywords = SITE_KEYWORDS, image = SITE_IMAGE, noindex = false } = opts;
+  const url = `${SITE_URL}${path}`;
+
   const metaDesc = document.querySelector('meta[name="description"]');
   if (metaDesc) metaDesc.setAttribute("content", description);
+
+  const metaKeywords = document.querySelector('meta[name="keywords"]');
+  if (metaKeywords) metaKeywords.setAttribute("content", keywords);
+
+  const metaRobots = document.querySelector('meta[name="robots"]');
+  if (metaRobots) metaRobots.setAttribute("content", noindex ? "noindex, nofollow" : SITE_ROBOTS);
+
+  const canonical = document.querySelector('link[rel="canonical"]');
+  if (canonical) canonical.setAttribute("href", url);
+
+  const ogTitle = document.querySelector('meta[property="og:title"]');
+  if (ogTitle) ogTitle.setAttribute("content", title);
+  const ogDesc = document.querySelector('meta[property="og:description"]');
+  if (ogDesc) ogDesc.setAttribute("content", description);
+  const ogUrl = document.querySelector('meta[property="og:url"]');
+  if (ogUrl) ogUrl.setAttribute("content", url);
+  const ogImage = document.querySelector('meta[property="og:image"]');
+  if (ogImage) ogImage.setAttribute("content", image);
+
+  const twTitle = document.querySelector('meta[name="twitter:title"]');
+  if (twTitle) twTitle.setAttribute("content", title);
+  const twDesc = document.querySelector('meta[name="twitter:description"]');
+  if (twDesc) twDesc.setAttribute("content", description);
 }
 
 function resetProductJsonLd() {
@@ -54,19 +98,39 @@ function resetProductJsonLd() {
   if (script) script.textContent = "{}";
 }
 
+// Shown for any path that isn't a known route or resolves to no real product (e.g. a
+// stale/mistyped Messenger ref link or product URL) — keeps a wrong URL from either
+// silently rendering the wrong product or looking identical to the homepage. `noindex`
+// keeps it out of search results even though the server still returns 200 for it (see
+// _redirects — Netlify has no server-side routing to return a real 404 status from).
+function renderNotFound(path) {
+  routes.notfound.classList.add("active");
+  setPageMeta(
+    "Page Not Found — Hayatiq",
+    "The page you're looking for doesn't exist or may have moved.",
+    { path, noindex: true }
+  );
+  resetProductJsonLd();
+}
+
 function navigate() {
-  const hash = location.hash || "#/";
+  const path = location.pathname.replace(/\/+$/, "") || "/";
+  const search = location.search;
   Object.values(routes).forEach((v) => v.classList.remove("active"));
 
-  if (hash.startsWith("#/product/")) {
-        routes.detail.classList.add("active");
-        const id = hash.split("/")[2];
-        const product = PRODUCTS.find(p => p.id === id);
-        trackProductView(id, product?.name);
-        renderDetail(id);
-  } else if (hash.startsWith("#/products")) {
+  if (path.startsWith("/product/")) {
+        const slugOrId = decodeURIComponent(path.slice("/product/".length));
+        const product = PRODUCTS.find((p) => p.slug === slugOrId) || PRODUCTS.find((p) => p.id === slugOrId);
+        if (!product) {
+          renderNotFound(path);
+        } else {
+          routes.detail.classList.add("active");
+          trackProductView(product.id, product.name);
+          renderDetail(product.id);
+        }
+  } else if (path.startsWith("/products")) {
     routes.products.classList.add("active");
-    const params = new URLSearchParams(hash.split("?")[1] || "");
+    const params = new URLSearchParams(search);
     const cat = params.get("cat");
     const concern = params.get("concern");
     renderProducts(cat, concern);
@@ -74,56 +138,82 @@ function navigate() {
     const topic = concern || cat;
     setPageMeta(
       `${topic ? topic + " " : ""}Products — Hayatiq`,
-      `Shop ${topic ? topic.toLowerCase() + " " : ""}products from Hayatiq — handcrafted natural wellness essentials.`
+      `Shop ${topic ? topic.toLowerCase() + " " : ""}products from Hayatiq — handcrafted natural wellness essentials.`,
+      { path: "/products" + search }
     );
     resetProductJsonLd();
-  } else if (hash === "#/categories") {
+  } else if (path === "/categories") {
     routes.categories.classList.add("active");
-    setPageMeta("Shop by Category — Hayatiq", "Browse Hayatiq's Hair Care, Magnesium Oil Spray, Salves & Balms, Bath Bombs, Footsoaks, Oral Care, and Cleaning Supply product categories.");
+    setPageMeta("Shop by Category — Hayatiq", "Browse Hayatiq's Hair Care, Magnesium Oil Spray, Salves & Balms, Bath Bombs, Footsoaks, Oral Care, and Cleaning Supply product categories.", { path: "/categories" });
     resetProductJsonLd();
-  } else if (hash === "#/contact") {
+  } else if (path === "/contact") {
     routes.contact.classList.add("active");
-    setPageMeta("Contact Us — Hayatiq", "Get in touch with Hayatiq for questions about our handcrafted natural wellness products.");
+    setPageMeta("Contact Us — Hayatiq", "Get in touch with Hayatiq for questions about our handcrafted natural wellness products.", { path: "/contact" });
     resetProductJsonLd();
-  } else if (hash === "#/about") {
+  } else if (path === "/about") {
     routes.about.classList.add("active");
-    setPageMeta("Our Story — Hayatiq", "Learn about Hayatiq's story — handmade natural wellness products crafted with intention.");
+    setPageMeta("Our Story — Hayatiq", "Learn about Hayatiq's story — handmade natural wellness products crafted with intention.", { path: "/about" });
     resetProductJsonLd();
-  } else if (hash === "#/cart") {
+  } else if (path === "/cart") {
     routes.cart.classList.add("active");
     renderCart();
-    setPageMeta("Your Cart — Hayatiq", "Review the items in your Hayatiq shopping cart.");
+    setPageMeta("Your Cart — Hayatiq", "Review the items in your Hayatiq shopping cart.", { path: "/cart" });
     resetProductJsonLd();
-  } else if (hash === "#/checkout") {
+  } else if (path === "/checkout") {
     routes.checkout.classList.add("active");
     initCheckout();
-    setPageMeta("Checkout — Hayatiq", "Complete your Hayatiq order — cash on delivery available across Bangladesh.");
+    setPageMeta("Checkout — Hayatiq", "Complete your Hayatiq order — cash on delivery available across Bangladesh.", { path: "/checkout" });
     resetProductJsonLd();
-  } else if (hash === "#/wishlist") {
+  } else if (path === "/wishlist") {
     routes.wishlist.classList.add("active");
     renderWishlist();
-    setPageMeta("Your Wishlist — Hayatiq", "Products you've saved from Hayatiq's natural wellness collection.");
+    setPageMeta("Your Wishlist — Hayatiq", "Products you've saved from Hayatiq's natural wellness collection.", { path: "/wishlist" });
     resetProductJsonLd();
-  } else {
+  } else if (path === "/") {
     routes.home.classList.add("active");
     renderTopProducts();
     renderFeatured();
     renderTestimonials();
     setPageMeta(
       "Hayatiq — Handcrafted with Intention",
-      "Hayatiq - Handcrafted natural wellness products. Magnesium oil spray, hair care, salves & balms, bath bombs, footsoaks, oral care, and non-toxic cleaning supplies made with intention in Bangladesh."
+      "Hayatiq - Handcrafted natural wellness products. Magnesium oil spray, hair care, salves & balms, bath bombs, footsoaks, oral care, and non-toxic cleaning supplies made with intention in Bangladesh.",
+      { path: "/" }
     );
     resetProductJsonLd();
+  } else {
+    renderNotFound(path);
   }
-  setActiveNav(hash);
+  setActiveNav(path);
   updateFloatingCartButton();
   // Start each route at the top instead of wherever the previous view left off scrolled.
   window.scrollTo(0, 0);
   // Move focus for accessibility (preventScroll so it doesn't fight the scrollTo above)
   document.getElementById("app").focus({ preventScroll: true });
+  // Lets visitor.js (and anything else) react to a route change without caring
+  // whether it came from a link click, browser back/forward, or the initial load.
+  window.dispatchEvent(new CustomEvent("route-changed"));
 }
 
-window.addEventListener("hashchange", navigate);
+// A real path means a plain <a href="/products"> click would trigger a full page
+// reload by default — intercept same-origin path clicks and drive them through
+// the router instead. Hash-only anchors (e.g. the carousel's "#topProductsGrid"
+// scroll target) and external/new-tab/download links are left to the browser.
+document.addEventListener("click", (e) => {
+  if (e.defaultPrevented || e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
+  const a = e.target.closest("a");
+  if (!a) return;
+  const href = a.getAttribute("href");
+  if (!href || !href.startsWith("/") || a.target === "_blank" || a.hasAttribute("download")) return;
+  e.preventDefault();
+  goTo(href);
+});
+
+function goTo(path) {
+  if (location.pathname + location.search !== path) history.pushState(null, "", path);
+  navigate();
+}
+
+window.addEventListener("popstate", navigate);
 
 /* ==============================
        Site-wide testimonials (Customer Love)
@@ -254,7 +344,7 @@ function productCard(p, opts = {}) {
 
   return `
       <article class="${cardClass}" aria-label="${p.name}">
-        <a href="#/product/${p.id}">
+        <a href="/product/${p.slug}">
           <div class="product-media">
             <img loading="lazy" src="${display.images[0]}" alt="${p.name}">
             ${isComingSoon ? `<div class="coming-soon-overlay">
@@ -319,8 +409,8 @@ function needTileLiveCount(tile) {
 }
 function needTileHref(tile) {
   return tile.category
-    ? `#/products?cat=${encodeURIComponent(tile.category)}`
-    : `#/products?concern=${encodeURIComponent(tile.concern)}`;
+    ? `/products?cat=${encodeURIComponent(tile.category)}`
+    : `/products?concern=${encodeURIComponent(tile.concern)}`;
 }
 
 function renderNeedTiles() {
@@ -388,7 +478,7 @@ function setupProductFilters() {
   if (!categoryFilter) return;
 
   const updateFilters = () => {
-    const params = new URLSearchParams(location.hash.split("?")[1] || "");
+    const params = new URLSearchParams(location.search);
     const category = params.get("cat");
     const concern = params.get("concern");
     categoryFilter.value = category || "";
@@ -398,9 +488,9 @@ function setupProductFilters() {
   categoryFilter.addEventListener("change", () => {
     const selectedCategory = categoryFilter.value;
     if (selectedCategory) {
-      window.location.hash = `#/products?cat=${encodeURIComponent(selectedCategory)}`;
+      goTo(`/products?cat=${encodeURIComponent(selectedCategory)}`);
     } else {
-      window.location.hash = "#/products";
+      goTo("/products");
     }
   });
 
@@ -444,7 +534,15 @@ function renderDetail(id, variantId = null) {
   const reviews = p.reviews || [];
   const avg = averageRating(reviews);
 
-  setPageMeta(`${p.name} — Hayatiq`, p.short || `${p.name} — handcrafted natural wellness from Hayatiq.`);
+  setPageMeta(
+    p.seoTitle || `${p.name} — Hayatiq`,
+    p.short || `${p.name} — handcrafted natural wellness from Hayatiq.`,
+    {
+      path: `/product/${p.slug}`,
+      keywords: p.metaKeywords,
+      image: display.images[0] ? `${SITE_URL}${display.images[0].replace(/^\./, "")}` : undefined,
+    }
+  );
   const jsonLdScript = document.getElementById("productJsonLd");
   if (jsonLdScript) {
     jsonLdScript.textContent = JSON.stringify({
@@ -480,7 +578,7 @@ function renderDetail(id, variantId = null) {
         <h2>${p.name}</h2>
         <div style="font-size:1.2rem; color:var(--color-earth); margin:1rem 0; font-weight:600;">Coming Soon</div>
         <p class="muted">This product will be available shortly. Check back soon!</p>
-        <a class="btn button-primary" href="#/products" style="margin-top:1.5rem;">Back to Products</a>
+        <a class="btn button-primary" href="/products" style="margin-top:1.5rem;">Back to Products</a>
       </div>
     `;
     return;
@@ -546,7 +644,7 @@ function renderDetail(id, variantId = null) {
           <div class="accordion-group">
             ${p.how && p.how.length ? `<details class="accordion-item" open>
               <summary>How to Use</summary>
-              <div class="accordion-panel">${renderHowToUseTags(p.how)}</div>
+              <div class="accordion-panel">${renderHowToUseTags(p.how, p.howToUseNote)}</div>
             </details>` : ''}
             ${p.ingredients && p.ingredients.length ? accordionItem("Ingredients", p.ingredients) : ''}
             ${p.warns && p.warns.length ? accordionItem("Cautions", p.warns) : ''}
@@ -796,8 +894,8 @@ function updateFloatingCartButton() {
   countEl.textContent = count;
   totalEl.textContent = money(total);
 
-  const hash = location.hash || "#/";
-  const onCartOrCheckout = hash.startsWith("#/cart") || hash.startsWith("#/checkout");
+  const path = location.pathname;
+  const onCartOrCheckout = path.startsWith("/cart") || path.startsWith("/checkout");
   btn.classList.toggle("hidden", onCartOrCheckout);
 }
 
@@ -964,9 +1062,9 @@ function closeImageLightbox() {
   modal.setAttribute("aria-hidden", "true");
   document.body.classList.remove("drawer-open");
 }
-  function renderHowToUseTags(howToUseItems) {
+  function renderHowToUseTags(howToUseItems, note) {
     if (!howToUseItems || howToUseItems.length === 0) return '';
-    
+
     return `
       <div class="how-to-use-container">
         <div class="how-to-use-tabs">
@@ -976,7 +1074,7 @@ function closeImageLightbox() {
           }).join('')}
         </div>
         <div class="how-to-use-content">
-        <div class="how-to-use-point" style="margin-bottom:-4px;">Shake well before Use</div>
+        ${note ? `<div class="how-to-use-point" style="margin-bottom:-4px;">${note}</div>` : ''}
           ${howToUseItems.map((item, index) => {
             const [tabName, ...contentParts] = item.split(':');
             const content = contentParts.join(':');

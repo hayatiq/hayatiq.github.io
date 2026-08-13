@@ -4,6 +4,12 @@
     <head>
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width,initial-scale=1">
+        <!-- Now that routing uses real paths (e.g. /product/conditioner-bar) instead of
+             hash fragments, every "./"-relative asset reference — this file's own
+             css/script tags, and every image path in products.js — would otherwise
+             resolve against the current route's path instead of the site root. This
+             pins the resolution base to root regardless of how deep the route is. -->
+        <base href="/">
         <!-- SEO Meta Tags -->
         <meta name="description" content="Hayatiq - Handcrafted natural wellness products. Magnesium oil spray, hair care, salves & balms, bath bombs, footsoaks, oral care, and non-toxic cleaning supplies made with intention in Bangladesh.">
         <meta name="keywords" content="natural products, wellness, magnesium oil, hair care, salves and balms, bath bombs, footsoak, oral care, non-toxic cleaning supply, Bangladesh, handmade, natural remedies, magnesium oil spray, magnesium oil price in bd">
@@ -42,18 +48,18 @@
     <body>
         <header class="site-header">
             <div class="container nav">
-                <a href="#/" class="brand" aria-label="Hayatiq Home">
+                <a href="/" class="brand" aria-label="Hayatiq Home">
                 <span class="brand-logo" aria-hidden="true"></span>
                 <span class="brand-name">HAYATIQ</span>
                 </a>
                 <div class="nav-right">
-                <a href="#/wishlist" aria-label="Wishlist" class="wishlist-link">
+                <a href="/wishlist" aria-label="Wishlist" class="wishlist-link">
                     <span class="wishlist-icon-wrap">
                     <i class="fa-solid fa-heart" aria-hidden="true"></i>
                     <span class="wishlist-count" id="wishlistCount">0</span>
                     </span>
                 </a>
-                <a href="#/cart" aria-label="Cart" class="cart-link" onclick="event.preventDefault(); openCartDrawer();">
+                <a href="/cart" aria-label="Cart" class="cart-link" onclick="event.preventDefault(); openCartDrawer();">
                     <span class="cart">
                     <svg width="26" height="26" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
                         <path d="M6 6h15l-2 9H8L6 2H2" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
@@ -71,17 +77,17 @@
                 </button>
                 </div>
                 <nav class="nav-links" id="primaryNav" aria-label="Primary">
-                <a href="#/products" data-link>Products</a>
-                <a href="#/categories" data-link>Categories</a>
-                <a href="#/about" data-link>About</a>
-                <a href="#/contact" data-link>Contact</a>
-                <a href="#/wishlist" aria-label="Wishlist" class="wishlist-link desktop-cart">
+                <a href="/products" data-link>Products</a>
+                <a href="/categories" data-link>Categories</a>
+                <a href="/about" data-link>About</a>
+                <a href="/contact" data-link>Contact</a>
+                <a href="/wishlist" aria-label="Wishlist" class="wishlist-link desktop-cart">
                     <span class="wishlist-icon-wrap">
                     <i class="fa-solid fa-heart" aria-hidden="true"></i>
                     <span class="wishlist-count" id="wishlistCount">0</span>
                     </span>
                 </a>
-                <a href="#/cart" aria-label="Cart" class="desktop-cart" onclick="event.preventDefault(); openCartDrawer();">
+                <a href="/cart" aria-label="Cart" class="desktop-cart" onclick="event.preventDefault(); openCartDrawer();">
                     <span class="cart">
                     <svg width="26" height="26" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
                         <path d="M6 6h15l-2 9H8L6 2H2" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
@@ -141,11 +147,11 @@
                 <section aria-label="Shop Our Products">
                     <div class="section-title">
                         <h2>Shop Our Products</h2>
-                        <a href="#/products" class="button-ghost btn">View All</a>
+                        <a href="/products" class="button-ghost btn">View All</a>
                     </div>
                     <div class="products-grid" id="featuredGrid"></div>
                     <div style="display:flex;justify-content:center;margin-top:2rem;">
-                        <a href="#/products" class="btn button-primary">View More Products</a>
+                        <a href="/products" class="btn button-primary">View More Products</a>
                     </div>
                 </section>
                 <section aria-label="Shop by category" class="category-section">
@@ -153,42 +159,42 @@
                         <h2>Shop by Category</h2>
                     </div>
                     <div class="category-tiles">
-                        <a class="category-tile" href="#/products?cat=Hair%20Care">
+                        <a class="category-tile" href="/products?cat=Hair%20Care">
                             <span class="category-tile-icon" aria-hidden="true"><i class="fa-solid fa-scissors"></i></span>
                             <span>Hair Care</span>
                             <span class="category-status" data-cat="Hair Care"></span>
                         </a>
-                        <a class="category-tile" href="#/products?cat=Magnesium%20Oil%20Spray">
+                        <a class="category-tile" href="/products?cat=Magnesium%20Oil%20Spray">
                             <span class="category-tile-icon" aria-hidden="true"><i class="fa-solid fa-spray-can"></i></span>
                             <span>Magnesium Oil Spray</span>
                             <span class="category-status" data-cat="Magnesium Oil Spray"></span>
                         </a>
-                        <a class="category-tile" href="#/products?cat=Salves%20%26%20Balms">
+                        <a class="category-tile" href="/products?cat=Salves%20%26%20Balms">
                             <span class="category-tile-icon" aria-hidden="true"><i class="fa-solid fa-mortar-pestle"></i></span>
                             <span>Salves & Balms</span>
                             <span class="category-status" data-cat="Salves & Balms"></span>
                         </a>
-                        <a class="category-tile" href="#/products?cat=Bath%20Bombs">
+                        <a class="category-tile" href="/products?cat=Bath%20Bombs">
                             <span class="category-tile-icon" aria-hidden="true"><i class="fa-solid fa-bath"></i></span>
                             <span>Bath Bombs</span>
                             <span class="category-status" data-cat="Bath Bombs"></span>
                         </a>
-                        <a class="category-tile" href="#/products?cat=Footsoaks">
+                        <a class="category-tile" href="/products?cat=Footsoaks">
                             <span class="category-tile-icon" aria-hidden="true"><i class="fa-solid fa-shoe-prints"></i></span>
                             <span>Footsoaks</span>
                             <span class="category-status" data-cat="Footsoaks"></span>
                         </a>
-                        <a class="category-tile" href="#/products?cat=Oral%20Care">
+                        <a class="category-tile" href="/products?cat=Oral%20Care">
                             <span class="category-tile-icon" aria-hidden="true"><i class="fa-solid fa-tooth"></i></span>
                             <span>Oral Care</span>
                             <span class="category-status" data-cat="Oral Care"></span>
                         </a>
-                        <a class="category-tile" href="#/products?cat=Cleaning%20Supply">
+                        <a class="category-tile" href="/products?cat=Cleaning%20Supply">
                             <span class="category-tile-icon" aria-hidden="true"><i class="fa-solid fa-broom"></i></span>
                             <span>Cleaning Supply</span>
                             <span class="category-status" data-cat="Cleaning Supply"></span>
                         </a>
-                        <a class="category-tile" href="#/products">
+                        <a class="category-tile" href="/products">
                             <span class="category-tile-icon" aria-hidden="true"><i class="fa-solid fa-bag-shopping"></i></span>
                             <span>All Products</span>
                         </a>
@@ -257,7 +263,7 @@
                         </details>
                         <details class="accordion-item">
                             <summary>How do I get in touch if I have a question?</summary>
-                            <div class="accordion-panel"><p>Message us on <a href="https://facebook.com/hayatiq.life" target="_blank" rel="noopener">Facebook</a>, or use the <a href="#/contact">Contact</a> page.</p></div>
+                            <div class="accordion-panel"><p>Message us on <a href="https://facebook.com/hayatiq.life" target="_blank" rel="noopener">Facebook</a>, or use the <a href="/contact">Contact</a> page.</p></div>
                         </details>
                     </div>
                 </section>
@@ -273,7 +279,7 @@
                     <div class="soft-card">
                         <h2>Let’s Talk</h2>
                         <p>Have a question about our blends? We’d love to hear from you.</p>
-                        <a class="btn button-primary" href="#/contact">Contact Us</a>
+                        <a class="btn button-primary" href="/contact">Contact Us</a>
                     </div>
                 </section>
             </section>
@@ -306,7 +312,7 @@
                 </div>
                 <div class="grid" style="grid-template-columns:repeat(1,minmax(0,1fr))">
                     <div class="soft-card category-card">
-                        <a href="#/products?cat=Hair%20Care" class="category-card-link">
+                        <a href="/products?cat=Hair%20Care" class="category-card-link">
                             <span class="icon-img" aria-hidden="true">
                                 <i class="fa-solid fa-scissors"></i>
                             </span>
@@ -318,7 +324,7 @@
                         <span class="category-notify" data-cat="Hair Care" hidden></span>
                     </div>
                     <div class="soft-card category-card">
-                        <a href="#/products?cat=Magnesium%20Oil%20Spray" class="category-card-link">
+                        <a href="/products?cat=Magnesium%20Oil%20Spray" class="category-card-link">
                             <span class="icon-img" aria-hidden="true">
                                 <i class="fa-solid fa-spray-can"></i>
                             </span>
@@ -330,7 +336,7 @@
                         <span class="category-notify" data-cat="Magnesium Oil Spray" hidden></span>
                     </div>
                     <div class="soft-card category-card">
-                        <a href="#/products?cat=Salves%20%26%20Balms" class="category-card-link">
+                        <a href="/products?cat=Salves%20%26%20Balms" class="category-card-link">
                             <span class="icon-img" aria-hidden="true">
                                 <i class="fa-solid fa-mortar-pestle"></i>
                             </span>
@@ -342,7 +348,7 @@
                         <span class="category-notify" data-cat="Salves & Balms" hidden></span>
                     </div>
                     <div class="soft-card category-card">
-                        <a href="#/products?cat=Bath%20Bombs" class="category-card-link">
+                        <a href="/products?cat=Bath%20Bombs" class="category-card-link">
                             <span class="icon-img" aria-hidden="true">
                                 <i class="fa-solid fa-bath"></i>
                             </span>
@@ -354,7 +360,7 @@
                         <span class="category-notify" data-cat="Bath Bombs" hidden></span>
                     </div>
                     <div class="soft-card category-card">
-                        <a href="#/products?cat=Footsoaks" class="category-card-link">
+                        <a href="/products?cat=Footsoaks" class="category-card-link">
                             <span class="icon-img" aria-hidden="true">
                                 <i class="fa-solid fa-shoe-prints"></i>
                             </span>
@@ -366,7 +372,7 @@
                         <span class="category-notify" data-cat="Footsoaks" hidden></span>
                     </div>
                     <div class="soft-card category-card">
-                        <a href="#/products?cat=Oral%20Care" class="category-card-link">
+                        <a href="/products?cat=Oral%20Care" class="category-card-link">
                             <span class="icon-img" aria-hidden="true">
                                 <i class="fa-solid fa-tooth"></i>
                             </span>
@@ -378,7 +384,7 @@
                         <span class="category-notify" data-cat="Oral Care" hidden></span>
                     </div>
                     <div class="soft-card category-card">
-                        <a href="#/products?cat=Cleaning%20Supply" class="category-card-link">
+                        <a href="/products?cat=Cleaning%20Supply" class="category-card-link">
                             <span class="icon-img" aria-hidden="true">
                                 <i class="fa-solid fa-broom"></i>
                             </span>
@@ -440,7 +446,7 @@
                     </div>
                     <div style="margin-top:.8rem;display:flex;gap:.6rem;flex-wrap:wrap">
                         <button class="btn button-ghost" onclick="clearCart()">Clear Cart</button>
-                        <a class="btn button-primary" href="#/checkout">Checkout</a>
+                        <a class="btn button-primary" href="/checkout">Checkout</a>
                     </div>
                     <p class="messenger-hint">Need help before you order? <a href="https://m.me/hayatiq.life?ref=cart-help" target="_blank" rel="noopener"><i class="fa-brands fa-facebook-messenger" aria-hidden="true"></i> Chat with us</a></p>
                 </div>
@@ -520,6 +526,15 @@
                     </form>
                 </div>
             </section>
+            <section id="view-notfound" class="view" aria-label="Page Not Found">
+                <div class="coming-soon-container">
+                    <div style="font-size:3rem;">🧭</div>
+                    <h2>Page Not Found</h2>
+                    <p class="muted">We couldn't find the page you're looking for. It may have moved, or the link might be out of date.</p>
+                    <a class="btn button-primary" href="/" style="margin-top:1rem;">Back to Home</a>
+                    <p class="messenger-hint" style="margin-top:1rem;">Looking for something specific? <a href="https://m.me/hayatiq.life?ref=page-not-found" target="_blank" rel="noopener"><i class="fa-brands fa-facebook-messenger" aria-hidden="true"></i> Ask us on Messenger</a></p>
+                </div>
+            </section>
         </main>
         <footer>
             <div class="container footer-grid">
@@ -533,9 +548,9 @@
                 <div class="footer-col">
                     <strong>Explore</strong>
                     <div style="display:grid;margin-top:.4rem;gap:.3rem">
-                        <a href="#/about">About</a>
-                        <a href="#/products">Products</a>
-                        <a href="#/categories">Categories</a>
+                        <a href="/about">About</a>
+                        <a href="/products">Products</a>
+                        <a href="/categories">Categories</a>
                     </div>
                 </div>
                 <div class="footer-col">
@@ -576,8 +591,8 @@
                     <strong id="drawerCartTotal">৳0.00</strong>
                 </div>
                 <div class="cart-drawer-actions">
-                    <a href="#/cart" class="btn button-ghost" onclick="closeCartDrawer()">View Full Cart</a>
-                    <a href="#/checkout" class="btn button-primary" onclick="closeCartDrawer()">Checkout</a>
+                    <a href="/cart" class="btn button-ghost" onclick="closeCartDrawer()">View Full Cart</a>
+                    <a href="/checkout" class="btn button-primary" onclick="closeCartDrawer()">Checkout</a>
                 </div>
                 <p class="messenger-hint">Need help before you order? <a href="https://m.me/hayatiq.life?ref=cart-help" target="_blank" rel="noopener"><i class="fa-brands fa-facebook-messenger" aria-hidden="true"></i> Chat with us</a></p>
             </div>

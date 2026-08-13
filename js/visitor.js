@@ -509,10 +509,12 @@ function setupExitTracking() {
   });
 }
 
-// Track page views and time spent
-window.addEventListener("hashchange", () => {
-  const currentView = location.hash.split("/")[1] || "home";
-  const params = new URLSearchParams(location.hash.split("?")[1] || "");
+// Track page views and time spent. Dispatched by navigate() in script.js on every
+// route change (link click, back/forward, or initial load) — plain "hashchange"
+// stopped firing once routing moved to real paths via the History API.
+window.addEventListener("route-changed", () => {
+  const currentView = location.pathname.split("/")[1] || "home";
+  const params = new URLSearchParams(location.search);
 
   // Track the page view
   trackPageView(currentView);
