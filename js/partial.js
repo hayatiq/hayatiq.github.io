@@ -17,6 +17,19 @@ function submitFormWithFallback(form, type = "checkout") {
   const config = FORMSUBMIT_CONFIG[type] || FORMSUBMIT_CONFIG.checkout;
   const formData = new FormData(form);
 
+  // Set unique, informative subject line so email apps don't group orders and each triggers a notification
+  if (type === "checkout") {
+    const nameInput = document.getElementById("checkoutName");
+    const name = nameInput && nameInput.value.trim() ? nameInput.value.trim() : "Customer";
+    const totalData = document.getElementById("totalData");
+    const total = totalData ? parseFloat(totalData.value) || 0 : 0;
+    formData.set("_subject", `You have an order from ${name} - Amount: ৳${total.toFixed(2)}`);
+  } else if (type === "contact") {
+    const nameInput = document.getElementById("name");
+    const name = nameInput && nameInput.value.trim() ? nameInput.value.trim() : "Visitor";
+    formData.set("_subject", `New Message from ${name}`);
+  }
+
   const requests = config.recipients.map((email) => {
     return axios.post(`https://formsubmit.co/ajax/${email}`, formData).catch((error) => {
       if (error.response?.status !== 429) throw error;
