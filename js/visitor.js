@@ -411,6 +411,7 @@ function sendVisitEmail(sessionData) {
     location.hostname === "localhost" ||
     location.hostname === "127.0.0.1" ||
     location.hostname === "" ||
+    location.hostname.includes("ngrok") ||
     location.protocol === "file:";
 
   if (isDev) {

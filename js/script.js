@@ -305,6 +305,7 @@ function selectedVariant(p, variantId) {
 }
 
 function variantIdFor(p, variantId) {
+  if (p.attributes) return variantId || null;
   return p.variants ? selectedVariant(p, variantId).id : null;
 }
 
@@ -356,10 +357,10 @@ function productCard(p, opts = {}) {
           </div>
           <div class="product-body">
             <div class="product-name">${p.name}</div>
-             ${p.variants ? `<div class="product-subtitle">${p.variants.length} variants · ${display.label || display.subtitle}</div>` : (p.subtitle ? `<div class="product-subtitle">${p.subtitle}</div>` : '')}
+             ${p.attributes ? `<div class="product-subtitle">${p.subtitle}</div>` : (p.variants ? `<div class="product-subtitle">${p.variants.length} variants · ${display.label || display.subtitle}</div>` : (p.subtitle ? `<div class="product-subtitle">${p.subtitle}</div>` : ''))}
             <div class="product-footer">
                <div class="product-price">${money(display.price)}</div>
-               ${!isComingSoon ? `<button class="btn-icon-add" aria-label="Add ${p.name} to cart" onclick="event.preventDefault(); event.stopPropagation(); addToCart('${p.id}', '${selectedId || ''}'); animateCartToCart(this);"><i class="fa-solid fa-cart-plus"></i></button>` : ''}
+               ${!isComingSoon ? `<button class="btn-icon-add" aria-label="${p.attributes ? 'Choose options for' : 'Add'} ${p.name} to cart" onclick="event.preventDefault(); event.stopPropagation(); ${p.attributes ? `goTo('/product/${p.slug}');` : `addToCart('${p.id}', '${selectedId || ''}'); animateCartToCart(this);`}"><i class="fa-solid ${p.attributes ? 'fa-sliders' : 'fa-cart-plus'}"></i></button>` : ''}
             </div>
           </div>
         </a>
@@ -525,14 +526,181 @@ function stars(n) {
   return html;
 }
 
+/* ==============================
+       Generic Product Attributes & Price Matrix System
+       ============================== */
+let activeProductSelections = {};
+
+function isAttributeVisible(attr, selections) {
+  if (!attr || !attr.showIf) return true;
+  return Object.entries(attr.showIf).every(([k, v]) => selections[k] === v);
+}
+
+function initProductAttributeSelections(p) {
+  if (!p.attributes) return {};
+  if (!activeProductSelections[p.id]) {
+    const defaults = { ...(p.defaultSelections || {}) };
+    p.attributes.forEach((attr) => {
+      if (!defaults[attr.id]) {
+        const firstChoice = attr.choices[0];
+        defaults[attr.id] = typeof firstChoice === "object" ? firstChoice.label : firstChoice;
+      }
+    });
+    activeProductSelections[p.id] = defaults;
+  }
+  return activeProductSelections[p.id];
+}
+
+function getProductPrice(p, selections) {
+  if (!p.priceMatrix || !selections) return p.price;
+  // Sort rules by specificity (more criteria matched first)
+  const rules = Object.entries(p.priceMatrix).sort((a, b) => {
+    const criteriaA = a[0].split("|").length;
+    const criteriaB = b[0].split("|").length;
+    return criteriaB - criteriaA;
+  });
+  for (const [rule, price] of rules) {
+    const conditions = rule.split("|").map((c) => c.trim().split(":"));
+    const isMatch = conditions.every(([attrId, val]) => {
+      const attr = p.attributes ? p.attributes.find((a) => a.id === attrId) : null;
+      if (attr && !isAttributeVisible(attr, selections)) return false;
+      return selections[attrId] === val;
+    });
+    if (isMatch) return price;
+  }
+  return p.price;
+}
+
+function formatAttributeSelections(p, selections) {
+  if (!p.attributes || !selections) return p.subtitle || "";
+  const parts = [];
+  p.attributes.forEach((attr) => {
+    if (!isAttributeVisible(attr, selections)) return;
+    const val = selections[attr.id];
+    if (!val) return;
+    if (attr.id === "styleType") return;
+    if (attr.id === "colorLayer") {
+      const colorVal = selections.color;
+      parts.push(`Color: ${val}${colorVal ? ` (${colorVal})` : ""}`);
+    } else if (attr.id === "color") {
+      if (!selections.colorLayer) parts.push(`Color: ${val}`);
+    } else if (attr.id === "botanical") {
+      parts.push(`Botanical: ${val}`);
+    } else {
+      parts.push(val);
+    }
+  });
+  if (!selections.size) {
+    const weightMatch = (p.subtitle || "").match(/\d+(?:g|ml|kg)\+?/i);
+    if (weightMatch) parts.push(weightMatch[0]);
+  }
+  return parts.join(" · ");
+}
+
+function attributeSelectionsKey(p, selections) {
+  if (!selections) return "";
+  const visible = p && p.attributes
+    ? p.attributes.filter((attr) => isAttributeVisible(attr, selections)).map((attr) => [attr.id, selections[attr.id]])
+    : Object.entries(selections);
+  return visible
+    .map(([k, v]) => `${k}-${v}`)
+    .join("_")
+    .toLowerCase()
+    .replace(/\s+/g, "-");
+}
+
+function getVisibleAttributeSelections(p, selections) {
+  if (!p || !p.attributes || !selections) return selections || {};
+  const visible = {};
+  p.attributes.forEach((attr) => {
+    if (isAttributeVisible(attr, selections)) {
+      visible[attr.id] = selections[attr.id];
+    }
+  });
+  return visible;
+}
+
+function setProductAttributeSelection(productId, attrId, value) {
+  const p = PRODUCTS.find((x) => x.id === productId);
+  if (!p || !p.attributes) return;
+  const current = initProductAttributeSelections(p);
+  current[attrId] = value;
+  renderDetail(productId);
+}
+
+function addAttributeProductToCart(productId, sourceBtn) {
+  const p = PRODUCTS.find((x) => x.id === productId);
+  if (!p || !p.attributes) return;
+  const rawSelections = initProductAttributeSelections(p);
+  const selections = getVisibleAttributeSelections(p, rawSelections);
+  const key = attributeSelectionsKey(p, selections);
+  addToCart(productId, key, null, true, selections);
+  toast(`${p.name} (${formatAttributeSelections(p, selections)}) added to cart`);
+  if (sourceBtn && typeof animateCartToCart === "function") {
+    animateCartToCart(sourceBtn);
+  }
+}
+
 function renderDetail(id, variantId = null) {
   const p = PRODUCTS.find((x) => x.id === id) || PRODUCTS[0];
+  const isGenericCustom = Boolean(p.attributes);
   const variant = selectedVariant(p, variantId);
   const display = productDisplay(p, variant.id);
   const selectedId = variantIdFor(p, variant.id);
   const isComingSoon = typeof display.price === 'string' && display.price.toLowerCase().includes('coming soon');
   const reviews = p.reviews || [];
   const avg = averageRating(reviews);
+
+  let currentSelections = null;
+  let customAttributesHTML = "";
+  let finalPrice = display.price;
+  let finalSubtitle = display.subtitle;
+
+  if (isGenericCustom) {
+    currentSelections = initProductAttributeSelections(p);
+    finalPrice = getProductPrice(p, currentSelections);
+    finalSubtitle = formatAttributeSelections(p, currentSelections);
+
+    customAttributesHTML = `
+      <div class="custom-options-wrap" role="group" aria-label="Customize ${p.name}">
+        ${p.attributes.filter((attr) => isAttributeVisible(attr, currentSelections)).map((attr) => {
+          const selectedVal = currentSelections[attr.id];
+          const isTab = attr.id === 'styleType';
+
+          if (isTab) {
+            return `
+              <div class="custom-option-group">
+                <div class="custom-option-label">${attr.label}: <span class="selected-value">${selectedVal}</span></div>
+                <div class="style-type-tabs">
+                  ${attr.choices.map((choice) => `
+                    <button type="button" class="style-type-tab${choice === selectedVal ? ' active' : ''}" onclick="setProductAttributeSelection('${p.id}', '${attr.id}', '${choice}')">${choice}</button>
+                  `).join('')}
+                </div>
+              </div>
+            `;
+          }
+
+          return `
+            <div class="custom-option-group">
+              <div class="custom-option-label">${attr.label}: <span class="selected-value">${selectedVal}</span></div>
+              <div class="custom-option-pills">
+                ${attr.choices.map((choice) => {
+                  const choiceLabel = typeof choice === 'object' ? choice.label : choice;
+                  const isSelected = choiceLabel === selectedVal;
+                  const previewSelections = { ...currentSelections, [attr.id]: choiceLabel };
+                  const previewPrice = getProductPrice(p, previewSelections);
+                  const priceBadge = previewPrice !== p.price ? `<span class="pill-price-badge">৳${previewPrice}</span>` : '';
+                  return `
+                    <button type="button" class="variant-badge${isSelected ? ' active' : ''}" onclick="setProductAttributeSelection('${p.id}', '${attr.id}', '${choiceLabel}')">${choiceLabel}${priceBadge}</button>
+                  `;
+                }).join('')}
+              </div>
+            </div>
+          `;
+        }).join('')}
+      </div>
+    `;
+  }
 
   setPageMeta(
     p.seoTitle || `${p.name} — Hayatiq`,
@@ -584,7 +752,17 @@ function renderDetail(id, variantId = null) {
     return;
   }
   
-  const [main] = display.images;
+  let activeImageIndex = 0;
+  const existingThumbs = document.querySelectorAll("#thumbs img");
+  if (existingThumbs.length) {
+    existingThumbs.forEach((t, i) => {
+      if (t.classList.contains("active")) activeImageIndex = i;
+    });
+  }
+  const main = display.images[activeImageIndex] || display.images[0];
+
+  const openAccordions = Array.from(document.querySelectorAll("#detailWrap details[open] summary")).map((s) => s.textContent.trim());
+
   detailWrap.innerHTML = `
         <div class="gallery">
           <div class="gallery-main"><img id="mainImg" src="${main}" fetchpriority="high" alt="${
@@ -595,7 +773,7 @@ function renderDetail(id, variantId = null) {
               .map(
                 (src, i) =>
                   `<img loading="lazy" src="${src}" alt="${p.name} ${i + 1}" class="${
-                    i === 0 ? "active" : ""
+                    i === activeImageIndex ? "active" : ""
                   }" data-src="${src}">`
               )
               .join("")}
@@ -604,15 +782,16 @@ function renderDetail(id, variantId = null) {
         <div style="display:grid; gap:.8rem;">
           <div>
             <h2 style="margin-bottom:.2rem;">${p.name}${p.variants && display.label ? ` ${display.label}` : ""}</h2>
-             ${p.variants ? `<div class="variant-picker" role="group" aria-label="Choose ${p.name} option">
+            ${isGenericCustom ? `<span class="product-subtitle-detail">${finalSubtitle}</span>` : (p.variants ? `<div class="variant-picker" role="group" aria-label="Choose ${p.name} option">
                  <span>Choose an option</span>
                  <div class="variant-badges">
                    ${p.variants.map((v) => `<button type="button" class="variant-badge${v.id === selectedId ? " active" : ""}" aria-pressed="${v.id === selectedId}" onclick="chooseProductVariant('${p.id}', '${v.id}', '${v.label || v.subtitle}')">${v.label || v.subtitle}</button>`).join("")}
                  </div>
-               </div>` : (p.subtitle ? `<span class="product-subtitle-detail">${p.subtitle}</span>` : '')}
-             ${p.variants ? `<span class="product-subtitle-detail">${display.subtitle}</span>` : ""}
-             <div class="product-price" style="font-size:1.1rem;">${money(
-               display.price
+               </div>` : (p.subtitle ? `<span class="product-subtitle-detail">${p.subtitle}</span>` : ''))}
+            ${p.variants && !isGenericCustom ? `<span class="product-subtitle-detail">${display.subtitle}</span>` : ""}
+            ${customAttributesHTML}
+            <div class="product-price" style="font-size:1.1rem;">${money(
+               finalPrice
             )}</div>
             <p class="muted">${p.short}</p>
             ${
@@ -626,7 +805,10 @@ function renderDetail(id, variantId = null) {
             }
           </div>
           <div class="detail-actions">
-             <button class="btn button-primary" onclick="event.preventDefault(); addToCart('${p.id}', '${selectedId || ''}'); animateCartToCart(this);">Add to Cart</button>
+             ${isGenericCustom
+               ? `<button class="btn button-primary" onclick="event.preventDefault(); addAttributeProductToCart('${p.id}', this);">Add to Cart</button>`
+               : `<button class="btn button-primary" onclick="event.preventDefault(); addToCart('${p.id}', '${selectedId || ''}'); animateCartToCart(this);">Add to Cart</button>`
+             }
             <a class="btn button-ghost" href="https://m.me/hayatiq.life?ref=${p.slug}" target="_blank" rel="noopener"><i class="fa-brands fa-facebook-messenger"></i> Ask a Question</a>
             <button class="wishlist-toggle wishlist-toggle-inline ${isWishlisted(p.id) ? 'active' : ''}" data-id="${p.id}" aria-label="Add to wishlist" onclick="event.preventDefault(); toggleWishlist('${p.id}');"><i class="fa-solid fa-heart"></i></button>
           </div>
@@ -646,10 +828,10 @@ function renderDetail(id, variantId = null) {
               <summary>How to Use</summary>
               <div class="accordion-panel">${renderHowToUseTags(p.how, p.howToUseNote)}</div>
             </details>` : ''}
-            ${p.ingredients && p.ingredients.length ? accordionItem("Ingredients", p.ingredients) : ''}
-            ${p.warns && p.warns.length ? accordionItem("Cautions", p.warns) : ''}
-            ${p.tips && p.tips.length ? accordionItem("For Optimal Benefits", p.tips) : ''}
-            ${p.storage && p.storage.length ? accordionItem("Storage", p.storage) : ''}
+            ${p.ingredients && p.ingredients.length ? accordionItem("Ingredients", p.ingredients, { open: openAccordions.includes("Ingredients") }) : ''}
+            ${p.warns && p.warns.length ? accordionItem("Cautions", p.warns, { open: openAccordions.includes("Cautions") }) : ''}
+            ${p.tips && p.tips.length ? accordionItem("For Optimal Benefits", p.tips, { open: openAccordions.includes("For Optimal Benefits") }) : ''}
+            ${p.storage && p.storage.length ? accordionItem("Storage", p.storage, { open: openAccordions.includes("Storage") }) : ''}
           </div>
 
           <div class="soft-card">
@@ -739,15 +921,32 @@ function setCart(list) {
 function cartProduct(row) {
   const p = PRODUCTS.find((x) => x.id === row.id);
   if (!p) return null;
+  if (p.attributes) {
+    const selections = row.selections || initProductAttributeSelections(p);
+    const price = getProductPrice(p, selections);
+    const subtitle = formatAttributeSelections(p, selections);
+    return {
+      p,
+      variant: { id: row.variantId || attributeSelectionsKey(p, selections), label: subtitle },
+      display: {
+        ...p,
+        price,
+        subtitle,
+        name: p.name,
+        images: p.images,
+      },
+    };
+  }
   const variant = selectedVariant(p, row.variantId);
   return { p, variant, display: productDisplay(p, variant.id) };
 }
 
 function cartRowVariantId(row, p) {
+  if (p.attributes) return row.variantId || null;
   return p.variants ? (row.variantId || selectedVariant(p).id) : null;
 }
 
-function addToCart(id, variantId = null, redirect = null, showToast = true) {
+function addToCart(id, variantId = null, redirect = null, showToast = true, selections = null) {
   const cart = getCart();
   const p = PRODUCTS.find((x) => x.id === id);
   if (!p) return;
@@ -760,11 +959,21 @@ function addToCart(id, variantId = null, redirect = null, showToast = true) {
     }
     item.qty += 1;
   }
-  else cart.push({ id, ...(resolvedVariantId ? { variantId: resolvedVariantId } : {}), qty: 1 });
+  else cart.push({
+    id,
+    ...(resolvedVariantId ? { variantId: resolvedVariantId } : {}),
+    ...(selections ? { selections } : {}),
+    qty: 1
+  });
   setCart(cart);
   if (redirect) {
     // No drawer on this path — the toast is the only add-to-cart confirmation shown.
-    showToast && toast(`${p.name}${resolvedVariantId ? ` (${selectedVariant(p, resolvedVariantId).label || selectedVariant(p, resolvedVariantId).subtitle})` : ""} added to cart`);
+    const label = p.attributes && selections
+      ? ` (${formatAttributeSelections(p, selections)})`
+      : resolvedVariantId && p.variants
+      ? ` (${selectedVariant(p, resolvedVariantId).label || selectedVariant(p, resolvedVariantId).subtitle})`
+      : "";
+    showToast && toast(`${p.name}${label} added to cart`);
     setTimeout(() => {
       window.location.href = redirect;
     }, 1500);
@@ -808,6 +1017,10 @@ function removeFromCart(id, variantId = null) {
   const resolvedVariantId = variantIdFor(p, variantId);
   setCart(getCart().filter((i) => {
     if (i.id !== id) return true;
+    if (p.attributes) {
+      if (!resolvedVariantId) return false;
+      return (i.variantId || null) !== resolvedVariantId;
+    }
     return p.variants && cartRowVariantId(i, p) !== resolvedVariantId;
   }));
 }
@@ -931,9 +1144,9 @@ function decQty(id, variantId = null) {
 function qtyControlsHTML(id, variantId, qty) {
   const variantArg = variantId || "";
   return `<div class="qty" aria-label="Quantity controls">
-      <button onclick="decQty('${id}', '${variantArg}')" aria-label="Decrease quantity">−</button>
+      <button type="button" onclick="decQty('${id}', '${variantArg}')" aria-label="Decrease quantity">−</button>
       <input type="number" min="1" max="99" value="${qty}" onchange="updateQty('${id}', '${variantArg}', this.value)" />
-      <button onclick="incQty('${id}', '${variantArg}')" aria-label="Increase quantity">+</button>
+      <button type="button" onclick="incQty('${id}', '${variantArg}')" aria-label="Increase quantity">+</button>
     </div>`;
 }
 
@@ -947,13 +1160,16 @@ function cartRowHTML(row, p) {
   }
   const { display, variant } = cartItem;
   // Keep the stored variant ID so stale variants can still be removed.
-  const variantId = p.variants ? (row.variantId || variant.id) : "";
+  const variantId = p?.attributes ? (row.variantId || "") : (p?.variants ? (row.variantId || variant.id) : "");
+  const subtitleText = p?.attributes
+    ? display.subtitle
+    : `${p?.variants ? `${variant.label} · ` : ""}${display.subtitle}`;
   return `<div style="display:grid; grid-template-columns: 64px 1fr auto; gap:.6rem; align-items:center; padding:.5rem 0; border-bottom:1px solid rgba(16,15,15,.06);">
       <img loading="lazy" src="${display.images[0]}" alt="${
     display.name
   }" style="width:64px; height:64px; object-fit:cover; border-radius:10px;">
       <div>
-        <div style="font-weight:600;">${display.name} <span class="deep-muted"> (${p.variants ? `${variant.label} · ` : ""}${display.subtitle}) </span></div>
+        <div style="font-weight:600;">${display.name} <span class="deep-muted"> (${subtitleText}) </span></div>
         ${qtyControlsHTML(row.id, variantId, row.qty)}
       </div>
       <div style="display:flex; align-items:center; gap:.4rem;">
@@ -1096,7 +1312,6 @@ function closeImageLightbox() {
   
   if (cart.length === 0) {
     container.innerHTML = '<p class="muted">Your cart is empty.</p>';
-    
     return;
   }
   
@@ -1105,18 +1320,21 @@ function closeImageLightbox() {
     const item = cartProduct(row);
     if (!item) return "";
     const { display, variant } = item;
-    const variantId = p.variants ? variant.id : "";
+    const variantId = p?.attributes ? (row.variantId || "") : (p?.variants ? variant.id : "");
+    const subtitleText = p?.attributes
+      ? display.subtitle
+      : `${p?.variants ? `${variant.label} · ` : ""}${display.subtitle}`;
 
     return `
       <div class="checkout-item">
         <img loading="lazy" src="${display.images[0]}" alt="${display.name}" class="checkout-item-img">
         <div class="checkout-item-details">
-          <div class="checkout-item-name">${display.name} <span class="deep-muted"> (${p.variants ? `${variant.label} · ` : ""}${display.subtitle}) </span></div>
+          <div class="checkout-item-name">${display.name} <span class="deep-muted"> (${subtitleText}) </span></div>
           ${qtyControlsHTML(row.id, variantId, row.qty)}
         </div>
         <div class="checkout-item-price">
           <strong>${money(display.price * row.qty)}</strong>
-          <button class="close-btn" title="Remove" onclick="removeFromCart('${row.id}', '${variantId}')">✕</button>
+          <button type="button" class="close-btn" title="Remove" onclick="event.preventDefault(); removeFromCart('${row.id}', '${variantId}')">✕</button>
         </div>
       </div>
     `;
@@ -1125,18 +1343,27 @@ function closeImageLightbox() {
 
 function updateCartItemsData() {
   const cart = getCart();
-  const cartItemsWithNames = cart.map(row => {
+  const lines = cart.map((row, index) => {
     const item = cartProduct(row);
     if (!item) return null;
     const { display, variant } = item;
-    return {
-      name: display.name + ' (' + (variant.label ? variant.label + ' · ' : '') + display.subtitle + ')',
-      qty: row.qty,
-      unit_price: display.price
-    };
+    const p = PRODUCTS.find((x) => x.id === row.id);
+    let itemLabel = display.name;
+    if (p && p.attributes) {
+      itemLabel += ` (${display.subtitle})`;
+    } else if (p && p.variants) {
+      itemLabel += ` (${variant.label || variant.subtitle} · ${display.subtitle})`;
+    } else if (display.subtitle) {
+      itemLabel += ` (${display.subtitle})`;
+    }
+    const lineTotal = display.price * row.qty;
+    return `${index + 1}. ${itemLabel}\n   Qty: ${row.qty} × ৳${display.price.toFixed(2)} = ৳${lineTotal.toFixed(2)}`;
   }).filter(Boolean);
-  
-  document.getElementById('cartItemsData').value = JSON.stringify(cartItemsWithNames);
+
+  const cartInput = document.getElementById('cartItemsData');
+  if (cartInput) {
+    cartInput.value = lines.join('\n\n');
+  }
 }
 
 function updateCheckoutTotals() {
@@ -1146,19 +1373,26 @@ function updateCheckoutTotals() {
     return item ? sum + item.display.price * row.qty : sum;
   }, 0);
   
-  const shippingMethod = document.querySelector('input[name="shipping_method"]:checked').value;
-  const shippingCost = SHIPPING_RATES[shippingMethod];
+  const shippingChecked = document.querySelector('input[name="shipping_method"]:checked');
+  const shippingMethod = shippingChecked ? shippingChecked.value : 'inside_dhaka';
+  const shippingCost = SHIPPING_RATES[shippingMethod] || SHIPPING_RATES.inside_dhaka;
   const total = subtotal + shippingCost;
   
-  document.getElementById('checkoutSubtotal').textContent = `৳${subtotal.toFixed(2)}`;
-  document.getElementById('checkoutShipping').textContent = `৳${shippingCost.toFixed(2)}`;
-  document.getElementById('checkoutTotal').textContent = `৳${total.toFixed(2)}`;
+  const subtotalEl = document.getElementById('checkoutSubtotal');
+  if (subtotalEl) subtotalEl.textContent = `৳${subtotal.toFixed(2)}`;
+  const shippingEl = document.getElementById('checkoutShipping');
+  if (shippingEl) shippingEl.textContent = `৳${shippingCost.toFixed(2)}`;
+  const totalEl = document.getElementById('checkoutTotal');
+  if (totalEl) totalEl.textContent = `৳${total.toFixed(2)}`;
   
   // Update hidden fields for form submission
-  updateCartItemsData(); // Add this line
-  document.getElementById('subtotalData').value = subtotal;
-  document.getElementById('shippingData').value = shippingCost;
-  document.getElementById('totalData').value = total;
+  updateCartItemsData();
+  const subtotalData = document.getElementById('subtotalData');
+  if (subtotalData) subtotalData.value = subtotal;
+  const shippingData = document.getElementById('shippingData');
+  if (shippingData) shippingData.value = shippingCost;
+  const totalData = document.getElementById('totalData');
+  if (totalData) totalData.value = total;
 }
 
 function updateShipping() {

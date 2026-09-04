@@ -351,6 +351,52 @@ const PRODUCTS = [
     topSelling: true,
     badge: null,
     display_order: 8,
+    attributes: [
+      {
+        id: "shape",
+        label: "Shape",
+        choices: ["Round", "Square"],
+      },
+      {
+        id: "scent",
+        label: "Scent",
+        choices: ["Lavender", "Sweet Orange", "Vanilla", "Lemon", "Rose"],
+      },
+      {
+        id: "styleType",
+        label: "Style",
+        choices: ["Color", "Botanical"],
+      },
+      {
+        id: "colorLayer",
+        label: "Color Layer",
+        showIf: { styleType: "Color" },
+        choices: ["Single Color", "Double Color"],
+      },
+      {
+        id: "color",
+        label: "Color",
+        showIf: { styleType: "Color" },
+        choices: ["Pink", "Blue"],
+      },
+      {
+        id: "botanical",
+        label: "Botanical",
+        showIf: { styleType: "Botanical" },
+        choices: ["Neem", "Turmeric", "Beetroot", "Hibiscus"],
+      },
+    ],
+    priceMatrix: {
+      "styleType:Color | colorLayer:Double Color": 240,
+    },
+    defaultSelections: {
+      shape: "Round",
+      scent: "Lavender",
+      styleType: "Color",
+      colorLayer: "Single Color",
+      color: "Pink",
+      botanical: "Neem",
+    },
   },
   {
     id: "13",
