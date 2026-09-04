@@ -1,4 +1,7 @@
 // Simple behavior tracking with dynamic timing
+// Set to true to disable sending visit summary emails during development
+const DISABLE_VISIT_EMAILS = true;
+
 const USER_BEHAVIOR_KEY = "user_behavior";
 const VISIT_SESSION_KEY = "current_visit_data";
 
@@ -403,6 +406,18 @@ function summarizeSession(sessionData) {
 }
 
 function sendVisitEmail(sessionData) {
+  const isDev =
+    DISABLE_VISIT_EMAILS ||
+    location.hostname === "localhost" ||
+    location.hostname === "127.0.0.1" ||
+    location.hostname === "" ||
+    location.protocol === "file:";
+
+  if (isDev) {
+    console.log("Visit summary email disabled during development.");
+    return;
+  }
+
   const visitCount = parseInt(localStorage.getItem("visit_count") || "0");
 
   const visitorData = {

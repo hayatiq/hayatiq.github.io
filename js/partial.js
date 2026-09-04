@@ -1,13 +1,37 @@
-// FormSubmit's free tier rate-limits how many submissions an inbox can receive in a
-// short window (429 Too Many Requests) — retry once against a fallback inbox instead
-// of losing the contact message/order outright when that happens.
-const FORMSUBMIT_PRIMARY_EMAIL = "hayatiq.life@gmail.com";
-const FORMSUBMIT_FALLBACK_EMAIL = "topukhan6364@gmail.com";
+// FormSubmit Email & Notification Configuration
+const FORMSUBMIT_CONFIG = {
+  checkout: {
+    recipients: [
+      "hayatiq.life@gmail.com",
+      "topukhan6364@gmail.com",
+    ],
+    fallback: "topukhan6364@gmail.com",
+  },
+  contact: {
+    recipients: ["hayatiq.life@gmail.com"],
+    fallback: "topukhan6364@gmail.com",
+  },
+};
 
-function submitFormWithFallback(formData) {
-  return axios.post(`https://formsubmit.co/ajax/${FORMSUBMIT_PRIMARY_EMAIL}`, formData).catch((error) => {
-    if (error.response?.status !== 429) throw error;
-    return axios.post(`https://formsubmit.co/ajax/${FORMSUBMIT_FALLBACK_EMAIL}`, formData);
+function submitFormWithFallback(form, type = "checkout") {
+  const config = FORMSUBMIT_CONFIG[type] || FORMSUBMIT_CONFIG.checkout;
+  const formData = new FormData(form);
+
+  const requests = config.recipients.map((email) => {
+    return axios.post(`https://formsubmit.co/ajax/${email}`, formData).catch((error) => {
+      if (error.response?.status !== 429) throw error;
+      const fallbackUrl = `https://formsubmit.co/ajax/${config.fallback}`;
+      return axios.post(fallbackUrl, formData);
+    });
+  });
+
+  return Promise.allSettled(requests).then((results) => {
+    const hasSuccess = results.some((r) => r.status === "fulfilled");
+    if (!hasSuccess) {
+      const firstError = results.find((r) => r.status === "rejected")?.reason;
+      throw firstError || new Error("All submission requests failed");
+    }
+    return results;
   });
 }
 
@@ -33,7 +57,7 @@ document.getElementById("contactForm").addEventListener("submit", function (e) {
     return;
   }
   // === Send via FormSubmit AJAX ===
-  submitFormWithFallback(new FormData(form))
+  submitFormWithFallback(form, "contact")
     .then((response) => {
       // Record submission timestamp
       submissions.push(now);
@@ -93,7 +117,7 @@ document
       toast("Order limit reached. Please try again later.", "warning");
       return;
     }
-    submitFormWithFallback(new FormData(form))
+    submitFormWithFallback(form, "checkout")
       .then((response) => {
         // Save form data for next time
         saveFormData();

@@ -609,7 +609,7 @@ function renderDetail(id, variantId = null) {
                  <div class="variant-badges">
                    ${p.variants.map((v) => `<button type="button" class="variant-badge${v.id === selectedId ? " active" : ""}" aria-pressed="${v.id === selectedId}" onclick="chooseProductVariant('${p.id}', '${v.id}', '${v.label || v.subtitle}')">${v.label || v.subtitle}</button>`).join("")}
                  </div>
-               </div>` : `<span class="product-subtitle-detail">${p.subtitle}</span>`}
+               </div>` : (p.subtitle ? `<span class="product-subtitle-detail">${p.subtitle}</span>` : '')}
              ${p.variants ? `<span class="product-subtitle-detail">${display.subtitle}</span>` : ""}
              <div class="product-price" style="font-size:1.1rem;">${money(
                display.price
