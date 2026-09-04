@@ -1718,6 +1718,44 @@ footer {
 
 .checkout-submit {
   width: 100%;
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.6rem;
+  font-size: 1rem;
+  letter-spacing: 0.01em;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1), transform 0.1s ease;
+}
+
+.checkout-submit:active:not(:disabled),
+.button-primary:active:not(:disabled) {
+  transform: scale(0.985);
+}
+
+.checkout-submit.is-submitting,
+.btn.is-submitting {
+  pointer-events: none !important;
+  cursor: not-allowed !important;
+  background: linear-gradient(90deg, var(--color-earth) 0%, #8f7457 50%, var(--color-earth) 100%) !important;
+  background-size: 200% 100% !important;
+  animation: submitShimmer 1.2s ease-in-out infinite;
+  box-shadow: 0 4px 16px rgba(126, 102, 74, 0.35);
+  opacity: 0.96;
+}
+
+@keyframes submitShimmer {
+  0% { background-position: 100% 0; }
+  100% { background-position: -100% 0; }
+}
+
+.checkout-submit.is-success,
+.btn.is-success {
+  background-color: #15803d !important;
+  border-color: #15803d !important;
+  color: var(--color-white) !important;
+  box-shadow: 0 4px 16px rgba(21, 128, 61, 0.35);
+  pointer-events: none !important;
 }
 
 .checkout-trust-note {

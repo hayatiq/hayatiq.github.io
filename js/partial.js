@@ -35,9 +35,14 @@ function submitFormWithFallback(form, type = "checkout") {
   });
 }
 
+let isContactSubmitting = false;
+
 document.getElementById("contactForm").addEventListener("submit", function (e) {
   e.preventDefault();
+  if (isContactSubmitting) return;
+
   const form = e.target;
+  const submitBtn = form.querySelector('button[type="submit"]');
   const messageBox = document.getElementById("formMessage");
   // === Rate Limiting with localStorage ===
   const limitKey = "contactFormSubmissions";
@@ -56,9 +61,23 @@ document.getElementById("contactForm").addEventListener("submit", function (e) {
     }, 5000);
     return;
   }
+
+  isContactSubmitting = true;
+  const originalBtnHTML = submitBtn ? submitBtn.innerHTML : "Send Message";
+  if (submitBtn) {
+    submitBtn.disabled = true;
+    submitBtn.classList.add("is-submitting");
+    submitBtn.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin" aria-hidden="true"></i> <span>Sending...</span>';
+  }
+
   // === Send via FormSubmit AJAX ===
   submitFormWithFallback(form, "contact")
     .then((response) => {
+      if (submitBtn) {
+        submitBtn.classList.remove("is-submitting");
+        submitBtn.classList.add("is-success");
+        submitBtn.innerHTML = '<i class="fa-solid fa-circle-check" aria-hidden="true"></i> <span>Sent!</span>';
+      }
       // Record submission timestamp
       submissions.push(now);
       localStorage.setItem(limitKey, JSON.stringify(submissions));
@@ -71,11 +90,23 @@ document.getElementById("contactForm").addEventListener("submit", function (e) {
       setTimeout(() => {
         messageBox.textContent = "";
         messageBox.style.display = "none";
+        form.reset();
+        if (submitBtn) {
+          submitBtn.disabled = false;
+          submitBtn.classList.remove("is-success");
+          submitBtn.innerHTML = originalBtnHTML;
+        }
+        isContactSubmitting = false;
         goTo("/products");
-      }, 5000);
-      form.reset();
+      }, 3500);
     })
     .catch((error) => {
+      isContactSubmitting = false;
+      if (submitBtn) {
+        submitBtn.disabled = false;
+        submitBtn.classList.remove("is-submitting");
+        submitBtn.innerHTML = originalBtnHTML;
+      }
       // Show error message
       messageBox.style.display = "block";
       messageBox.style.color = "red";
@@ -84,31 +115,40 @@ document.getElementById("contactForm").addEventListener("submit", function (e) {
     });
 });
 
+let isCheckoutSubmitting = false;
+
 // checkout form submit
 document
   .getElementById("checkoutForm")
   .addEventListener("submit", function (e) {
     e.preventDefault();
+    if (isCheckoutSubmitting) return;
+
     const form = e.target;
+    const submitBtn = form.querySelector('button[type="submit"]') || form.querySelector(".checkout-submit");
     const limitKey = "checkoutOrders";
     const now = Date.now();
     let orders = JSON.parse(localStorage.getItem(limitKey)) || [];
     const cart = getCart();
+
     // Cart validation
     if (cart.length === 0) {
       toast("Your cart is empty");
       return;
     }
 
-    const phone = document.getElementById("checkoutPhone").value;
+    const phoneInput = document.getElementById("checkoutPhone");
+    const phone = phoneInput ? phoneInput.value.trim() : "";
 
     // Phone validation
     const phoneRegex = /^01[3-9]\d{8}$/;
 
     if (!phoneRegex.test(phone)) {
       toast("Please enter a valid Bangladeshi phone number");
+      if (phoneInput) phoneInput.focus();
       return;
     }
+
     // Remove old orders (older than 20 minutes)
     orders = orders.filter((timestamp) => now - timestamp < 1200000);
     localStorage.setItem(limitKey, JSON.stringify(orders));
@@ -117,8 +157,24 @@ document
       toast("Order limit reached. Please try again later.", "warning");
       return;
     }
+
+    // All validations passed — instantly trigger active loading feedback and prevent duplicate clicks
+    isCheckoutSubmitting = true;
+    const originalBtnHTML = submitBtn ? submitBtn.innerHTML : "Place Order";
+    if (submitBtn) {
+      submitBtn.disabled = true;
+      submitBtn.classList.add("is-submitting");
+      submitBtn.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin" aria-hidden="true"></i> <span>Placing Order...</span>';
+    }
+
     submitFormWithFallback(form, "checkout")
       .then((response) => {
+        if (submitBtn) {
+          submitBtn.classList.remove("is-submitting");
+          submitBtn.classList.add("is-success");
+          submitBtn.innerHTML = '<i class="fa-solid fa-circle-check" aria-hidden="true"></i> <span>Order Placed!</span>';
+        }
+
         // Save form data for next time
         saveFormData();
         // Record order timestamp
@@ -131,10 +187,22 @@ document
 
         setTimeout(() => {
           form.reset();
+          if (submitBtn) {
+            submitBtn.disabled = false;
+            submitBtn.classList.remove("is-success");
+            submitBtn.innerHTML = originalBtnHTML;
+          }
+          isCheckoutSubmitting = false;
           goTo("/products");
-        }, 3000);
+        }, 2500);
       })
       .catch((error) => {
+        isCheckoutSubmitting = false;
+        if (submitBtn) {
+          submitBtn.disabled = false;
+          submitBtn.classList.remove("is-submitting");
+          submitBtn.innerHTML = originalBtnHTML;
+        }
         toast("Error placing order. Please try again.");
         console.error(error);
       });
