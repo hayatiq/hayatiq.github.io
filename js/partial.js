@@ -180,12 +180,38 @@ document
       submitBtn.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin" aria-hidden="true"></i> <span>Placing Order...</span>';
     }
 
+    const nameInput = document.getElementById("checkoutName");
+    const customerName = nameInput && nameInput.value.trim() ? nameInput.value.trim() : "Customer";
+    const addressInput = document.getElementById("checkoutAddress");
+    const customerAddress = addressInput && addressInput.value.trim() ? addressInput.value.trim() : "";
+    const noteInput = document.getElementById("orderNote");
+    const orderNote = noteInput && noteInput.value.trim() ? noteInput.value.trim() : "";
+    const totalData = document.getElementById("totalData");
+    const totalAmount = totalData ? parseFloat(totalData.value) || 0 : 0;
+
     submitFormWithFallback(form, "checkout")
       .then((response) => {
         if (submitBtn) {
           submitBtn.classList.remove("is-submitting");
           submitBtn.classList.add("is-success");
           submitBtn.innerHTML = '<i class="fa-solid fa-circle-check" aria-hidden="true"></i> <span>Order Placed!</span>';
+        }
+
+        // Track successful order placement for visitor behavior summary
+        const tracker =
+          typeof trackOrderPlaced === "function"
+            ? trackOrderPlaced
+            : typeof window !== "undefined"
+            ? window.trackOrderPlaced
+            : null;
+        if (typeof tracker === "function") {
+          tracker({
+            name: customerName,
+            phone: phone,
+            address: customerAddress,
+            note: orderNote,
+            total: totalAmount,
+          });
         }
 
         // Save form data for next time

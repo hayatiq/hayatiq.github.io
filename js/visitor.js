@@ -1,6 +1,7 @@
 // Simple behavior tracking with dynamic timing
-// Set to true to disable sending visit summary emails during development
+// Set to true to disable sending visit summary emails even in production (dev is auto-disabled)
 const DISABLE_VISIT_EMAILS = true;
+const MIN_VISIT_EMAIL_DURATION_MS = 5000; // Filter out visits under 5 seconds
 
 const USER_BEHAVIOR_KEY = "user_behavior";
 const VISIT_SESSION_KEY = "current_visit_data";
@@ -24,13 +25,36 @@ function initVisitSession() {
     variantSelections: [],
     contactActions: [],
     checkoutActions: [],
-    formFields: {}, // Store final field values instead of every keystroke
+    formFields: {}, // Store full field values
+    orderPlaced: false,
+    orderData: null,
   };
   localStorage.setItem(VISIT_SESSION_KEY, JSON.stringify(sessionData));
 }
 
 // Save visit session when user leaves
 function saveVisitSession() {
+  // Capture any active input values from checkout or contact forms directly before leaving
+  try {
+    const checkoutName = document.getElementById("checkoutName")?.value;
+    const checkoutPhone = document.getElementById("checkoutPhone")?.value;
+    const checkoutAddress = document.getElementById("checkoutAddress")?.value;
+    const orderNoteVal = document.getElementById("orderNote")?.value;
+    if (checkoutName && checkoutName.trim()) trackFormField("checkout_name", checkoutName);
+    if (checkoutPhone && checkoutPhone.trim()) trackFormField("checkout_phone", checkoutPhone);
+    if (checkoutAddress && checkoutAddress.trim()) trackFormField("checkout_address", checkoutAddress);
+    if (orderNoteVal && orderNoteVal.trim()) trackFormField("checkout_order_note", orderNoteVal);
+
+    const contactNameVal = document.getElementById("name")?.value;
+    const contactEmailPhoneVal = document.getElementById("contact")?.value;
+    const contactMsgVal = document.getElementById("message")?.value;
+    if (contactNameVal && contactNameVal.trim()) trackFormField("contact_name", contactNameVal);
+    if (contactEmailPhoneVal && contactEmailPhoneVal.trim()) trackFormField("contact_email_or_phone", contactEmailPhoneVal);
+    if (contactMsgVal && contactMsgVal.trim()) trackFormField("contact_message", contactMsgVal);
+  } catch (e) {
+    // Ignore DOM read errors during unload
+  }
+
   const sessionData = getVisitSession();
 
   // Record time spent on current page before leaving
@@ -49,7 +73,8 @@ function saveVisitSession() {
     sessionData.socialClicks.length > 0 ||
     sessionData.cartActions.length > 0 ||
     sessionData.contactActions.length > 0 ||
-    sessionData.checkoutActions.length > 0
+    sessionData.checkoutActions.length > 0 ||
+    Object.keys(sessionData.formFields || {}).length > 0
   ) {
     // Calculate total session duration
     sessionData.endTime = new Date().toISOString();
@@ -87,7 +112,9 @@ function getVisitSession() {
       contactActions: [],
       checkoutActions: [],
       formFields: {},
-    }
+      orderPlaced: false,
+      orderData: null,
+    };
   sessionData.searchActions ||= [];
   sessionData.filterActions ||= [];
   sessionData.wishlistActions ||= [];
@@ -212,11 +239,11 @@ function trackVariantSelection(data = {}) {
 function trackFormField(field, value) {
   const sessionData = getVisitSession();
 
-  // Only store final values, not every keystroke
-  if (value && value.length > 0) {
+  // Store full field values without truncation
+  if (value && value.trim().length > 0) {
     sessionData.formFields[field] = {
-      value: value.length > 20 ? value.substring(0, 20) + "..." : value,
-      length: value.length,
+      value: value.trim(),
+      length: value.trim().length,
       timestamp: Date.now(),
       time: new Date().toLocaleString(),
     };
@@ -247,6 +274,7 @@ function trackCheckoutAction(action, data = {}) {
   const shouldTrack =
     action === "shipping_change" ||
     action === "order_submit" ||
+    action === "order_placed" ||
     (action === "note_typed" && data.length > 5) ||
     (action === "form_input" && data.field && data.value);
 
@@ -259,6 +287,36 @@ function trackCheckoutAction(action, data = {}) {
     });
     localStorage.setItem(VISIT_SESSION_KEY, JSON.stringify(sessionData));
   }
+}
+
+function trackOrderPlaced(orderData = {}) {
+  const sessionData = getVisitSession();
+  sessionData.orderPlaced = true;
+  sessionData.orderData = {
+    name: orderData.name || "",
+    phone: orderData.phone || "",
+    address: orderData.address || "",
+    note: orderData.note || "",
+    total: orderData.total || 0,
+    timestamp: Date.now(),
+    time: new Date().toLocaleString(),
+  };
+
+  if (orderData.name) trackFormField("checkout_name", orderData.name);
+  if (orderData.phone) trackFormField("checkout_phone", orderData.phone);
+  if (orderData.address) trackFormField("checkout_address", orderData.address);
+  if (orderData.note) trackFormField("checkout_order_note", orderData.note);
+
+  trackCheckoutAction("order_placed", {
+    total: orderData.total || 0,
+    phone: orderData.phone || "",
+  });
+
+  localStorage.setItem(VISIT_SESSION_KEY, JSON.stringify(sessionData));
+}
+
+if (typeof window !== "undefined") {
+  window.trackOrderPlaced = trackOrderPlaced;
 }
 
 function getBehavior() {
@@ -276,133 +334,301 @@ function formatDuration(ms) {
     : `${minutes}m`;
 }
 
-function summarizeSession(sessionData) {
-  const summary = [];
+function parseUserAgent(ua) {
+  if (!ua) return "Unknown Device";
+  let os = "Desktop";
+  if (/Android/i.test(ua)) os = "Android Mobile";
+  else if (/iPhone/i.test(ua)) os = "iPhone";
+  else if (/iPad/i.test(ua)) os = "iPad";
+  else if (/Windows/i.test(ua)) os = "Windows PC";
+  else if (/Macintosh/i.test(ua)) os = "Mac";
+  else if (/Linux/i.test(ua)) os = "Linux";
 
-  if (sessionData.pages.length > 0) {
-    const pageSummary = sessionData.pages
-      .map((page) => `${page.page} (${formatDuration(page.duration)})`)
-      .join(", ");
-    summary.push(`Pages Visited: ${pageSummary}`);
+  let browser = "Browser";
+  if (/FB_IAB|FB4A|FBAV/i.test(ua)) browser = "Facebook App";
+  else if (/Instagram/i.test(ua)) browser = "Instagram App";
+  else if (/Edg/i.test(ua)) browser = "Edge";
+  else if (/Chrome/i.test(ua)) browser = "Chrome";
+  else if (/Safari/i.test(ua) && !/Chrome/i.test(ua)) browser = "Safari";
+  else if (/Firefox/i.test(ua)) browser = "Firefox";
+
+  return `${os} (${browser})`;
+}
+
+function parseReferrer(ref) {
+  if (!ref || ref === "none") return "Direct Traffic / Bookmark";
+  try {
+    const url = new URL(ref);
+    if (url.hostname.includes("facebook.com") || url.hostname.includes("fb.com")) {
+      return `Facebook (${url.hostname})`;
+    }
+    if (url.hostname.includes("instagram.com")) {
+      return `Instagram (${url.hostname})`;
+    }
+    if (url.hostname.includes("google.com")) {
+      return `Google Search (${url.hostname})`;
+    }
+    return `${url.hostname}`;
+  } catch {
+    return ref;
+  }
+}
+
+function getVisitorIntent(sessionData) {
+  const fields = sessionData.formFields || {};
+  const hasCheckoutName = Boolean(fields["checkout_name"]?.value);
+  const hasCheckoutPhone = Boolean(fields["checkout_phone"]?.value);
+  const hasCheckoutAddress = Boolean(fields["checkout_address"]?.value);
+  const hasCheckoutData = hasCheckoutName || hasCheckoutPhone || hasCheckoutAddress;
+
+  // 1. Check if an order was placed during this visit session
+  let isOrderPlaced =
+    Boolean(sessionData.orderPlaced) ||
+    (sessionData.checkoutActions &&
+      sessionData.checkoutActions.some((a) => a.action === "order_placed"));
+
+  // Secondary check: Did an order occur in checkoutOrders during this session?
+  if (!isOrderPlaced) {
+    try {
+      const recentOrders = JSON.parse(localStorage.getItem("checkoutOrders")) || [];
+      isOrderPlaced = recentOrders.some(
+        (ts) => ts >= (sessionData.startTimestamp || 0) - 2000
+      );
+    } catch (e) {}
   }
 
-  // Add current page if session ended while on a page
-  if (sessionData.currentPage && sessionData.totalDuration) {
-    const currentPageDuration =
-      sessionData.endTimestamp - sessionData.pageStartTime;
-    summary.push(
-      `Current Page: ${sessionData.currentPage} (${formatDuration(
-        currentPageDuration
-      )})`
-    );
+  if (isOrderPlaced) {
+    const customerName =
+      sessionData.orderData?.name ||
+      fields["checkout_name"]?.value ||
+      "Customer";
+    const total = sessionData.orderData?.total;
+    const totalPart =
+      total !== undefined && total !== null && Number(total) > 0
+        ? ` - ৳${Number(total).toFixed(2)}`
+        : "";
+
+    return {
+      isOrderPlaced: true,
+      level: "🎉 ORDER COMPLETED: Customer Successfully Placed Order!",
+      subjectTag: `🎉 [Order Placed] ${customerName}${totalPart}`,
+    };
   }
 
-  if (sessionData.productsViewed.length > 0) {
-    const productNames = sessionData.productsViewed.map((p) => p.productName);
-    summary.push(`Products Viewed: ${productNames.join(", ")}`);
+  const reachedCheckout =
+    sessionData.currentPage === "checkout" ||
+    (sessionData.pages && sessionData.pages.some((p) => p.page === "checkout"));
+
+  const cartCount = sessionData.cartActions ? sessionData.cartActions.length : 0;
+  const productsCount = sessionData.productsViewed ? sessionData.productsViewed.length : 0;
+
+  if (hasCheckoutData) {
+    return {
+      isOrderPlaced: false,
+      level: "🔥 HIGH INTENT: Checkout Data Entered (Potential Lead / Unfinished Order)",
+      subjectTag: "🔥 [High Intent Lead] Checkout Filled (Unfinished)",
+    };
+  }
+  if (reachedCheckout) {
+    return {
+      isOrderPlaced: false,
+      level: "🛒 HIGH INTENT: Checkout Abandoned",
+      subjectTag: "🛒 [Abandoned Checkout]",
+    };
+  }
+  if (cartCount > 0) {
+    return {
+      isOrderPlaced: false,
+      level: "🛍️ CART ENGAGED: Items Added to Cart",
+      subjectTag: "🛍️ [Cart Active]",
+    };
+  }
+  if (productsCount > 0) {
+    return {
+      isOrderPlaced: false,
+      level: "👀 PRODUCT EXPLORER: Browsed Catalog",
+      subjectTag: "👀 [Browsed Products]",
+    };
+  }
+  return {
+    isOrderPlaced: false,
+    level: "⏱️ VISITOR SESSION SUMMARY",
+    subjectTag: "⏱️ [Visit Summary]",
+  };
+}
+
+function formatOrderPlacedSummary(sessionData) {
+  const orderData = sessionData.orderData || {};
+  const fields = sessionData.formFields || {};
+  const name = orderData.name || fields["checkout_name"]?.value || "Customer";
+  const phone = orderData.phone || fields["checkout_phone"]?.value || "Not provided";
+  const address = orderData.address || fields["checkout_address"]?.value || "Not provided";
+  const note = orderData.note || fields["checkout_order_note"]?.value;
+  const total = orderData.total;
+
+  const lines = [
+    "🎉 COMPLETED ORDER DETAILS:",
+    "  • Order Status: Successfully Placed ✅",
+    `  • Customer Name: ${name}`,
+    `  • Phone Number: ${phone}`,
+    `  • Full Delivery Address: ${address}`,
+  ];
+  if (note) {
+    lines.push(`  • Order Note: ${note}`);
+  }
+  if (total !== undefined && total !== null && Number(total) > 0) {
+    lines.push(`  • Total Amount: ৳${Number(total).toFixed(2)}`);
   }
 
-  if (sessionData.socialClicks.length > 0) {
-    const socialPlatforms = sessionData.socialClicks.map(
-      (click) => click.platform
-    );
-    summary.push(
-      `Social Clicks: ${[...new Set(socialPlatforms)].join(", ")} (${
-        sessionData.socialClicks.length
-      } clicks)`
-    );
+  return lines.join("\n");
+}
+
+function formatFormFieldsSummary(formFields) {
+  if (!formFields || Object.keys(formFields).length === 0) return null;
+  const lines = [];
+
+  const name = formFields["checkout_name"]?.value;
+  const phone = formFields["checkout_phone"]?.value;
+  const address = formFields["checkout_address"]?.value;
+  const note = formFields["checkout_order_note"]?.value;
+
+  if (name || phone || address || note) {
+    lines.push("📋 CUSTOMER ENTERED CHECKOUT DETAILS (UNFINISHED ORDER):");
+    if (name) lines.push(`  • Full Name: ${name}`);
+    if (phone) lines.push(`  • Phone Number: ${phone}`);
+    if (address) lines.push(`  • Full Delivery Address: ${address}`);
+    if (note) lines.push(`  • Order Note: ${note}`);
   }
 
-  if (sessionData.cartActions.length > 0) {
-    const actionCounts = {};
-    sessionData.cartActions.forEach((action) => {
-      actionCounts[action.action] = (actionCounts[action.action] || 0) + 1;
+  const cName = formFields["contact_name"]?.value;
+  const cContact = formFields["contact_contact"]?.value || formFields["contact_email_or_phone"]?.value;
+  const cMsg = formFields["contact_message"]?.value;
+  if (cName || cContact || cMsg) {
+    if (lines.length > 0) lines.push("");
+    lines.push("📬 CONTACT FORM DETAILS:");
+    if (cName) lines.push(`  • Name: ${cName}`);
+    if (cContact) lines.push(`  • Phone/Email: ${cContact}`);
+    if (cMsg) lines.push(`  • Message: ${cMsg}`);
+  }
+
+  const handledKeys = new Set([
+    "checkout_name",
+    "checkout_phone",
+    "checkout_address",
+    "checkout_order_note",
+    "contact_name",
+    "contact_contact",
+    "contact_email_or_phone",
+    "contact_message"
+  ]);
+  const otherFields = Object.entries(formFields).filter(([k]) => !handledKeys.has(k));
+  if (otherFields.length > 0) {
+    if (lines.length > 0) lines.push("");
+    lines.push("📝 OTHER FORM INPUTS:");
+    otherFields.forEach(([k, v]) => lines.push(`  • ${k}: ${v.value}`));
+  }
+
+  return lines.length > 0 ? lines.join("\n") : null;
+}
+
+function formatJourneyTimeline(pages, currentPage, totalDuration, pageStartTime, endTimestamp) {
+  const steps = [];
+  if (pages && pages.length > 0) {
+    pages.forEach((p) => {
+      steps.push(`${p.page} (${formatDuration(p.duration || 0)})`);
     });
-    const actionSummary = Object.entries(actionCounts)
-      .map(([action, count]) => `${action} (${count})`)
-      .join(", ");
-    summary.push(`Cart Actions: ${actionSummary}`);
   }
-
-  if (sessionData.searchActions.length > 0) {
-    summary.push(`Product Searches: ${sessionData.searchActions.map((a) => a.query).join(", ")}`);
+  if (steps.length === 0 && currentPage) {
+    const dur = (endTimestamp || Date.now()) - (pageStartTime || Date.now());
+    steps.push(`${currentPage} (${formatDuration(Math.max(0, dur))})`);
   }
+  return steps.length > 0 ? steps.join(" ➔ ") : "Single page visit";
+}
 
-  if (sessionData.filterActions.length > 0) {
-    const filters = sessionData.filterActions.map((a) => `${a.type}: ${a.value}`).join(", ");
-    summary.push(`Product Filters: ${filters}`);
-  }
+function formatVisitSummaryMessage(sessionData, intent, deviceInfo, referrerInfo) {
+  const visitCount = localStorage.getItem("visit_count") || "1";
+  const sections = [];
 
-  if (sessionData.wishlistActions.length > 0) {
-    const wishlistSummary = sessionData.wishlistActions
-      .map((a) => `${a.action}${a.product ? ` (${a.product})` : ""}`)
-      .join(", ");
-    summary.push(`Wishlist: ${wishlistSummary}`);
-  }
+  sections.push(`==================================================`);
+  sections.push(intent.level);
+  sections.push(`==================================================\n`);
 
-  if (sessionData.variantSelections.length > 0) {
-    const variants = sessionData.variantSelections
-      .map((v) => `${v.product || "Product"}: ${v.variant || "unknown"}`)
-      .join(", ");
-    summary.push(`Variant Choices: ${variants}`);
-  }
+  sections.push(`⏱️ SESSION OVERVIEW`);
+  sections.push(`• Total Duration: ${formatDuration(sessionData.totalDuration)} (Visit #${visitCount})`);
+  sections.push(`• Time: ${new Date(sessionData.startTimestamp).toLocaleString()}`);
+  sections.push(`• Traffic Source: ${referrerInfo}`);
+  sections.push(`• Device: ${deviceInfo}`);
+  sections.push(`• Screen Size: ${window.screen ? `${window.screen.width} × ${window.screen.height}` : "Unknown"}\n`);
 
-  if (sessionData.contactActions.length > 0) {
-    const submitCount = sessionData.contactActions.filter(
-      (a) => a.action === "form_submit"
-    ).length;
-    const inputCount = sessionData.contactActions.filter(
-      (a) => a.action === "form_input"
-    ).length;
-    summary.push(
-      `Contact Form: ${inputCount} fields filled, ${submitCount} submissions`
-    );
-  }
-
-  if (sessionData.checkoutActions.length > 0) {
-    const shippingChanges = sessionData.checkoutActions.filter(
-      (a) => a.action === "shipping_change"
-    ).length;
-    const noteTyped = sessionData.checkoutActions.filter(
-      (a) => a.action === "note_typed"
-    ).length;
-    const formInputs = sessionData.checkoutActions.filter(
-      (a) => a.action === "form_input"
-    ).length;
-    const submits = sessionData.checkoutActions.filter(
-      (a) => a.action === "order_submit"
-    ).length;
-
-    let checkoutSummary = [];
-    if (shippingChanges > 0)
-      checkoutSummary.push(`shipping changes: ${shippingChanges}`);
-    if (noteTyped > 0) checkoutSummary.push(`notes: ${noteTyped}`);
-    if (formInputs > 0) checkoutSummary.push(`fields filled: ${formInputs}`);
-    if (submits > 0) checkoutSummary.push(`submits: ${submits}`);
-
-    if (checkoutSummary.length > 0) {
-      summary.push(`Checkout: ${checkoutSummary.join(", ")}`);
+  // Full Customer Form Details (Completed Order or Unfinished Checkout)
+  if (intent.isOrderPlaced) {
+    sections.push(`${formatOrderPlacedSummary(sessionData)}\n`);
+  } else {
+    const formSummary = formatFormFieldsSummary(sessionData.formFields);
+    if (formSummary) {
+      sections.push(`${formSummary}\n`);
     }
   }
 
-  if (Object.keys(sessionData.formFields).length > 0) {
-    const fieldSummary = Object.entries(sessionData.formFields)
-      .map(([field, data]) => `${field}: ${data.value} (${data.length} chars)`)
-      .join("; ");
-    summary.push(`Form Data: ${fieldSummary}`);
+  // Shopping and site interactions
+  const shoppingLines = [];
+  if (sessionData.productsViewed && sessionData.productsViewed.length > 0) {
+    const productCounts = {};
+    sessionData.productsViewed.forEach((p) => {
+      productCounts[p.productName] = (productCounts[p.productName] || 0) + 1;
+    });
+    const productText = Object.entries(productCounts)
+      .map(([name, count]) => (count > 1 ? `${name} (viewed ${count}x)` : name))
+      .join(", ");
+    shoppingLines.push(`• Products Viewed: ${productText}`);
   }
 
-  if (sessionData.alertsShown.length > 0) {
-    summary.push(`Alerts Shown: ${sessionData.alertsShown.join(", ")}`);
+  if (sessionData.cartActions && sessionData.cartActions.length > 0) {
+    const actionCounts = {};
+    sessionData.cartActions.forEach((a) => {
+      actionCounts[a.action] = (actionCounts[a.action] || 0) + 1;
+    });
+    const cartSummary = Object.entries(actionCounts)
+      .map(([action, count]) => `${action}: ${count}`)
+      .join(", ");
+    shoppingLines.push(`• Cart Actions: ${cartSummary}`);
   }
 
-  if (sessionData.totalDuration) {
-    summary.push(`Total Session: ${formatDuration(sessionData.totalDuration)}`);
+  if (sessionData.variantSelections && sessionData.variantSelections.length > 0) {
+    const variants = sessionData.variantSelections
+      .map((v) => `${v.product || "Product"}: ${v.variant || "Default"}`)
+      .join(", ");
+    shoppingLines.push(`• Options Selected: ${variants}`);
   }
 
-  return summary.length > 0
-    ? summary.join("\n")
-    : "Brief visit - no significant activity";
+  if (sessionData.wishlistActions && sessionData.wishlistActions.length > 0) {
+    shoppingLines.push(`• Wishlist Actions: ${sessionData.wishlistActions.length}`);
+  }
+
+  if (sessionData.searchActions && sessionData.searchActions.length > 0) {
+    const searches = sessionData.searchActions.map((a) => a.query).join(", ");
+    shoppingLines.push(`• Product Searches: ${searches}`);
+  }
+
+  if (sessionData.filterActions && sessionData.filterActions.length > 0) {
+    const filters = sessionData.filterActions.map((a) => `${a.type}: ${a.value}`).join(", ");
+    shoppingLines.push(`• Filters Applied: ${filters}`);
+  }
+
+  if (sessionData.socialClicks && sessionData.socialClicks.length > 0) {
+    const platforms = [...new Set(sessionData.socialClicks.map((c) => c.platform))];
+    shoppingLines.push(`• Social Clicks: ${platforms.join(", ")} (${sessionData.socialClicks.length} clicks)`);
+  }
+
+  if (shoppingLines.length > 0) {
+    sections.push(`🛒 SHOPPING & SITE ACTIVITY`);
+    sections.push(shoppingLines.join("\n") + "\n");
+  }
+
+  sections.push(`📍 JOURNEY TIMELINE`);
+  sections.push(formatJourneyTimeline(sessionData.pages, sessionData.currentPage, sessionData.totalDuration, sessionData.pageStartTime, sessionData.endTimestamp));
+
+  return sections.join("\n");
 }
 
 function sendVisitEmail(sessionData) {
@@ -419,67 +645,21 @@ function sendVisitEmail(sessionData) {
     return;
   }
 
-  const visitCount = parseInt(localStorage.getItem("visit_count") || "0");
+  // Filter out visits under 5 seconds (5000ms)
+  if (!sessionData.totalDuration || sessionData.totalDuration < MIN_VISIT_EMAIL_DURATION_MS) {
+    console.log(`Visit duration (${sessionData.totalDuration || 0}ms) under 5s minimum, skipping email.`);
+    return;
+  }
+
+  const intent = getVisitorIntent(sessionData);
+  const deviceInfo = parseUserAgent(navigator.userAgent);
+  const referrerInfo = parseReferrer(document.referrer || "none");
+  const sourceLabel = referrerInfo.split("(")[0].trim();
+  const subject = `${intent.subjectTag} (${formatDuration(sessionData.totalDuration)}) — ${sourceLabel}`;
 
   const visitorData = {
-    // name: "Visit Completed",
-    // email: "visitor@example.com",
-    message: `
-Visit Summary:
-User Agent: ${navigator.userAgent}
-Referrer: ${document.referrer || "none"}
-Screen: ${window.screen.width}x${window.screen.height}
-Session Start: ${new Date(sessionData.startTimestamp).toLocaleString()}
-Session End: ${new Date().toLocaleString()}
-Total Duration: ${formatDuration(sessionData.totalDuration)}
-Visit Count: ${visitCount}
-
-Session Activity:
-${summarizeSession(sessionData)}
-
-Key Interactions:
-- Social Clicks: ${sessionData.socialClicks.length}
-- Cart Actions: ${sessionData.cartActions.length}
-- Product Searches: ${sessionData.searchActions.length}
-- Product Filters: ${sessionData.filterActions.length}
-- Wishlist Actions: ${sessionData.wishlistActions.length}
-- Variant Choices: ${sessionData.variantSelections.length}
-- Contact Fields: ${
-      Object.keys(sessionData.formFields).filter((k) => k.includes("contact"))
-        .length
-    }
-- Checkout Actions: ${sessionData.checkoutActions.length}
-- Products Viewed: ${sessionData.productsViewed.length}
-
-Full Session Data (simplified):
-${JSON.stringify(
-  {
-    pages: sessionData.pages.length,
-    products: sessionData.productsViewed.map((p) => p.productName),
-    socialClicks: sessionData.socialClicks.map((s) => s.platform),
-    cartActions: sessionData.cartActions.reduce((acc, action) => {
-      acc[action.action] = (acc[action.action] || 0) + 1;
-      return acc;
-    }, {}),
-    searches: sessionData.searchActions.map((action) => action.query),
-    filters: sessionData.filterActions.map((action) => `${action.type}: ${action.value}`),
-    wishlistActions: sessionData.wishlistActions.map((action) => ({
-      action: action.action,
-      product: action.product,
-    })),
-    variantSelections: sessionData.variantSelections.map((selection) => ({
-      product: selection.product,
-      variant: selection.variant,
-    })),
-    formFields: sessionData.formFields,
-    checkoutSummary: sessionData.checkoutActions.reduce((acc, action) => {
-      acc[action.action] = (acc[action.action] || 0) + 1;
-      return acc;
-    }, {}),
-  },
-  null,
-  2
-)}`,
+    _subject: subject,
+    message: formatVisitSummaryMessage(sessionData, intent, deviceInfo, referrerInfo),
   };
 
   fetch("https://formsubmit.co/ajax/topukhan6364@gmail.com", {
@@ -578,9 +758,22 @@ function setupActionTracking() {
 
   });
 
-  // Form field tracking on blur (when user leaves the field)
+  // Form field tracking on blur and input (when user types or leaves field)
   function setupFormFieldTracking(form, prefix) {
     if (!form) return;
+
+    const captureAllFormFields = () => {
+      const fields = form.querySelectorAll("input, textarea, select");
+      fields.forEach((field) => {
+        if (field.value && field.value.trim().length > 0) {
+          const fieldName = `${prefix}_${field.name || field.id}`;
+          trackFormField(fieldName, field.value);
+        }
+      });
+    };
+
+    // Capture initial values if already populated (e.g. from loadFormData)
+    captureAllFormFields();
 
     const fields = form.querySelectorAll("input, textarea, select");
     fields.forEach((field) => {
@@ -591,7 +784,7 @@ function setupActionTracking() {
           if (prefix === "checkout") {
             trackCheckoutAction("form_input", {
               field: fieldName,
-              value: field.value.length > 40 ? field.value.substring(0, 40) + "..." : field.value,
+              value: field.value.trim(),
             });
           }
         }
@@ -606,6 +799,7 @@ function setupActionTracking() {
 
     // Form submission
     form.addEventListener("submit", () => {
+      captureAllFormFields();
       if (prefix === "contact") {
         trackContactAction("form_submit");
       } else if (prefix === "checkout") {
@@ -633,12 +827,10 @@ function setupActionTracking() {
     const orderNote = document.getElementById("orderNote");
     if (orderNote) {
       orderNote.addEventListener("blur", () => {
-        if (orderNote.value.length > 5) {
+        if (orderNote.value && orderNote.value.trim().length > 0) {
           trackCheckoutAction("note_typed", {
-            length: orderNote.value.length,
-            preview:
-              orderNote.value.substring(0, 30) +
-              (orderNote.value.length > 30 ? "..." : ""),
+            length: orderNote.value.trim().length,
+            value: orderNote.value.trim(),
           });
         }
       });
