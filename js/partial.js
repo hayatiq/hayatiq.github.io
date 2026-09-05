@@ -2,7 +2,7 @@
 const FORMSUBMIT_CONFIG = {
   checkout: {
     recipients: [
-      "hayatiq.life@gmail.com",
+      // "hayatiq.life@gmail.com",
       "topukhan6364@gmail.com",
     ],
     fallback: "topukhan6364@gmail.com",
@@ -196,6 +196,24 @@ document
           submitBtn.classList.add("is-success");
           submitBtn.innerHTML = '<i class="fa-solid fa-circle-check" aria-hidden="true"></i> <span>Order Placed!</span>';
         }
+
+        // --- NEW: Send to Telegram Netlify Function ---
+        const telegramPayload = {
+          name: customerName,
+          phone: phone,
+          address: customerAddress,
+          note: orderNote,
+          cart: cart, // Using the cart variable which holds the array of items
+          total: totalAmount,
+          time: new Date().toLocaleString()
+        };
+
+        fetch('/.netlify/functions/telegram-order', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(telegramPayload)
+        }).catch(err => console.error("Error sending Telegram notification:", err));
+        // ----------------------------------------------
 
         // Track successful order placement for visitor behavior summary
         const tracker =
