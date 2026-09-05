@@ -1,6 +1,6 @@
 // Simple behavior tracking with dynamic timing
 // Set to true to disable sending visit summary emails even in production (dev is auto-disabled)
-const DISABLE_VISIT_EMAILS = true;
+const DISABLE_VISIT_EMAILS = false;
 const MIN_VISIT_EMAIL_DURATION_MS = 5000; // Filter out visits under 5 seconds
 
 const USER_BEHAVIOR_KEY = "user_behavior";
