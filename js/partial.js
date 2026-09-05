@@ -2,7 +2,7 @@
 const FORMSUBMIT_CONFIG = {
   checkout: {
     recipients: [
-      // "hayatiq.life@gmail.com",
+      "hayatiq.life@gmail.com",
       "topukhan6364@gmail.com",
     ],
     fallback: "topukhan6364@gmail.com",

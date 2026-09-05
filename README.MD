@@ -340,3 +340,41 @@ from `"Coming Soon"` to a number), consider also setting `badge: "new"` for the 
 `null` once that window passes.
 
 ✅ That's it! Save `products.js` and reload to see the badge on that product's card.
+
+---
+
+# 📱 Setting up Telegram Order Notifications
+
+The site is configured to automatically send new orders to your Telegram account using a secure Netlify Function.
+
+## 1. Create your Telegram Bot
+
+1. Open Telegram and search for **@BotFather** (it has a blue verification tick).
+2. Send the message `/newbot`
+3. Give your bot a display name (e.g., "Hayatiq Orders")
+4. Give it a username (e.g., "hayatiq_order_bot")
+5. BotFather will reply with a message containing your **HTTP API Token** (it looks like this: `1234567890:ABCDEFGHIJKLMNOPQRSTUVWXYZ`).
+6. **Save this Token securely.**
+
+## 2. Get your Chat ID
+
+You need to tell the bot where to send the messages.
+1. In Telegram, search for the username of the bot you just created and start a conversation by sending it a message (e.g., "hello").
+2. Then, search for another bot called **@userinfobot** or **@RawDataBot** and start a chat with it. It will immediately reply with your `id` (a number like `123456789`).
+3. **Save this Chat ID.**
+
+*(Note: To send orders to a group chat, add your Bot to that group, get the group's ID, and use that instead).*
+
+## 3. Add to Netlify & Deploy
+
+Since the frontend is static, the Bot Token must be hidden in the backend (Netlify Functions) for security.
+
+1. Go to your **Netlify Dashboard** for this site.
+2. Go to **Site Configuration** > **Environment Variables**.
+3. Click **Add a variable** and add the following two variables:
+   * Key: `TELEGRAM_BOT_TOKEN` | Value: *(Paste the token from Step 1)*
+   * Key: `TELEGRAM_CHAT_ID` | Value: *(Paste the ID from Step 2)*
+4. Trigger a new deploy (or simply push code to your repository).
+5. Netlify will automatically build the site with the secure environment variables, and Telegram notifications will start working for all new orders.
+
+✅ That's it! If you ever need to change who receives the orders, just update the `TELEGRAM_CHAT_ID` in Netlify and redeploy. No code changes required.
