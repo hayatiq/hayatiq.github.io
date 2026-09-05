@@ -30,7 +30,9 @@ exports.handler = async (event, context) => {
 
     // Format the cart items
     let cartText = "";
-    if (cart && Array.isArray(cart)) {
+    if (typeof cart === 'string') {
+      cartText = cart;
+    } else if (cart && Array.isArray(cart)) {
       cartText = cart.map(item => `- ${item.name} (x${item.quantity}) - ৳${item.price * item.quantity}`).join("\n");
     } else {
       cartText = "No items provided";

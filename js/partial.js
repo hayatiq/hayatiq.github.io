@@ -198,28 +198,15 @@ document
         }
 
         // --- NEW: Send to Telegram Netlify Function ---
-        const formattedCart = (cart || []).map(item => {
-          try {
-            const cp = typeof cartProduct === "function" ? cartProduct(item) : null;
-            const name = cp ? cp.display.name : item.id;
-            const price = cp ? cp.display.price : 0;
-            const label = cp && cp.variant && cp.variant.label ? ` (${cp.variant.label})` : '';
-            return {
-              name: name + label,
-              quantity: item.qty,
-              price: price
-            };
-          } catch (e) {
-            return { name: item.id, quantity: item.qty, price: 0 };
-          }
-        });
+        const cartItemsInput = document.getElementById('cartItemsData');
+        const formattedCartString = cartItemsInput ? cartItemsInput.value : "No items found";
 
         const telegramPayload = {
           name: customerName,
           phone: phone,
           address: customerAddress,
           note: orderNote,
-          cart: formattedCart,
+          cart: formattedCartString,
           total: totalAmount,
           time: new Date().toLocaleString()
         };
