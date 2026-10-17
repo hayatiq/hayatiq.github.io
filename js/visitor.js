@@ -1,327 +1,184 @@
-// Simple behavior tracking with dynamic timing
-// Set to true to disable sending visit summary emails even in production (dev is auto-disabled)
-const DISABLE_VISIT_EMAILS = false;
-const MIN_VISIT_EMAIL_DURATION_MS = 5000; // Filter out visits under 5 seconds
+/* ==============================
+       Visit summaries (emailed via FormSubmit)
+       ============================== */
+// One "visit" = one browser tab: refreshing or switching to another app and back
+// continues the same visit instead of starting a new one. A summary email goes out
+// when the visitor leaves or switches away, and again only if they did something
+// new since the last email (viewed another product, added to cart, reached checkout,
+// ordered…). Emails only go out on the live address, to the people listed in
+// NOTIFY.visitSummaryEmails (js/config.js), and never from a ?notrack device.
+// Each device sends at most VISIT_EMAIL_LIMIT.max summaries per window; a summary held
+// back by that limit is sent later (on the next tab switch, or the next time the site
+// is opened on that device, within VISIT_EMAIL_LATE_MAX_AGE_MS).
+const MIN_VISIT_EMAIL_DURATION_MS = 5000; // ignore visits with under 5 s of time on the page
+const VISIT_EMAIL_LIMIT = { max: 3, windowMs: 10 * 60 * 1000 }; // 3 emails per 10 minutes
+const VISIT_EMAIL_LATE_MAX_AGE_MS = 24 * 60 * 60 * 1000; // drop held-back summaries after a day
+const VISIT_EMAIL_LOG_KEY = "hayatiq_visit_email_log"; // localStorage: when this device sent summaries
 
-const USER_BEHAVIOR_KEY = "user_behavior";
-const VISIT_SESSION_KEY = "current_visit_data";
+const USER_BEHAVIOR_KEY = "user_behavior"; // localStorage: last 10 visits on this phone
+const VISIT_SESSION_KEY = "current_visit_data"; // sessionStorage: the visit in progress
+const VISIT_ACTIVE_KEY = "hayatiq_visit_active"; // sessionStorage: this tab already counted
 
-// Dynamic timing variables (easily adjustable)
-// Initialize visit session when page loads
-function initVisitSession() {
-  const sessionData = {
-    startTime: new Date().toISOString(),
+function readJSON(storage, key, fallback) {
+  try {
+    return JSON.parse(storage.getItem(key)) || fallback;
+  } catch (e) {
+    return fallback;
+  }
+}
+function writeJSON(storage, key, value) {
+  try {
+    storage.setItem(key, JSON.stringify(value));
+  } catch (e) {}
+}
+
+function newVisitSession() {
+  return {
+    visitId: Math.random().toString(36).slice(2, 7).toUpperCase(),
     startTimestamp: Date.now(),
-    currentPage: "home",
+    currentPage: null,
     pageStartTime: Date.now(),
     pages: [],
     productsViewed: [],
-    alertsShown: [],
     socialClicks: [],
     cartActions: [],
-    searchActions: [],
     filterActions: [],
     wishlistActions: [],
     variantSelections: [],
     contactActions: [],
     checkoutActions: [],
-    formFields: {}, // Store full field values
+    formFields: {},
     orderPlaced: false,
     orderData: null,
+    source: typeof visitSource === "function" ? visitSource() : {},
+    emailsSent: 0,
+    lastSentSignature: null,
   };
-  localStorage.setItem(VISIT_SESSION_KEY, JSON.stringify(sessionData));
-}
-
-// Save visit session when user leaves
-function saveVisitSession() {
-  // Capture any active input values from checkout or contact forms directly before leaving
-  try {
-    const checkoutName = document.getElementById("checkoutName")?.value;
-    const checkoutPhone = document.getElementById("checkoutPhone")?.value;
-    const checkoutAddress = document.getElementById("checkoutAddress")?.value;
-    const orderNoteVal = document.getElementById("orderNote")?.value;
-    if (checkoutName && checkoutName.trim()) trackFormField("checkout_name", checkoutName);
-    if (checkoutPhone && checkoutPhone.trim()) trackFormField("checkout_phone", checkoutPhone);
-    if (checkoutAddress && checkoutAddress.trim()) trackFormField("checkout_address", checkoutAddress);
-    if (orderNoteVal && orderNoteVal.trim()) trackFormField("checkout_order_note", orderNoteVal);
-
-    const contactNameVal = document.getElementById("name")?.value;
-    const contactEmailPhoneVal = document.getElementById("contact")?.value;
-    const contactMsgVal = document.getElementById("message")?.value;
-    if (contactNameVal && contactNameVal.trim()) trackFormField("contact_name", contactNameVal);
-    if (contactEmailPhoneVal && contactEmailPhoneVal.trim()) trackFormField("contact_email_or_phone", contactEmailPhoneVal);
-    if (contactMsgVal && contactMsgVal.trim()) trackFormField("contact_message", contactMsgVal);
-  } catch (e) {
-    // Ignore DOM read errors during unload
-  }
-
-  const sessionData = getVisitSession();
-
-  // Record time spent on current page before leaving
-  if (sessionData.currentPage) {
-    const pageDuration = Date.now() - sessionData.pageStartTime;
-    sessionData.pages.push({
-      page: sessionData.currentPage,
-      duration: pageDuration,
-      timestamp: Date.now(),
-      time: new Date().toLocaleString(),
-    });
-  }
-
-  if (
-    sessionData.pages.length > 0 ||
-    sessionData.socialClicks.length > 0 ||
-    sessionData.cartActions.length > 0 ||
-    sessionData.contactActions.length > 0 ||
-    sessionData.checkoutActions.length > 0 ||
-    Object.keys(sessionData.formFields || {}).length > 0
-  ) {
-    // Calculate total session duration
-    sessionData.endTime = new Date().toISOString();
-    sessionData.endTimestamp = Date.now();
-    sessionData.totalDuration =
-      sessionData.endTimestamp - sessionData.startTimestamp;
-
-    // Save to behavior history
-    saveSessionToHistory(sessionData);
-
-    // Send email with this session data
-    sendVisitEmail(sessionData);
-  }
-
-  // Clear current session
-  localStorage.removeItem(VISIT_SESSION_KEY);
 }
 
 function getVisitSession() {
-  const sessionData =
-    JSON.parse(localStorage.getItem(VISIT_SESSION_KEY)) || {
-      startTime: new Date().toISOString(),
-      startTimestamp: Date.now(),
-      currentPage: "home",
-      pageStartTime: Date.now(),
-      pages: [],
-      productsViewed: [],
-      alertsShown: [],
-      socialClicks: [],
-      cartActions: [],
-      searchActions: [],
-      filterActions: [],
-      wishlistActions: [],
-      variantSelections: [],
-      contactActions: [],
-      checkoutActions: [],
-      formFields: {},
-      orderPlaced: false,
-      orderData: null,
-    };
-  sessionData.searchActions ||= [];
-  sessionData.filterActions ||= [];
-  sessionData.wishlistActions ||= [];
-  sessionData.variantSelections ||= [];
-  return sessionData;
+  return readJSON(sessionStorage, VISIT_SESSION_KEY, null) || newVisitSession();
+}
+function saveSession(sessionData) {
+  writeJSON(sessionStorage, VISIT_SESSION_KEY, sessionData);
+}
+function updateSession(change) {
+  const sessionData = getVisitSession();
+  change(sessionData);
+  saveSession(sessionData);
 }
 
-function saveSessionToHistory(sessionData) {
-  const behavior = getBehavior();
-  if (!behavior.visitHistory) {
-    behavior.visitHistory = [];
+// Start (or continue) the visit right away, before the router records the landing
+// page, so the first page and product a visitor sees are never lost.
+(function startVisit() {
+  if (!sessionStorage.getItem(VISIT_ACTIVE_KEY)) {
+    try {
+      sessionStorage.setItem(VISIT_ACTIVE_KEY, "1");
+    } catch (e) {}
+    saveSession(newVisitSession());
+    const visitCount = parseInt(localStorage.getItem("visit_count") || "0") + 1;
+    localStorage.setItem("visit_count", visitCount.toString());
+  } else {
+    // Same tab after a refresh: keep the visit, restart the clock for this page.
+    updateSession((s) => {
+      s.currentPage = null;
+      s.pageStartTime = Date.now();
+    });
   }
+})();
 
-  // Keep only last 10 visits to prevent storage bloat
-  behavior.visitHistory.unshift(sessionData);
-  behavior.visitHistory = behavior.visitHistory.slice(0, 10);
+function now() {
+  return { timestamp: Date.now(), time: new Date().toLocaleString("en-GB", { timeZone: "Asia/Dhaka" }) };
+}
 
-  localStorage.setItem(USER_BEHAVIOR_KEY, JSON.stringify(behavior));
+// Closes the current page's time slot (on navigation or when the tab is hidden).
+function closePageSegment(s) {
+  if (!s.currentPage) return;
+  s.pages.push({ page: s.currentPage, duration: Date.now() - s.pageStartTime, ...now() });
+  s.pageStartTime = Date.now();
 }
 
 function trackPageView(pageName) {
-  const sessionData = getVisitSession();
-
-  // Record time spent on previous page
-  if (sessionData.currentPage) {
-    const pageDuration = Date.now() - sessionData.pageStartTime;
-    sessionData.pages.push({
-      page: sessionData.currentPage,
-      duration: pageDuration,
-      timestamp: Date.now(),
-      time: new Date().toLocaleString(),
-    });
-  }
-
-  // Start tracking new page
-  sessionData.currentPage = pageName;
-  sessionData.pageStartTime = Date.now();
-
-  localStorage.setItem(VISIT_SESSION_KEY, JSON.stringify(sessionData));
+  updateSession((s) => {
+    closePageSegment(s);
+    s.currentPage = pageName;
+    s.pageStartTime = Date.now();
+  });
 }
 
 function trackProductView(productId, productName) {
-  const sessionData = getVisitSession();
-
-  // Add to session products viewed (avoid duplicates in same session)
-  if (!sessionData.productsViewed.some((p) => p.productId === productId)) {
-    sessionData.productsViewed.push({
-      productId: productId,
-      productName: productName,
-      timestamp: Date.now(),
-      time: new Date().toLocaleString(),
-    });
-  }
-
-  localStorage.setItem(VISIT_SESSION_KEY, JSON.stringify(sessionData));
+  updateSession((s) => {
+    if (!s.productsViewed.some((p) => p.productId === productId)) {
+      s.productsViewed.push({ productId, productName, ...now() });
+    }
+  });
 }
 
 function trackSocialClick(platform) {
-  const sessionData = getVisitSession();
-  sessionData.socialClicks.push({
-    platform: platform,
-    timestamp: Date.now(),
-    time: new Date().toLocaleString(),
-  });
-  localStorage.setItem(VISIT_SESSION_KEY, JSON.stringify(sessionData));
+  updateSession((s) => s.socialClicks.push({ platform, ...now() }));
 }
 
 function trackCartAction(action, data = {}) {
-  const sessionData = getVisitSession();
-
-  // Only track unique cart actions to avoid duplicates
-  const lastAction =
-    sessionData.cartActions[sessionData.cartActions.length - 1];
-  if (
-    !lastAction ||
-    lastAction.action !== action ||
-    Date.now() - lastAction.timestamp > 1000
-  ) {
-    sessionData.cartActions.push({
-      action: action,
-      ...data,
-      timestamp: Date.now(),
-      time: new Date().toLocaleString(),
-    });
-    localStorage.setItem(VISIT_SESSION_KEY, JSON.stringify(sessionData));
-  }
+  updateSession((s) => s.cartActions.push({ action, ...data, ...now() }));
 }
 
 function trackProductFilter(type, value) {
   if (!value) return;
-  const sessionData = getVisitSession();
-  sessionData.filterActions.push({
-    type,
-    value,
-    timestamp: Date.now(),
-    time: new Date().toLocaleString(),
-  });
-  localStorage.setItem(VISIT_SESSION_KEY, JSON.stringify(sessionData));
+  updateSession((s) => s.filterActions.push({ type, value, ...now() }));
 }
 
 function trackWishlistAction(action, data = {}) {
-  const sessionData = getVisitSession();
-  sessionData.wishlistActions.push({
-    action,
-    ...data,
-    timestamp: Date.now(),
-    time: new Date().toLocaleString(),
-  });
-  localStorage.setItem(VISIT_SESSION_KEY, JSON.stringify(sessionData));
+  updateSession((s) => s.wishlistActions.push({ action, ...data, ...now() }));
 }
 
 function trackVariantSelection(data = {}) {
-  const sessionData = getVisitSession();
-  sessionData.variantSelections.push({
-    ...data,
-    timestamp: Date.now(),
-    time: new Date().toLocaleString(),
-  });
-  localStorage.setItem(VISIT_SESSION_KEY, JSON.stringify(sessionData));
+  updateSession((s) => s.variantSelections.push({ ...data, ...now() }));
 }
 
 function trackFormField(field, value) {
-  const sessionData = getVisitSession();
-
-  // Store full field values without truncation
-  if (value && value.trim().length > 0) {
-    sessionData.formFields[field] = {
-      value: value.trim(),
-      length: value.trim().length,
-      timestamp: Date.now(),
-      time: new Date().toLocaleString(),
-    };
-  }
-
-  localStorage.setItem(VISIT_SESSION_KEY, JSON.stringify(sessionData));
+  if (!value || !value.trim()) return;
+  updateSession((s) => {
+    s.formFields[field] = { value: value.trim(), length: value.trim().length, ...now() };
+  });
 }
 
 function trackContactAction(action, data = {}) {
-  const sessionData = getVisitSession();
-
-  // Only track meaningful contact actions
-  if (action === "form_submit" || (action === "form_input" && data.field)) {
-    sessionData.contactActions.push({
-      action: action,
-      ...data,
-      timestamp: Date.now(),
-      time: new Date().toLocaleString(),
-    });
-    localStorage.setItem(VISIT_SESSION_KEY, JSON.stringify(sessionData));
-  }
+  updateSession((s) => s.contactActions.push({ action, ...data, ...now() }));
 }
 
 function trackCheckoutAction(action, data = {}) {
-  const sessionData = getVisitSession();
-
-  // Filter out excessive tracking
-  const shouldTrack =
-    action === "shipping_change" ||
-    action === "order_submit" ||
-    action === "order_placed" ||
-    (action === "note_typed" && data.length > 5) ||
-    (action === "form_input" && data.field && data.value);
-
-  if (shouldTrack) {
-    sessionData.checkoutActions.push({
-      action: action,
-      ...data,
-      timestamp: Date.now(),
-      time: new Date().toLocaleString(),
-    });
-    localStorage.setItem(VISIT_SESSION_KEY, JSON.stringify(sessionData));
-  }
+  updateSession((s) => s.checkoutActions.push({ action, ...data, ...now() }));
 }
 
 function trackOrderPlaced(orderData = {}) {
-  const sessionData = getVisitSession();
-  sessionData.orderPlaced = true;
-  sessionData.orderData = {
-    name: orderData.name || "",
-    phone: orderData.phone || "",
-    address: orderData.address || "",
-    note: orderData.note || "",
-    total: orderData.total || 0,
-    timestamp: Date.now(),
-    time: new Date().toLocaleString(),
-  };
-
-  if (orderData.name) trackFormField("checkout_name", orderData.name);
-  if (orderData.phone) trackFormField("checkout_phone", orderData.phone);
-  if (orderData.address) trackFormField("checkout_address", orderData.address);
-  if (orderData.note) trackFormField("checkout_order_note", orderData.note);
-
-  trackCheckoutAction("order_placed", {
-    total: orderData.total || 0,
-    phone: orderData.phone || "",
+  updateSession((s) => {
+    s.orderPlaced = true;
+    s.orderData = {
+      orderId: orderData.orderId || "",
+      name: orderData.name || "",
+      phone: orderData.phone || "",
+      address: orderData.address || "",
+      note: orderData.note || "",
+      total: orderData.total || 0,
+      ...now(),
+    };
+    s.checkoutActions.push({ action: "order_placed", orderId: orderData.orderId || "", total: orderData.total || 0, ...now() });
   });
-
-  localStorage.setItem(VISIT_SESSION_KEY, JSON.stringify(sessionData));
-}
-
-if (typeof window !== "undefined") {
-  window.trackOrderPlaced = trackOrderPlaced;
 }
 
 function getBehavior() {
-  return JSON.parse(localStorage.getItem(USER_BEHAVIOR_KEY)) || {};
+  return readJSON(localStorage, USER_BEHAVIOR_KEY, {});
 }
+
+function saveSessionToHistory(sessionData) {
+  const behavior = getBehavior();
+  behavior.visitHistory = (behavior.visitHistory || []).filter((v) => v.visitId !== sessionData.visitId);
+  behavior.visitHistory.unshift(sessionData);
+  behavior.visitHistory = behavior.visitHistory.slice(0, 10);
+  writeJSON(localStorage, USER_BEHAVIOR_KEY, behavior);
+}
+
+/* ---------- Building the summary ---------- */
 
 function formatDuration(ms) {
   if (!ms || isNaN(ms)) return "0s";
@@ -329,9 +186,7 @@ function formatDuration(ms) {
   if (seconds < 60) return `${seconds}s`;
   const minutes = Math.floor(seconds / 60);
   const remainingSeconds = seconds % 60;
-  return remainingSeconds > 0
-    ? `${minutes}m ${remainingSeconds}s`
-    : `${minutes}m`;
+  return remainingSeconds > 0 ? `${minutes}m ${remainingSeconds}s` : `${minutes}m`;
 }
 
 function parseUserAgent(ua) {
@@ -345,7 +200,7 @@ function parseUserAgent(ua) {
   else if (/Linux/i.test(ua)) os = "Linux";
 
   let browser = "Browser";
-  if (/FB_IAB|FB4A|FBAV/i.test(ua)) browser = "Facebook App";
+  if (/FB_IAB|FB4A|FBAV|FBAN/i.test(ua)) browser = "Facebook App";
   else if (/Instagram/i.test(ua)) browser = "Instagram App";
   else if (/Edg/i.test(ua)) browser = "Edge";
   else if (/Chrome/i.test(ua)) browser = "Chrome";
@@ -355,488 +210,334 @@ function parseUserAgent(ua) {
   return `${os} (${browser})`;
 }
 
-function parseReferrer(ref) {
-  if (!ref || ref === "none") return "Direct Traffic / Bookmark";
-  try {
-    const url = new URL(ref);
-    if (url.hostname.includes("facebook.com") || url.hostname.includes("fb.com")) {
-      return `Facebook (${url.hostname})`;
-    }
-    if (url.hostname.includes("instagram.com")) {
-      return `Instagram (${url.hostname})`;
-    }
-    if (url.hostname.includes("google.com")) {
-      return `Google Search (${url.hostname})`;
-    }
-    return `${url.hostname}`;
-  } catch {
-    return ref;
-  }
+function activeTime(sessionData) {
+  return sessionData.pages.reduce((sum, p) => sum + (p.duration || 0), 0);
 }
 
-function getVisitorIntent(sessionData) {
-  const fields = sessionData.formFields || {};
-  const hasCheckoutName = Boolean(fields["checkout_name"]?.value);
-  const hasCheckoutPhone = Boolean(fields["checkout_phone"]?.value);
-  const hasCheckoutAddress = Boolean(fields["checkout_address"]?.value);
-  const hasCheckoutData = hasCheckoutName || hasCheckoutPhone || hasCheckoutAddress;
-
-  // 1. Check if an order was placed during this visit session
-  let isOrderPlaced =
-    Boolean(sessionData.orderPlaced) ||
-    (sessionData.checkoutActions &&
-      sessionData.checkoutActions.some((a) => a.action === "order_placed"));
-
-  // Secondary check: Did an order occur in checkoutOrders during this session?
-  if (!isOrderPlaced) {
-    try {
-      const recentOrders = JSON.parse(localStorage.getItem("checkoutOrders")) || [];
-      isOrderPlaced = recentOrders.some(
-        (ts) => ts >= (sessionData.startTimestamp || 0) - 2000
-      );
-    } catch (e) {}
-  }
-
-  if (isOrderPlaced) {
-    const customerName =
-      sessionData.orderData?.name ||
-      fields["checkout_name"]?.value ||
-      "Customer";
-    const total = sessionData.orderData?.total;
-    const totalPart =
-      total !== undefined && total !== null && Number(total) > 0
-        ? ` - ৳${Number(total).toFixed(2)}`
-        : "";
-
-    return {
-      isOrderPlaced: true,
-      level: "🎉 ORDER COMPLETED: Customer Successfully Placed Order!",
-      subjectTag: `🎉 [Order Placed] ${customerName}${totalPart}`,
-    };
-  }
-
-  const reachedCheckout =
-    sessionData.currentPage === "checkout" ||
-    (sessionData.pages && sessionData.pages.some((p) => p.page === "checkout"));
-
-  const cartCount = sessionData.cartActions ? sessionData.cartActions.length : 0;
-  const productsCount = sessionData.productsViewed ? sessionData.productsViewed.length : 0;
-
-  if (hasCheckoutData) {
-    return {
-      isOrderPlaced: false,
-      level: "🔥 HIGH INTENT: Checkout Data Entered (Potential Lead / Unfinished Order)",
-      subjectTag: "🔥 [High Intent Lead] Checkout Filled (Unfinished)",
-    };
-  }
-  if (reachedCheckout) {
-    return {
-      isOrderPlaced: false,
-      level: "🛒 HIGH INTENT: Checkout Abandoned",
-      subjectTag: "🛒 [Abandoned Checkout]",
-    };
-  }
-  if (cartCount > 0) {
-    return {
-      isOrderPlaced: false,
-      level: "🛍️ CART ENGAGED: Items Added to Cart",
-      subjectTag: "🛍️ [Cart Active]",
-    };
-  }
-  if (productsCount > 0) {
-    return {
-      isOrderPlaced: false,
-      level: "👀 PRODUCT EXPLORER: Browsed Catalog",
-      subjectTag: "👀 [Browsed Products]",
-    };
-  }
+// What's in the cart right now (including items added on an earlier visit).
+function cartSnapshot() {
+  const items = typeof orderItems === "function" ? orderItems() : [];
   return {
-    isOrderPlaced: false,
-    level: "⏱️ VISITOR SESSION SUMMARY",
-    subjectTag: "⏱️ [Visit Summary]",
+    items: items.map((i) => `${i.label} × ${i.qty}`),
+    subtotal: items.reduce((sum, i) => sum + i.lineTotal, 0),
   };
 }
 
-function formatOrderPlacedSummary(sessionData) {
-  const orderData = sessionData.orderData || {};
-  const fields = sessionData.formFields || {};
-  const name = orderData.name || fields["checkout_name"]?.value || "Customer";
-  const phone = orderData.phone || fields["checkout_phone"]?.value || "Not provided";
-  const address = orderData.address || fields["checkout_address"]?.value || "Not provided";
-  const note = orderData.note || fields["checkout_order_note"]?.value;
-  const total = orderData.total;
+const taka = (n) => `৳${Math.round(Number(n) || 0).toLocaleString("en-US")}`;
 
+function getVisitorIntent(sessionData) {
+  const fields = sessionData.formFields || {};
+  const hasCheckoutData = Boolean(fields.checkout_name?.value || fields.checkout_phone?.value || fields.checkout_address?.value);
+
+  if (sessionData.orderPlaced) {
+    const o = sessionData.orderData || {};
+    const totalPart = Number(o.total) > 0 ? ` - ৳${Math.round(Number(o.total)).toLocaleString("en-US")}` : "";
+    return {
+      isOrderPlaced: true,
+      level: "🎉 ORDER COMPLETED",
+      subjectTag: `🎉 [Order Placed${o.orderId ? ` ${o.orderId}` : ""}] ${o.name || "Customer"}${totalPart}`,
+    };
+  }
+  if (sessionData.contactActions.some((a) => a.action === "form_submit")) {
+    const who = fields.contact_name?.value || "Visitor";
+    return { level: "📬 CONTACT MESSAGE SENT", subjectTag: `📬 [Contact Message] ${who}` };
+  }
+  const reachedCheckout = sessionData.pages.some((p) => p.page === "checkout") || sessionData.currentPage === "checkout";
+  if (hasCheckoutData) {
+    return { level: "🔥 HIGH INTENT: Checkout Data Entered (Unfinished Order)", subjectTag: "🔥 [High Intent Lead] Checkout Filled (Unfinished)" };
+  }
+  if (reachedCheckout) return { level: "🛒 HIGH INTENT: Checkout Abandoned", subjectTag: "🛒 [Abandoned Checkout]" };
+  if (sessionData.cartActions.some((a) => a.action === "add_to_cart") || sessionData.cartNow?.items.length) {
+    return { level: "🛍️ CART ENGAGED: Items Added to Cart", subjectTag: "🛍️ [Cart Active]" };
+  }
+  if (sessionData.productsViewed.length) return { level: "👀 PRODUCT EXPLORER: Browsed Products", subjectTag: "👀 [Browsed Products]" };
+  return { level: "⏱️ VISITOR SESSION SUMMARY", subjectTag: "⏱️ [Visit Summary]" };
+}
+
+function formatOrderPlacedSummary(sessionData) {
+  const o = sessionData.orderData || {};
   const lines = [
     "🎉 COMPLETED ORDER DETAILS:",
-    "  • Order Status: Successfully Placed ✅",
-    `  • Customer Name: ${name}`,
-    `  • Phone Number: ${phone}`,
-    `  • Full Delivery Address: ${address}`,
+    o.orderId ? `  • Order Number: ${o.orderId}` : "",
+    `  • Customer Name: ${o.name || "Customer"}`,
+    `  • Phone Number: ${o.phone || "Not provided"}`,
+    `  • Full Delivery Address: ${o.address || "Not provided"}`,
+    o.note ? `  • Order Note: ${o.note}` : "",
+    Number(o.total) > 0 ? `  • Total Amount: ৳${Math.round(Number(o.total)).toLocaleString("en-US")}` : "",
   ];
-  if (note) {
-    lines.push(`  • Order Note: ${note}`);
-  }
-  if (total !== undefined && total !== null && Number(total) > 0) {
-    lines.push(`  • Total Amount: ৳${Number(total).toFixed(2)}`);
-  }
-
-  return lines.join("\n");
+  return lines.filter(Boolean).join("\n");
 }
 
 function formatFormFieldsSummary(formFields) {
   if (!formFields || Object.keys(formFields).length === 0) return null;
   const lines = [];
+  const f = (key) => formFields[key]?.value;
 
-  const name = formFields["checkout_name"]?.value;
-  const phone = formFields["checkout_phone"]?.value;
-  const address = formFields["checkout_address"]?.value;
-  const note = formFields["checkout_order_note"]?.value;
-
-  if (name || phone || address || note) {
+  if (f("checkout_name") || f("checkout_phone") || f("checkout_address") || f("checkout_order_note")) {
     lines.push("📋 CUSTOMER ENTERED CHECKOUT DETAILS (UNFINISHED ORDER):");
-    if (name) lines.push(`  • Full Name: ${name}`);
-    if (phone) lines.push(`  • Phone Number: ${phone}`);
-    if (address) lines.push(`  • Full Delivery Address: ${address}`);
-    if (note) lines.push(`  • Order Note: ${note}`);
+    if (f("checkout_name")) lines.push(`  • Full Name: ${f("checkout_name")}`);
+    if (f("checkout_phone")) lines.push(`  • Phone Number: ${f("checkout_phone")}`);
+    if (f("checkout_address")) lines.push(`  • Full Delivery Address: ${f("checkout_address")}`);
+    if (f("checkout_shipping_method")) {
+      const area = f("checkout_shipping_method");
+      lines.push(`  • Delivery Area: ${(typeof AREA_LABELS !== "undefined" && AREA_LABELS[area]) || area}`);
+    }
+    if (f("checkout_order_note")) lines.push(`  • Order Note: ${f("checkout_order_note")}`);
   }
-
-  const cName = formFields["contact_name"]?.value;
-  const cContact = formFields["contact_contact"]?.value || formFields["contact_email_or_phone"]?.value;
-  const cMsg = formFields["contact_message"]?.value;
-  if (cName || cContact || cMsg) {
-    if (lines.length > 0) lines.push("");
+  if (f("contact_name") || f("contact_email_or_phone") || f("contact_message")) {
+    if (lines.length) lines.push("");
     lines.push("📬 CONTACT FORM DETAILS:");
-    if (cName) lines.push(`  • Name: ${cName}`);
-    if (cContact) lines.push(`  • Phone/Email: ${cContact}`);
-    if (cMsg) lines.push(`  • Message: ${cMsg}`);
+    if (f("contact_name")) lines.push(`  • Name: ${f("contact_name")}`);
+    if (f("contact_email_or_phone")) lines.push(`  • Phone/Email: ${f("contact_email_or_phone")}`);
+    if (f("contact_message")) lines.push(`  • Message: ${f("contact_message")}`);
   }
-
-  const handledKeys = new Set([
-    "checkout_name",
-    "checkout_phone",
-    "checkout_address",
-    "checkout_order_note",
-    "contact_name",
-    "contact_contact",
-    "contact_email_or_phone",
-    "contact_message"
-  ]);
-  const otherFields = Object.entries(formFields).filter(([k]) => !handledKeys.has(k));
-  if (otherFields.length > 0) {
-    if (lines.length > 0) lines.push("");
-    lines.push("📝 OTHER FORM INPUTS:");
-    otherFields.forEach(([k, v]) => lines.push(`  • ${k}: ${v.value}`));
-  }
-
-  return lines.length > 0 ? lines.join("\n") : null;
+  return lines.length ? lines.join("\n") : null;
 }
 
-function formatJourneyTimeline(pages, currentPage, totalDuration, pageStartTime, endTimestamp) {
-  const steps = [];
-  if (pages && pages.length > 0) {
-    pages.forEach((p) => {
-      steps.push(`${p.page} (${formatDuration(p.duration || 0)})`);
-    });
-  }
-  if (steps.length === 0 && currentPage) {
-    const dur = (endTimestamp || Date.now()) - (pageStartTime || Date.now());
-    steps.push(`${currentPage} (${formatDuration(Math.max(0, dur))})`);
-  }
-  return steps.length > 0 ? steps.join(" ➔ ") : "Single page visit";
+// Joins back-to-back time on the same page (e.g. before and after an app switch).
+function formatJourneyTimeline(pages) {
+  const merged = [];
+  pages.forEach((p) => {
+    const last = merged[merged.length - 1];
+    if (last && last.page === p.page) last.duration += p.duration || 0;
+    else merged.push({ page: p.page, duration: p.duration || 0 });
+  });
+  return merged.length ? merged.map((p) => `${p.page} (${formatDuration(p.duration)})`).join(" ➔ ") : "Single page visit";
 }
 
-function formatVisitSummaryMessage(sessionData, intent, deviceInfo, referrerInfo) {
-  const visitCount = localStorage.getItem("visit_count") || "1";
+function formatVisitSummaryMessage(sessionData, intent) {
+  const source = sessionData.source || {};
   const sections = [];
-
-  sections.push(`==================================================`);
+  sections.push("==================================================");
   sections.push(intent.level);
-  sections.push(`==================================================\n`);
+  sections.push("==================================================\n");
 
-  sections.push(`⏱️ SESSION OVERVIEW`);
-  sections.push(`• Total Duration: ${formatDuration(sessionData.totalDuration)} (Visit #${visitCount})`);
-  sections.push(`• Time: ${new Date(sessionData.startTimestamp).toLocaleString()}`);
-  sections.push(`• Traffic Source: ${referrerInfo}`);
-  sections.push(`• Device: ${deviceInfo}`);
+  sections.push("⏱️ SESSION OVERVIEW");
+  sections.push(`• Visit ID: ${sessionData.visitId}${sessionData.emailsSent ? ` (update ${sessionData.emailsSent + 1})` : ""}`);
+  sections.push(`• Time on site: ${formatDuration(activeTime(sessionData))} (Visit #${localStorage.getItem("visit_count") || "1"} on this phone)`);
+  sections.push(`• Started: ${new Date(sessionData.startTimestamp).toLocaleString("en-GB", { timeZone: "Asia/Dhaka" })} (Dhaka time)`);
+  sections.push(`• Source: ${typeof sourceLabel === "function" ? sourceLabel(source) : source.referrer || "Direct"}`);
+  sections.push(`• Landing page: ${source.landing || "/"}`);
+  sections.push(`• Device: ${parseUserAgent(navigator.userAgent)}`);
   sections.push(`• Screen Size: ${window.screen ? `${window.screen.width} × ${window.screen.height}` : "Unknown"}\n`);
 
-  // Full Customer Form Details (Completed Order or Unfinished Checkout)
   if (intent.isOrderPlaced) {
     sections.push(`${formatOrderPlacedSummary(sessionData)}\n`);
   } else {
     const formSummary = formatFormFieldsSummary(sessionData.formFields);
-    if (formSummary) {
-      sections.push(`${formSummary}\n`);
-    }
+    if (formSummary) sections.push(`${formSummary}\n`);
   }
 
-  // Shopping and site interactions
-  const shoppingLines = [];
-  if (sessionData.productsViewed && sessionData.productsViewed.length > 0) {
-    const productCounts = {};
-    sessionData.productsViewed.forEach((p) => {
-      productCounts[p.productName] = (productCounts[p.productName] || 0) + 1;
-    });
-    const productText = Object.entries(productCounts)
-      .map(([name, count]) => (count > 1 ? `${name} (viewed ${count}x)` : name))
-      .join(", ");
-    shoppingLines.push(`• Products Viewed: ${productText}`);
+  const shopping = [];
+  const cart = sessionData.cartNow;
+  if (cart && cart.items.length) shopping.push(`• Cart right now (${taka(cart.subtotal)}): ${cart.items.join(", ")}`);
+  if (sessionData.productsViewed.length) {
+    shopping.push(`• Products Viewed: ${sessionData.productsViewed.map((p) => p.productName).join(", ")}`);
+  }
+  const adds = sessionData.cartActions.filter((a) => a.action === "add_to_cart").map((a) => a.product || "item");
+  if (adds.length) shopping.push(`• Added to Cart: ${adds.join(", ")}`);
+  const removes = sessionData.cartActions.filter((a) => a.action === "remove_from_cart").map((a) => a.product || "item");
+  if (removes.length) shopping.push(`• Removed from Cart: ${removes.join(", ")}`);
+  if (sessionData.cartActions.some((a) => a.action === "clear_cart")) shopping.push("• Cleared the cart");
+  if (sessionData.variantSelections.length) {
+    shopping.push(`• Options Selected: ${sessionData.variantSelections.map((v) => `${v.product || "Product"}: ${v.variant || "Default"}`).join(", ")}`);
+  }
+  if (sessionData.wishlistActions.length) {
+    shopping.push(`• Wishlist: ${sessionData.wishlistActions.map((w) => `${w.action} ${w.product || ""}`.trim()).join(", ")}`);
+  }
+  if (sessionData.filterActions.length) {
+    shopping.push(`• Filters Applied: ${[...new Set(sessionData.filterActions.map((a) => `${a.type}: ${a.value}`))].join(", ")}`);
+  }
+  if (sessionData.socialClicks.length) {
+    shopping.push(`• Social / Messenger Clicks: ${[...new Set(sessionData.socialClicks.map((c) => c.platform))].join(", ")} (${sessionData.socialClicks.length})`);
+  }
+  if (shopping.length) {
+    sections.push("🛒 SHOPPING & SITE ACTIVITY");
+    sections.push(shopping.join("\n") + "\n");
   }
 
-  if (sessionData.cartActions && sessionData.cartActions.length > 0) {
-    const actionCounts = {};
-    sessionData.cartActions.forEach((a) => {
-      actionCounts[a.action] = (actionCounts[a.action] || 0) + 1;
-    });
-    const cartSummary = Object.entries(actionCounts)
-      .map(([action, count]) => `${action}: ${count}`)
-      .join(", ");
-    shoppingLines.push(`• Cart Actions: ${cartSummary}`);
-  }
-
-  if (sessionData.variantSelections && sessionData.variantSelections.length > 0) {
-    const variants = sessionData.variantSelections
-      .map((v) => `${v.product || "Product"}: ${v.variant || "Default"}`)
-      .join(", ");
-    shoppingLines.push(`• Options Selected: ${variants}`);
-  }
-
-  if (sessionData.wishlistActions && sessionData.wishlistActions.length > 0) {
-    shoppingLines.push(`• Wishlist Actions: ${sessionData.wishlistActions.length}`);
-  }
-
-  if (sessionData.searchActions && sessionData.searchActions.length > 0) {
-    const searches = sessionData.searchActions.map((a) => a.query).join(", ");
-    shoppingLines.push(`• Product Searches: ${searches}`);
-  }
-
-  if (sessionData.filterActions && sessionData.filterActions.length > 0) {
-    const filters = sessionData.filterActions.map((a) => `${a.type}: ${a.value}`).join(", ");
-    shoppingLines.push(`• Filters Applied: ${filters}`);
-  }
-
-  if (sessionData.socialClicks && sessionData.socialClicks.length > 0) {
-    const platforms = [...new Set(sessionData.socialClicks.map((c) => c.platform))];
-    shoppingLines.push(`• Social Clicks: ${platforms.join(", ")} (${sessionData.socialClicks.length} clicks)`);
-  }
-
-  if (shoppingLines.length > 0) {
-    sections.push(`🛒 SHOPPING & SITE ACTIVITY`);
-    sections.push(shoppingLines.join("\n") + "\n");
-  }
-
-  sections.push(`📍 JOURNEY TIMELINE`);
-  sections.push(formatJourneyTimeline(sessionData.pages, sessionData.currentPage, sessionData.totalDuration, sessionData.pageStartTime, sessionData.endTimestamp));
-
+  sections.push("📍 JOURNEY TIMELINE");
+  sections.push(formatJourneyTimeline(sessionData.pages));
   return sections.join("\n");
 }
 
-function sendVisitEmail(sessionData) {
-  const isDev =
-    DISABLE_VISIT_EMAILS ||
-    location.hostname === "localhost" ||
-    location.hostname === "127.0.0.1" ||
-    location.hostname === "" ||
-    location.hostname.includes("ngrok") ||
-    location.protocol === "file:";
+/* ---------- Sending ---------- */
 
-  if (isDev) {
-    console.log("Visit summary email disabled during development.");
-    return;
-  }
+// What counts as "something new" for a follow-up email. Time on page alone doesn't.
+function visitSignature(s) {
+  return JSON.stringify([
+    s.productsViewed.length,
+    s.cartActions.length,
+    s.wishlistActions.length,
+    s.pages.some((p) => p.page === "checkout"),
+    Object.keys(s.formFields).sort(),
+    s.contactActions.length,
+    s.orderPlaced,
+  ]);
+}
 
-  // Filter out visits under 5 seconds (5000ms)
-  if (!sessionData.totalDuration || sessionData.totalDuration < MIN_VISIT_EMAIL_DURATION_MS) {
-    console.log(`Visit duration (${sessionData.totalDuration || 0}ms) under 5s minimum, skipping email.`);
-    return;
-  }
-
-  const intent = getVisitorIntent(sessionData);
-  const deviceInfo = parseUserAgent(navigator.userAgent);
-  const referrerInfo = parseReferrer(document.referrer || "none");
-  const sourceLabel = referrerInfo.split("(")[0].trim();
-  const subject = `${intent.subjectTag} (${formatDuration(sessionData.totalDuration)}) — ${sourceLabel}`;
-
-  const visitorData = {
-    _subject: subject,
-    message: formatVisitSummaryMessage(sessionData, intent, deviceInfo, referrerInfo),
+function captureOpenForms() {
+  const fields = {
+    checkout_name: "checkoutName",
+    checkout_phone: "checkoutPhone",
+    checkout_address: "checkoutAddress",
+    checkout_order_note: "orderNote",
+    contact_name: "name",
+    contact_email_or_phone: "contact",
+    contact_message: "message",
   };
-
-  fetch("https://formsubmit.co/ajax/topukhan6364@gmail.com", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(visitorData),
-  })
-    .then((r) => r.json())
-    .then((d) => console.log("Visit summary sent:", d))
-    .catch((err) => console.error("Error sending visit summary:", err));
+  Object.entries(fields).forEach(([key, id]) => {
+    const value = document.getElementById(id)?.value;
+    if (value && value.trim()) trackFormField(key, value);
+  });
 }
 
-// Exit tracking
-function setupExitTracking() {
-  // Page visibility change (tab switch, minimize)
-  document.addEventListener("visibilitychange", () => {
-    if (document.hidden) {
-      saveVisitSession();
+function visitEmailsAllowed() {
+  return !NO_TRACK && sendsOn("visitSummaryEmails") && recipients("visitSummaryEmails").length > 0;
+}
+
+// How many more summaries this device may send in the current window.
+function visitEmailRoom() {
+  const since = Date.now() - VISIT_EMAIL_LIMIT.windowMs;
+  const log = readJSON(localStorage, VISIT_EMAIL_LOG_KEY, []).filter((t) => t > since);
+  writeJSON(localStorage, VISIT_EMAIL_LOG_KEY, log);
+  return VISIT_EMAIL_LIMIT.max - log.length;
+}
+
+function logVisitEmail() {
+  writeJSON(localStorage, VISIT_EMAIL_LOG_KEY, [...readJSON(localStorage, VISIT_EMAIL_LOG_KEY, []), Date.now()]);
+}
+
+// Emails one summary (to every recipient) and marks the visit as sent up to now.
+function sendVisitSummary(s, late = false) {
+  recipients("visitSummaryEmails").forEach((address) => sendVisitEmail(s, address, late));
+  logVisitEmail();
+  s.lastSentSignature = visitSignature(s);
+  s.emailsSent += 1;
+  s.pendingEmail = false;
+}
+
+// Sends summaries of earlier visits on this device that the limit held back.
+function sendHeldBackVisits(currentVisitId) {
+  if (!visitEmailsAllowed()) return;
+  const behavior = getBehavior();
+  const history = behavior.visitHistory || [];
+  let changed = false;
+  history.forEach((v) => {
+    if (!v.pendingEmail || v.visitId === currentVisitId) return;
+    if (Date.now() - v.startTimestamp > VISIT_EMAIL_LATE_MAX_AGE_MS) {
+      v.pendingEmail = false; // too old to be useful
+    } else if (visitEmailRoom() > 0) {
+      sendVisitSummary(v, true);
+    } else return;
+    changed = true;
+  });
+  if (changed) writeJSON(localStorage, USER_BEHAVIOR_KEY, behavior);
+}
+
+// Runs when the visitor switches away or leaves. Sends at most one email per change,
+// within the per-device limit.
+function flushVisit() {
+  captureOpenForms();
+  const s = getVisitSession();
+  closePageSegment(s);
+  s.cartNow = cartSnapshot();
+  // Another tab may have sent this visit's held-back summary already.
+  const saved = (getBehavior().visitHistory || []).find((v) => v.visitId === s.visitId);
+  if (saved && saved.emailsSent > s.emailsSent) {
+    s.emailsSent = saved.emailsSent;
+    s.lastSentSignature = saved.lastSentSignature;
+    s.pendingEmail = saved.pendingEmail;
+  }
+  const signature = visitSignature(s);
+  const shouldSend = activeTime(s) >= MIN_VISIT_EMAIL_DURATION_MS && signature !== s.lastSentSignature;
+
+  if (shouldSend) {
+    if (!visitEmailsAllowed()) {
+      console.log("Visit summary email not sent (?notrack device, test mode, SEND_VISIT_EMAILS=false, or turned off in config.js).");
+      s.lastSentSignature = signature;
+      s.pendingEmail = false;
+    } else if (visitEmailRoom() > 0) {
+      sendVisitSummary(s);
     } else {
-      // User came back to tab - start new session
-      initVisitSession();
+      console.log(`Visit summary held back (limit: ${VISIT_EMAIL_LIMIT.max} per ${VISIT_EMAIL_LIMIT.windowMs / 60000} min); it will be sent later.`);
+      s.pendingEmail = true;
     }
-  });
-
-  // Beforeunload (closing tab/browser)
-  window.addEventListener("beforeunload", () => {
-    saveVisitSession();
-  });
-
-  // Page load (initialize new session)
-  window.addEventListener("load", () => {
-    initVisitSession();
-
-    // Increment visit count
-    const visitCount = parseInt(localStorage.getItem("visit_count") || "0") + 1;
-    localStorage.setItem("visit_count", visitCount.toString());
-
-    // Setup social icon tracking
-    setupSocialTracking();
-
-    // Setup form and cart tracking
-    setupActionTracking();
-  });
+  }
+  saveSession(s);
+  saveSessionToHistory(s);
+  sendHeldBackVisits(s.visitId);
 }
 
-// Track page views and time spent. Dispatched by navigate() in script.js on every
-// route change (link click, back/forward, or initial load) — plain "hashchange"
-// stopped firing once routing moved to real paths via the History API.
-window.addEventListener("route-changed", () => {
-  const currentView = location.pathname.split("/")[1] || "home";
-  const params = new URLSearchParams(location.search);
+function sendVisitEmail(sessionData, to, late = false) {
+  const intent = getVisitorIntent(sessionData);
+  const source = typeof sourceLabel === "function" ? sourceLabel(sessionData.source || {}) : "";
+  const update = (sessionData.emailsSent ? " (update)" : "") + (late ? " (sent late)" : "");
+  const body = new FormData();
+  body.set("_subject", `${intent.subjectTag}${update} (${formatDuration(activeTime(sessionData))}) — ${source} — Visit ${sessionData.visitId}`);
+  body.set("message", formatVisitSummaryMessage(sessionData, intent));
+  // keepalive lets the request finish even if the tab is closing; a FormData body
+  // needs no CORS preflight, which keepalive requests can't do.
+  fetch(`https://formsubmit.co/ajax/${to}`, {
+    method: "POST",
+    headers: { Accept: "application/json" },
+    body,
+    keepalive: true,
+  }).catch((err) => console.error("Error sending visit summary:", err));
+}
 
-  // Track the page view
-  trackPageView(currentView);
+document.addEventListener("visibilitychange", () => {
+  if (document.hidden) {
+    flushVisit();
+  } else {
+    // Back from another app: same visit, the clock restarts for the current page.
+    updateSession((s) => {
+      s.pageStartTime = Date.now();
+    });
+  }
+});
+window.addEventListener("pagehide", flushVisit);
+setTimeout(() => sendHeldBackVisits(getVisitSession().visitId), 5000);
+
+// Page views come from navigate() in script.js on every route change (link click,
+// back/forward or first load). Product pages are named after the product.
+window.addEventListener("route-changed", () => {
+  const parts = location.pathname.split("/").filter(Boolean);
+  const pageName = parts[0] === "product" && parts[1] ? `product: ${decodeURIComponent(parts[1])}` : parts[0] || "home";
+  const params = new URLSearchParams(location.search);
+  trackPageView(pageName);
   if (params.get("cat")) trackProductFilter("category", params.get("cat"));
   if (params.get("concern")) trackProductFilter("need", params.get("concern"));
 });
 
-function setupSocialTracking() {
-  // Track social media icon clicks
-  document.addEventListener("click", (e) => {
-    const socialLink = e.target.closest(
-      'a[href*="instagram"], a[href*="facebook"], a[href*="twitter"]'
-    );
-    if (socialLink) {
-      let platform = "unknown";
-      const href = socialLink.getAttribute("href") || "";
+// Social and Messenger link clicks.
+document.addEventListener("click", (e) => {
+  const link = e.target.closest('a[href*="instagram"], a[href*="facebook"], a[href*="m.me"]');
+  if (!link) return;
+  const href = link.getAttribute("href") || "";
+  trackSocialClick(href.includes("instagram") ? "instagram" : href.includes("m.me") ? "messenger" : "facebook");
+});
 
-      if (href.includes("instagram")) platform = "instagram";
-      else if (href.includes("facebook")) platform = "facebook";
-      else if (href.includes("twitter")) platform = "twitter";
-
-      trackSocialClick(platform);
-    }
+// Form fields: record typed values (on pause and on leaving a field), ignoring
+// hidden settings fields and unchosen radio buttons.
+function setupFormFieldTracking(form, prefix) {
+  if (!form) return;
+  const record = (field) => {
+    if (field.type === "hidden" || field.name === "_honey" || !field.name) return;
+    if (field.type === "radio" && !field.checked) return;
+    if (field.value && field.value.trim()) trackFormField(`${prefix}_${field.name}`, field.value);
+  };
+  form.addEventListener("focusout", (e) => record(e.target));
+  form.addEventListener("change", (e) => record(e.target));
+  let timer;
+  form.addEventListener("input", (e) => {
+    clearTimeout(timer);
+    timer = setTimeout(() => record(e.target), 700);
+  });
+  form.addEventListener("submit", () => {
+    if (prefix === "contact") trackContactAction("form_submit");
+    else trackCheckoutAction("order_submit");
   });
 }
-
-function setupActionTracking() {
-  // Cart actions with debouncing
-  document.addEventListener("click", (e) => {
-    if (e.target.closest('[onclick*="addToCart"]')) {
-      trackCartAction("add_to_cart");
-    }
-    if (e.target.closest('[onclick*="removeFromCart"]')) {
-      trackCartAction("remove_from_cart");
-    }
-    if (e.target.closest('[onclick*="incQty"]')) {
-      trackCartAction("increase_quantity");
-    }
-    if (e.target.closest('[onclick*="decQty"]')) {
-      trackCartAction("decrease_quantity");
-    }
-    if (e.target.closest('[onclick*="clearCart"]')) {
-      trackCartAction("clear_cart");
-    }
-
-  });
-
-  // Form field tracking on blur and input (when user types or leaves field)
-  function setupFormFieldTracking(form, prefix) {
-    if (!form) return;
-
-    const captureAllFormFields = () => {
-      const fields = form.querySelectorAll("input, textarea, select");
-      fields.forEach((field) => {
-        if (field.value && field.value.trim().length > 0) {
-          const fieldName = `${prefix}_${field.name || field.id}`;
-          trackFormField(fieldName, field.value);
-        }
-      });
-    };
-
-    // Capture initial values if already populated (e.g. from loadFormData)
-    captureAllFormFields();
-
-    const fields = form.querySelectorAll("input, textarea, select");
-    fields.forEach((field) => {
-      const recordField = () => {
-        if (field.value && field.value.trim().length > 0) {
-          const fieldName = `${prefix}_${field.name || field.id}`;
-          trackFormField(fieldName, field.value);
-          if (prefix === "checkout") {
-            trackCheckoutAction("form_input", {
-              field: fieldName,
-              value: field.value.trim(),
-            });
-          }
-        }
-      };
-      field.addEventListener("blur", recordField);
-      let fieldTimer;
-      field.addEventListener("input", () => {
-        clearTimeout(fieldTimer);
-        fieldTimer = setTimeout(recordField, 700);
-      });
-    });
-
-    // Form submission
-    form.addEventListener("submit", () => {
-      captureAllFormFields();
-      if (prefix === "contact") {
-        trackContactAction("form_submit");
-      } else if (prefix === "checkout") {
-        trackCheckoutAction("order_submit");
-      }
-    });
-  }
-
-  // Contact form
-  setupFormFieldTracking(document.getElementById("contactForm"), "contact");
-
-  // Checkout form
-  const checkoutForm = document.getElementById("checkoutForm");
-  if (checkoutForm) {
-    setupFormFieldTracking(checkoutForm, "checkout");
-
-    // Shipping method changes
-    checkoutForm.addEventListener("change", (e) => {
-      if (e.target.name === "shipping_method") {
-        trackCheckoutAction("shipping_change", { method: e.target.value });
-      }
-    });
-
-    // Order note tracking (only when substantial content)
-    const orderNote = document.getElementById("orderNote");
-    if (orderNote) {
-      orderNote.addEventListener("blur", () => {
-        if (orderNote.value && orderNote.value.trim().length > 0) {
-          trackCheckoutAction("note_typed", {
-            length: orderNote.value.trim().length,
-            value: orderNote.value.trim(),
-          });
-        }
-      });
-    }
-  }
-}
-
-// Initialize everything when script loads
-setupExitTracking();
+setupFormFieldTracking(document.getElementById("contactForm"), "contact");
+setupFormFieldTracking(document.getElementById("checkoutForm"), "checkout");

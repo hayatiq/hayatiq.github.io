@@ -197,6 +197,9 @@ Add a new object with all the required keys. Example:
   for a tag you've started using (e.g. once a few products are tagged "Stress Relief",
   add `{ label: "Stress Relief", icon: "fa-...", concern: "Stress Relief" }` there so a
   tile appears for it).
+* **"You may also like"** (`related`, optional): a list of product ids shown first on this
+  product's page, e.g. `related: ["11", "14"]`. Same-category products and best sellers fill the
+  rest (up to 4), so `related: []` still shows suggestions.
 * **Display order** (`display_order`, optional number): controls the order products
   appear in **everywhere** a product list renders — Top Selling Products, Shop Our
   Products, the full Products page, and every category/need filter of it. Lower
@@ -343,38 +346,165 @@ from `"Coming Soon"` to a number), consider also setting `badge: "new"` for the 
 
 ---
 
-# 📱 Setting up Telegram Order Notifications
+# 📱 Order Notifications (email, Telegram, Google Sheet)
 
-The site is configured to automatically send new orders to your Telegram account using a secure Netlify Function.
+Every order gets a number like **HQ-261017-4K7P**. Who gets what is set in one place,
+`NOTIFY` in **`js/config.js`**:
 
-## 1. Create your Telegram Bot
+| Message | Business (hayatiq.life + main Telegram) | Developer (topukhan + developer Telegram) |
+| --- | --- | --- |
+| Order placed — email | ✓ | ✓ |
+| Order placed — Telegram | ✓ | ✓ |
+| Contact-form message — email | ✓ | ✓ |
+| Contact-form message — Telegram | ✓ | ✓ |
+| Visit summary — email | | ✓ |
+| Order row in the Google Sheet | one shared sheet (owned by whoever creates it) | |
 
-1. Open Telegram and search for **@BotFather** (it has a blue verification tick).
-2. Send the message `/newbot`
-3. Give your bot a display name (e.g., "Hayatiq Orders")
-4. Give it a username (e.g., "hayatiq_order_bot")
-5. BotFather will reply with a message containing your **HTTP API Token** (it looks like this: `1234567890:ABCDEFGHIJKLMNOPQRSTUVWXYZ`).
-6. **Save this Token securely.**
+To change it, edit the lists (e.g. `visitSummaryEmails: ["developer"]`); `[]` turns that message
+off. Each email is one FormSubmit submission, so every extra recipient uses quota. The order counts
+as received if any channel works; if all fail, the customer sees their order with a "Send on
+Messenger" button and their cart is kept.
 
-## 2. Get your Chat ID
+**Secrets never go in the code.** Telegram chat IDs and the sheet address live in Netlify:
+**Site configuration → Environment variables**. After adding or changing a variable, trigger a
+new deploy (**Deploys → Trigger deploy → Deploy site**) — running sites only pick up variables on
+the next deploy.
 
-You need to tell the bot where to send the messages.
-1. In Telegram, search for the username of the bot you just created and start a conversation by sending it a message (e.g., "hello").
-2. Then, search for another bot called **@userinfobot** or **@RawDataBot** and start a chat with it. It will immediately reply with your `id` (a number like `123456789`).
-3. **Save this Chat ID.**
+| Netlify variable | What it is | Needed for |
+| --- | --- | --- |
+| `TELEGRAM_BOT_TOKEN` | The bot that sends alerts (already set) | All Telegram alerts |
+| `TELEGRAM_CHAT_ID` | Business chat (already set) | Business Telegram |
+| `TELEGRAM_DEV_CHAT_ID` | Developer chat | Developer Telegram |
+| `TELEGRAM_DEV_BOT_TOKEN` | Optional — only if the developer chat uses a different bot | |
+| `SHEET_WEBHOOK_URL` | The Google Apps Script web app address | Google Sheet |
+| `SHEET_TOKEN` | A password shared with the sheet script | Google Sheet |
 
-*(Note: To send orders to a group chat, add your Bot to that group, get the group's ID, and use that instead).*
+A chat or sheet whose variables aren't set yet is simply skipped; nothing breaks.
 
-## 3. Add to Netlify & Deploy
+## Test mode
 
-Since the frontend is static, the Bot Token must be hidden in the backend (Netlify Functions) for security.
+Orders, contact messages, Telegram alerts, sheet rows and visit emails are only sent from the live
+address (`LIVE_HOSTS` in `js/config.js`). Anywhere else — your laptop, your phone over Wi-Fi, a Netlify
+preview — a yellow **TEST MODE** bar shows and nothing is sent, so testing never uses FormSubmit quota.
 
-1. Go to your **Netlify Dashboard** for this site.
-2. Go to **Site Configuration** > **Environment Variables**.
-3. Click **Add a variable** and add the following two variables:
-   * Key: `TELEGRAM_BOT_TOKEN` | Value: *(Paste the token from Step 1)*
-   * Key: `TELEGRAM_CHAT_ID` | Value: *(Paste the ID from Step 2)*
-4. Trigger a new deploy (or simply push code to your repository).
-5. Netlify will automatically build the site with the secure environment variables, and Telegram notifications will start working for all new orders.
+## Testing real sends locally
 
-✅ That's it! If you ever need to change who receives the orders, just update the `TELEGRAM_CHAT_ID` in Netlify and redeploy. No code changes required.
+To check that emails, Telegram alerts, sheet rows and visit summaries really arrive, without
+deploying or logging in to Netlify:
+
+1. Copy `.env.example` to `.env` and fill in the values (same names as the Netlify variables
+   above). Git ignores `.env`, so the tokens never reach GitHub or the website. **Never put tokens
+   in the code**: this repository and the site's scripts are public.
+2. Run `node tools/dev-server.js` (Node 20.12 or newer) and open
+   `http://localhost:8888/?send=real`. A red **REAL SENDS ON** bar shows; that tab now sends for
+   real (emails go to the `NOTIFY` addresses, so use a test name like "TEST" on orders).
+3. Click **turn off** in the bar (or open `?send=test`) when done. A new tab starts in test mode again.
+
+**Switch each kind of message on or off** with these lines in `.env` (`true` or `false`; a missing
+line means on). Restart the server after changing them (or after pulling new code), then reload
+the page. If the page was served some other way, a yellow **REAL SENDS BLOCKED** bar shows and
+nothing is sent. They only affect local testing; the live
+site always sends everything in `NOTIFY`.
+
+| `.env` line | Controls |
+| --- | --- |
+| `SEND_ORDER_EMAILS` | Order emails |
+| `SEND_CONTACT_EMAILS` | Contact-form emails |
+| `SEND_VISIT_EMAILS` | Visit summary emails |
+| `SEND_ORDER_TELEGRAM` | Telegram order alerts |
+| `SEND_CONTACT_TELEGRAM` | Telegram contact-form alerts |
+| `SEND_ORDER_SHEET` | Google Sheet rows |
+
+After a test order, a red-bordered **Test details** box on the order page shows what each channel
+did (sent, switched off, not-configured, or FormSubmit's own error message). It only appears on
+your computer, never on the live site.
+
+Real sends can only be switched on at `localhost` and home-network addresses, never on the live
+site or a Netlify preview. The first email from a new address may make FormSubmit send an
+activation email; click its link once.
+
+## 1. Developer Telegram chat (same bot)
+
+1. In the developer's Telegram, open the existing order bot (search its @username) and press
+   **Start** (or send "hi"). A bot can't message anyone who hasn't started it.
+2. Get that account's chat ID: message **@userinfobot**; it replies with your `Id` (a number).
+   For a group instead: add the bot to the group and use the group's ID (starts with `-`).
+3. In Netlify add `TELEGRAM_DEV_CHAT_ID` = that number, then trigger a deploy.
+
+The next real order goes to both chats. (Setting up a brand-new bot instead? Create it with
+**@BotFather** `/newbot`, start it from the developer account, and also add its token as
+`TELEGRAM_DEV_BOT_TOKEN`.)
+
+## 2. Google order sheet
+
+**Create the sheet and add the script**
+
+1. Signed in to the Google account that should own the orders (e.g. the developer's), open
+   [sheets.new](https://sheets.new) and name the sheet **Hayatiq Orders**.
+2. Menu **Extensions → Apps Script**. A code editor opens in a new tab.
+3. Delete everything in `Code.gs`, paste the whole of `google-apps-script/orders.gs` from this
+   repository, and click **Save** (disk icon).
+4. On the line `const TOKEN = "CHANGE-ME-to-a-long-random-text";` replace the text between the
+   quotes with your own long random password (e.g. 30+ letters and numbers). Save again.
+
+**Check it works**
+
+5. In the toolbar, pick **testOrder** in the function dropdown and click **Run**.
+6. The first time, Google asks for permission: **Review permissions → choose your account**. If you
+   see "Google hasn't verified this app", click **Advanced → Go to (project name) (unsafe)** — it's
+   your own script — then **Allow**.
+7. Go back to the sheet: a new **Orders** tab has a header row and one "Test order (delete me)" row.
+   Delete that row (right-click the row number → Delete row).
+
+**Publish it so the website can send rows**
+
+8. In Apps Script click **Deploy → New deployment**. Click the gear next to "Select type" and choose
+   **Web app**. Description: "Hayatiq orders". **Execute as: Me**. **Who has access: Anyone**.
+   Click **Deploy** (approve permissions again if asked).
+9. Copy the **Web app URL** (ends in `/exec`).
+10. In Netlify add `SHEET_WEBHOOK_URL` = that URL and `SHEET_TOKEN` = the same password you put in
+    `TOKEN`. Trigger a deploy.
+
+"Anyone" only means the address can be called; nobody can read your sheet through it, and rows are
+only added when the password matches. Keep the URL and password private.
+
+**Using it**
+
+- Change each order's **Status** from the dropdown: New → Confirmed → Shipped → Delivered (or
+  Cancelled / Returned / Fake). Use **Courier tracking** and **Team notes** freely.
+- Phone numbers that appear on more than one order are highlighted yellow.
+- To let the business see it, use the sheet's **Share** button.
+- If you edit the script later: **Deploy → Manage deployments → ✏️ Edit → Version: New version →
+  Deploy**. This keeps the same URL, so Netlify needs no change.
+
+## 3. Visit summaries and Umami analytics
+
+- **Visit summary emails** (one per visit, plus an update only if the visitor does something new)
+  go to the recipients in `NOTIFY.visitSummaryEmails`. The subject shows what happened: 🎉 order
+  placed, 📬 contact message, 🔥 checkout filled but not ordered, 🛒 abandoned checkout, 🛍️ cart,
+  👀 browsed. The email includes what's in the cart right now (even items added on an earlier visit).
+- **Limit:** each phone/browser sends at most **3 visit emails per 10 minutes**
+  (`VISIT_EMAIL_LIMIT` in `js/visitor.js`). A summary held back by the limit is sent later, marked
+  "(sent late)", when that visitor switches tabs again or next opens the site (within a day).
+- **Your own devices:** open `https://hayatiq.netlify.app/?notrack` once on each phone and browser
+  you use (the Facebook app's browser counts separately). That browser then sends no visit emails
+  and no Umami stats; orders still work. `?track` turns it back on.
+- **Umami** (free, no cookies): create a site at [cloud.umami.is](https://cloud.umami.is), copy its
+  **Website ID** into `UMAMI_WEBSITE_ID` in `js/config.js`. It records page views plus these events:
+  `product_view`, `add_to_cart`, `begin_checkout`, `order_placed`, `order_failed`. Compare it with the
+  visit emails for a while to see which numbers you trust.
+- **Tag the links you share** so both reports show which post or ad brought each visitor and order:
+  `https://hayatiq.netlify.app/product/magnesium-oil?utm_source=facebook&utm_medium=post&utm_campaign=oct-offer`
+  (`utm_source`: facebook / instagram / messenger; `utm_medium`: post / story / bio / ad / reply).
+
+---
+
+# 🖼️ Adding Product Photos
+
+Each photo needs two files with the same name:
+
+1. `images/<name>.webp` — the main photo, at most about **1,100px wide**.
+2. `images/cards/<name>.webp` — a **600px-wide** copy used on product cards and in the cart.
+
+[Squoosh](https://squoosh.app) (free, in the browser) does both: open the photo, choose **WebP**,
+set the width, and download. Keeping photos small is what keeps the site fast on mobile data.

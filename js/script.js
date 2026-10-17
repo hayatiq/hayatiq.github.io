@@ -36,6 +36,7 @@ const routes = {
   checkout: document.getElementById("view-checkout"),
   wishlist: document.getElementById("view-wishlist"),
   notfound: document.getElementById("view-notfound"),
+  order: document.getElementById("view-order"),
 };
 
 function setActiveNav(path) {
@@ -126,6 +127,7 @@ function navigate() {
         } else {
           routes.detail.classList.add("active");
           trackProductView(product.id, product.name);
+          trackEvent("product_view", { product: product.name });
           renderDetail(product.id);
         }
   } else if (path.startsWith("/products")) {
@@ -162,7 +164,13 @@ function navigate() {
   } else if (path === "/checkout") {
     routes.checkout.classList.add("active");
     initCheckout();
+    if (getCart().length) trackEvent("begin_checkout", { items: getCart().length });
     setPageMeta("Checkout — Hayatiq", "Complete your Hayatiq order — cash on delivery available across Bangladesh.", { path: "/checkout" });
+    resetProductJsonLd();
+  } else if (path === "/order") {
+    routes.order.classList.add("active");
+    renderOrderPage();
+    setPageMeta("Your Order — Hayatiq", "Your Hayatiq order confirmation.", { path: "/order", noindex: true });
     resetProductJsonLd();
   } else if (path === "/wishlist") {
     routes.wishlist.classList.add("active");
@@ -185,6 +193,7 @@ function navigate() {
   }
   setActiveNav(path);
   updateFloatingCartButton();
+  document.getElementById("toastBox")?.classList.remove("show");
   // Start each route at the top instead of wherever the previous view left off scrolled.
   window.scrollTo(0, 0);
   // Move focus for accessibility (preventScroll so it doesn't fight the scrollTo above)
@@ -223,12 +232,8 @@ window.addEventListener("popstate", navigate);
 // the homepage section entirely until populated. Entry shape: { type:
 // "text"|"photo"|"screenshot", customerName, rating (optional), content, image
 // (required for photo/screenshot), relatedProductId (optional), source (optional) }.
-// DEMO PREVIEW DATA below — replace with real testimonials before launch.
-const TESTIMONIALS = [
-  { type: "text", customerName: "Farhana S.", rating: 5, content: "Ordered on a Wednesday, arrived exactly as described — will be reordering the magnesium oil.", source: "Facebook" },
-  { type: "text", customerName: "Imran K.", rating: 5, content: "Really appreciated how quickly they replied to my questions on Messenger before I ordered.", source: "Messenger" },
-  { type: "photo", customerName: "Sadia R.", rating: 4.5, content: "Loved the packaging, felt very premium for a small brand.", image: "./images/placeholder.webp" },
-];
+// Only add genuine feedback, with the customer's permission (see README.MD).
+const TESTIMONIALS = [];
 
 function initials(name) {
   return (name || "?").trim().split(/\s+/).map((w) => w[0]).join("").slice(0, 2).toUpperCase();
@@ -292,7 +297,14 @@ function money(n) {
   if (typeof n === "string") {
     return n;
   }
-  return `৳${n.toFixed(2)}`;
+  return `৳${Math.round(n).toLocaleString("en-US")}`;
+}
+
+// Small (600px-wide) copy of a product photo for cards, thumbnails and cart rows;
+// the full-size file is only loaded for the product page's main photo. Every photo
+// in images/ needs a matching file in images/cards/ (see README.MD).
+function cardImage(src) {
+  return src.replace("./images/", "./images/cards/");
 }
 
 function productVariants(p) {
@@ -347,7 +359,7 @@ function productCard(p, opts = {}) {
       <article class="${cardClass}" aria-label="${p.name}">
         <a href="/product/${p.slug}">
           <div class="product-media">
-            <img loading="lazy" src="${display.images[0]}" alt="${p.name}">
+            <img ${opts.eager ? 'fetchpriority="high"' : 'loading="lazy"'} src="${cardImage(display.images[0])}" alt="${p.name}">
             ${isComingSoon ? `<div class="coming-soon-overlay">
               <span>Coming Soon</span>
               <button class="coming-soon-ask" onclick="event.preventDefault(); event.stopPropagation(); window.open('https://m.me/hayatiq.life?ref=${p.slug}', '_blank');"><i class="fa-brands fa-facebook-messenger" aria-hidden="true"></i> Ask about this</button>
@@ -360,16 +372,19 @@ function productCard(p, opts = {}) {
              ${p.attributes ? `<div class="product-subtitle">${p.subtitle}</div>` : (p.variants ? `<div class="product-subtitle">${p.variants.length} variants · ${display.label || display.subtitle}</div>` : (p.subtitle ? `<div class="product-subtitle">${p.subtitle}</div>` : ''))}
             <div class="product-footer">
                <div class="product-price">${money(display.price)}</div>
-               ${!isComingSoon ? `<button class="btn-icon-add" aria-label="${p.attributes ? 'Choose options for' : 'Add'} ${p.name} to cart" onclick="event.preventDefault(); event.stopPropagation(); ${p.attributes ? `goTo('/product/${p.slug}');` : `addToCart('${p.id}', '${selectedId || ''}'); animateCartToCart(this);`}"><i class="fa-solid ${p.attributes ? 'fa-sliders' : 'fa-cart-plus'}"></i></button>` : ''}
+               ${!isComingSoon ? `<button class="btn-icon-add" aria-label="${p.attributes ? 'Choose options for' : 'Add'} ${p.name} to cart" onclick="event.preventDefault(); event.stopPropagation(); ${p.attributes ? `goTo('/product/${p.slug}');` : `addToCart('${p.id}', '${selectedId || ''}');`}"><i class="fa-solid ${p.attributes ? 'fa-sliders' : 'fa-cart-plus'}"></i></button>` : ''}
             </div>
           </div>
         </a>
       </article>`;
 }
 
+// Skips products already shown in the Top Selling carousel just above it, so the
+// homepage shows more of the range instead of the same cards twice.
 function renderFeatured() {
   if (!featuredGrid) return;
-  featuredGrid.innerHTML = PRODUCTS.slice(0, 8).map(productCard).join("");
+  const shown = new Set(topProducts().map((p) => p.id));
+  featuredGrid.innerHTML = PRODUCTS.filter((p) => !shown.has(p.id)).slice(0, 8).map((p) => productCard(p)).join("");
 }
 
 // Opt-in only via `topSelling: true` — no automatic fallback to other live products.
@@ -388,7 +403,8 @@ function renderTopProducts() {
     return;
   }
   if (section) section.style.display = "";
-  topProductsGrid.innerHTML = items.map((p) => productCard(p, { carousel: true })).join("");
+  // The first two cards are on screen at load, so their photos load straight away.
+  topProductsGrid.innerHTML = items.map((p, i) => productCard(p, { carousel: true, eager: i < 2 })).join("");
 }
 
 // "Find the Right Product" — small, hand-curated list of needs (not auto-derived) so
@@ -457,7 +473,7 @@ function renderProducts(category, concern) {
   let items = PRODUCTS;
   if (category) items = items.filter((p) => p.category === category);
   if (concern) items = items.filter((p) => (p.concerns || []).includes(concern));
-  productsGrid.innerHTML = items.map(productCard).join("");
+  productsGrid.innerHTML = items.map((p) => productCard(p)).join("");
   productCount.textContent = `${items.length} item${
     items.length !== 1 ? "s" : ""
   }`;
@@ -486,14 +502,19 @@ function setupProductFilters() {
     renderProducts(category, concern);
   };
 
-  categoryFilter.addEventListener("change", () => {
-    const selectedCategory = categoryFilter.value;
-    if (selectedCategory) {
-      goTo(`/products?cat=${encodeURIComponent(selectedCategory)}`);
-    } else {
-      goTo("/products");
-    }
-  });
+  // Attach the change handler only once: navigate() calls this on every visit to
+  // /products, and a fresh listener each time made every change re-render 2x, 4x, 8x…
+  if (!categoryFilter.dataset.bound) {
+    categoryFilter.dataset.bound = "true";
+    categoryFilter.addEventListener("change", () => {
+      const selectedCategory = categoryFilter.value;
+      if (selectedCategory) {
+        goTo(`/products?cat=${encodeURIComponent(selectedCategory)}`);
+      } else {
+        goTo("/products");
+      }
+    });
+  }
 
   updateFilters();
 }
@@ -635,10 +656,21 @@ function addAttributeProductToCart(productId, sourceBtn) {
   const selections = getVisibleAttributeSelections(p, rawSelections);
   const key = attributeSelectionsKey(p, selections);
   addToCart(productId, key, null, true, selections);
-  toast(`${p.name} (${formatAttributeSelections(p, selections)}) added to cart`);
-  if (sourceBtn && typeof animateCartToCart === "function") {
-    animateCartToCart(sourceBtn);
+}
+
+// "Order Now": put this exact item in the cart (once) and go straight to checkout.
+function orderNow(productId, variantId) {
+  const p = PRODUCTS.find((x) => x.id === productId);
+  if (!p) return;
+  let key = variantIdFor(p, variantId || null);
+  let selections = null;
+  if (p.attributes) {
+    selections = getVisibleAttributeSelections(p, initProductAttributeSelections(p));
+    key = attributeSelectionsKey(p, selections);
   }
+  const inCart = getCart().some((i) => i.id === productId && cartRowVariantId(i, p) === key);
+  if (!inCart) addToCart(productId, key, null, false, selections);
+  goTo("/checkout");
 }
 
 function renderDetail(id, variantId = null) {
@@ -753,7 +785,10 @@ function renderDetail(id, variantId = null) {
   }
   
   let activeImageIndex = 0;
-  const existingThumbs = document.querySelectorAll("#thumbs img");
+  // Keep the chosen photo only when re-rendering the same product (e.g. after picking
+  // an option), not when moving to another product from "You may also like".
+  const existingThumbs = detailWrap.dataset.productId === p.id ? document.querySelectorAll("#thumbs img") : [];
+  detailWrap.dataset.productId = p.id;
   if (existingThumbs.length) {
     existingThumbs.forEach((t, i) => {
       if (t.classList.contains("active")) activeImageIndex = i;
@@ -772,7 +807,7 @@ function renderDetail(id, variantId = null) {
              ${display.images
               .map(
                 (src, i) =>
-                  `<img loading="lazy" src="${src}" alt="${p.name} ${i + 1}" class="${
+                  `<img loading="lazy" src="${cardImage(src)}" alt="${p.name} ${i + 1}" class="${
                     i === activeImageIndex ? "active" : ""
                   }" data-src="${src}">`
               )
@@ -789,10 +824,10 @@ function renderDetail(id, variantId = null) {
                  </div>
                </div>` : (p.subtitle ? `<span class="product-subtitle-detail">${p.subtitle}</span>` : ''))}
             ${p.variants && !isGenericCustom ? `<span class="product-subtitle-detail">${display.subtitle}</span>` : ""}
-            ${customAttributesHTML}
             <div class="product-price" style="font-size:1.1rem;">${money(
                finalPrice
             )}</div>
+            ${customAttributesHTML}
             <p class="muted">${p.short}</p>
             ${
               reviews.length
@@ -805,9 +840,10 @@ function renderDetail(id, variantId = null) {
             }
           </div>
           <div class="detail-actions">
+            <button class="btn button-primary detail-order-now" onclick="event.preventDefault(); orderNow('${p.id}', '${selectedId || ''}');">Order Now</button>
              ${isGenericCustom
-               ? `<button class="btn button-primary" onclick="event.preventDefault(); addAttributeProductToCart('${p.id}', this);">Add to Cart</button>`
-               : `<button class="btn button-primary" onclick="event.preventDefault(); addToCart('${p.id}', '${selectedId || ''}'); animateCartToCart(this);">Add to Cart</button>`
+               ? `<button class="btn button-ghost" onclick="event.preventDefault(); addAttributeProductToCart('${p.id}', this);">Add to Cart</button>`
+               : `<button class="btn button-ghost" onclick="event.preventDefault(); addToCart('${p.id}', '${selectedId || ''}');">Add to Cart</button>`
              }
             <a class="btn button-ghost" href="https://m.me/hayatiq.life?ref=${p.slug}" target="_blank" rel="noopener"><i class="fa-brands fa-facebook-messenger"></i> Ask a Question</a>
             <button class="wishlist-toggle wishlist-toggle-inline ${isWishlisted(p.id) ? 'active' : ''}" data-id="${p.id}" aria-label="Add to wishlist" onclick="event.preventDefault(); toggleWishlist('${p.id}');"><i class="fa-solid fa-heart"></i></button>
@@ -819,9 +855,8 @@ function renderDetail(id, variantId = null) {
             <div class="usp-badge"><span aria-hidden="true">💵</span> Cash on Delivery</div>
           </div>
           <p class="hero-trust-line">100% Cash on Delivery — inspect your order before you pay.</p>
-          <p class="muted" style="font-size:.85rem;">🚚 Delivery: Inside Dhaka ৳${
-            SHIPPING_RATES.inside_dhaka
-          } · Outside Dhaka ৳${SHIPPING_RATES.outside_dhaka}</p>
+          <p class="muted" style="font-size:.85rem;">🚚 Delivery: Inside Dhaka ৳${SHIPPING_RATES.inside_dhaka} (${DELIVERY_TIME.inside_dhaka}) · Outside Dhaka ৳${SHIPPING_RATES.outside_dhaka} (${DELIVERY_TIME.outside_dhaka})</p>
+          <p class="muted" style="font-size:.85rem;">${DAMAGE_PROMISE} <a href="${FACEBOOK_URL}" target="_blank" rel="noopener" style="text-decoration:underline;">Facebook page</a></p>
 
           <div class="accordion-group">
             ${p.how && p.how.length ? `<details class="accordion-item" open>
@@ -834,11 +869,9 @@ function renderDetail(id, variantId = null) {
             ${p.storage && p.storage.length ? accordionItem("Storage", p.storage, { open: openAccordions.includes("Storage") }) : ''}
           </div>
 
-          <div class="soft-card">
+          ${reviews.length ? `<div class="soft-card">
             <h3 style="margin-bottom:.4rem;">Customer Reviews</h3>
-            <div class="reviews">${
-              reviews.length
-                ? reviews
+            <div class="reviews">${reviews
                     .map(
                       (r) =>
                         `<div class="review-item">
@@ -848,11 +881,10 @@ function renderDetail(id, variantId = null) {
                           ${r.source ? `<span class="review-source">via ${r.source}</span>` : ''}
                         </div>`
                     )
-                    .join("")
-                : '<p class="muted">No reviews yet.</p>'
-            }</div>
-          </div>
+                    .join("")}</div>
+          </div>` : ""}
         </div>
+        ${renderRelated(p)}
       `;
   // thumbs interactivity
   const thumbs = document.getElementById("thumbs");
@@ -884,6 +916,26 @@ function renderDetail(id, variantId = null) {
       document.getElementById(target).classList.add('active');
     });
   });
+}
+
+// "You may also like": the product's own `related` ids first (see products.js), then
+// other live products from the same category, then top sellers, up to 4 in total.
+function relatedProducts(p, limit = 4) {
+  const live = (x) => x && x.id !== p.id && isLiveProduct(x);
+  const picked = (p.related || []).map((id) => PRODUCTS.find((x) => x.id === id)).filter(live);
+  const add = (list, more) => list.concat(more.filter((x) => live(x) && !list.includes(x)));
+  let items = add(picked, PRODUCTS.filter((x) => x.category === p.category));
+  items = add(items, PRODUCTS.filter((x) => x.topSelling));
+  return items.slice(0, limit);
+}
+
+function renderRelated(p) {
+  const items = relatedProducts(p);
+  if (!items.length) return "";
+  return `<section class="related-products" aria-label="You may also like">
+      <h3>You may also like</h3>
+      <div class="products-grid">${items.map((x) => productCard(x)).join("")}</div>
+    </section>`;
 }
 
 function chooseProductVariant(productId, variantId, variantLabel) {
@@ -946,6 +998,16 @@ function cartRowVariantId(row, p) {
   return p.variants ? (row.variantId || selectedVariant(p).id) : null;
 }
 
+// Readable name for a cart line, e.g. "Bath Bomb (Round · Lavender · 100g)".
+function cartLineLabel(p, variantId, selections) {
+  if (p.attributes && selections) return `${p.name} (${formatAttributeSelections(p, selections)})`;
+  if (variantId && p.variants) {
+    const v = selectedVariant(p, variantId);
+    return `${p.name} (${v.label || v.subtitle})`;
+  }
+  return p.subtitle ? `${p.name} (${p.subtitle})` : p.name;
+}
+
 function addToCart(id, variantId = null, redirect = null, showToast = true, selections = null) {
   const cart = getCart();
   const p = PRODUCTS.find((x) => x.id === id);
@@ -966,50 +1028,15 @@ function addToCart(id, variantId = null, redirect = null, showToast = true, sele
     qty: 1
   });
   setCart(cart);
-  if (redirect) {
-    // No drawer on this path — the toast is the only add-to-cart confirmation shown.
-    const label = p.attributes && selections
-      ? ` (${formatAttributeSelections(p, selections)})`
-      : resolvedVariantId && p.variants
-      ? ` (${selectedVariant(p, resolvedVariantId).label || selectedVariant(p, resolvedVariantId).subtitle})`
-      : "";
-    showToast && toast(`${p.name}${label} added to cart`);
-    setTimeout(() => {
-      window.location.href = redirect;
-    }, 1500);
-  }
-  // The drawer only opens when the user explicitly taps the floating cart button or a
-  // header cart icon — not automatically on every add.
-}
-function animateCartToCart(source) {
-  const floatingCart = document.getElementById("floatingCartBtn");
-  const target = [floatingCart, ...document.querySelectorAll(".cart-link, .desktop-cart")].find((el) => {
-    if (!el) return false;
-    const rect = el.getBoundingClientRect();
-    return !el.classList.contains("hidden") && getComputedStyle(el).display !== "none" && rect.width > 0 && rect.height > 0;
-  });
-  if (!source || !target) return;
-  if (source.classList.contains("btn-icon-add") || source.classList.contains("button-primary")) source.blur();
-
-  const sourceRect = source.getBoundingClientRect();
-  const targetRect = target.getBoundingClientRect();
-  const flyer = document.createElement("span");
-  flyer.className = "cart-flight-item";
-  flyer.innerHTML = '<i class="fa-solid fa-cart-shopping" aria-hidden="true"></i>';
-  flyer.style.left = `${sourceRect.left + sourceRect.width / 2 - 15}px`;
-  flyer.style.top = `${sourceRect.top + sourceRect.height / 2 - 15}px`;
-  flyer.style.setProperty("--cart-flight-x", `${targetRect.left + targetRect.width / 2 - sourceRect.left - sourceRect.width / 2}px`);
-  flyer.style.setProperty("--cart-flight-y", `${targetRect.top + targetRect.height / 2 - sourceRect.top - sourceRect.height / 2}px`);
-  document.body.appendChild(flyer);
-  requestAnimationFrame(() => flyer.classList.add("is-flying"));
-  target.classList.add("cart-arrival");
-  setTimeout(() => {
-    flyer.remove();
-    target.classList.remove("cart-arrival");
-  }, 1250);
+  const label = cartLineLabel(p, resolvedVariantId, selections);
+  if (typeof trackCartAction === "function") trackCartAction("add_to_cart", { product: label });
+  trackEvent("add_to_cart", { product: label });
+  // Every add confirms itself and offers the next step, instead of a silent counter change.
+  if (showToast) toast(`Added to cart: ${label}`, "success", { label: "Checkout", href: "/checkout" });
 }
 function removeFromCart(id, variantId = null) {
   const p = PRODUCTS.find((x) => x.id === id);
+  if (typeof trackCartAction === "function") trackCartAction("remove_from_cart", { product: p ? cartLineLabel(p, variantId || null) : id });
   if (!p) {
     setCart(getCart().filter((i) => i.id !== id));
     return;
@@ -1024,7 +1051,8 @@ function removeFromCart(id, variantId = null) {
     return p.variants && cartRowVariantId(i, p) !== resolvedVariantId;
   }));
 }
-function clearCart() {
+function clearCart(track = true) {
+  if (track && typeof trackCartAction === "function" && getCart().length) trackCartAction("clear_cart");
   setCart([]);
 }
 function updateCartCount() {
@@ -1085,18 +1113,21 @@ function renderWishlist() {
   const ids = getWishlist();
   const items = PRODUCTS.filter((p) => ids.includes(p.id));
   grid.innerHTML = items.length
-    ? items.map(productCard).join("")
+    ? items.map((p) => productCard(p)).join("")
     : '<p class="muted">Your wishlist is empty. Tap the heart on any product to save it here.</p>';
 }
 
 /* ==============================
        Floating mobile cart button
        ============================== */
+// Slim bottom bar with the cart total and a Checkout button. It shows only when the
+// cart has something in it, and stays out of the way on cart, checkout and the
+// order confirmation.
 function updateFloatingCartButton() {
-  const btn = document.getElementById("floatingCartBtn");
+  const bar = document.getElementById("floatingCartBtn");
   const countEl = document.getElementById("floatingCartCount");
   const totalEl = document.getElementById("floatingCartTotal");
-  if (!btn || !countEl || !totalEl) return;
+  if (!bar || !countEl || !totalEl) return;
 
   const cart = getCart();
   const count = cart.reduce((n, i) => n + i.qty, 0);
@@ -1104,12 +1135,13 @@ function updateFloatingCartButton() {
     const item = cartProduct(row);
     return item ? sum + item.display.price * row.qty : sum;
   }, 0);
-  countEl.textContent = count;
+  countEl.textContent = `${count} item${count === 1 ? "" : "s"}`;
   totalEl.textContent = money(total);
 
   const path = location.pathname;
-  const onCartOrCheckout = path.startsWith("/cart") || path.startsWith("/checkout");
-  btn.classList.toggle("hidden", onCartOrCheckout);
+  const hide = count === 0 || path.startsWith("/cart") || path.startsWith("/checkout") || path.startsWith("/order");
+  bar.classList.toggle("hidden", hide);
+  document.body.classList.toggle("has-cart-bar", !hide);
 }
 
 function updateQty(id, variantId, qty) {
@@ -1165,7 +1197,7 @@ function cartRowHTML(row, p) {
     ? display.subtitle
     : `${p?.variants ? `${variant.label} · ` : ""}${display.subtitle}`;
   return `<div style="display:grid; grid-template-columns: 64px 1fr auto; gap:.6rem; align-items:center; padding:.5rem 0; border-bottom:1px solid rgba(16,15,15,.06);">
-      <img loading="lazy" src="${display.images[0]}" alt="${
+      <img loading="lazy" src="${cardImage(display.images[0])}" alt="${
     display.name
   }" style="width:64px; height:64px; object-fit:cover; border-radius:10px;">
       <div>
@@ -1186,7 +1218,7 @@ function renderCart() {
   const list = getCart();
   if (list.length === 0) {
     holder.innerHTML = '<p class="muted">Your cart is empty.</p>';
-    document.getElementById("cartTotal").textContent = "৳0.00";
+    document.getElementById("cartTotal").textContent = money(0);
     return;
   }
   holder.innerHTML = list
@@ -1210,7 +1242,7 @@ function renderCartDrawer() {
   const list = getCart();
   if (list.length === 0) {
     holder.innerHTML = '<p class="muted">Your cart is empty.</p>';
-    totalEl.textContent = "৳0.00";
+    totalEl.textContent = money(0);
     return;
   }
   holder.innerHTML = list
@@ -1327,7 +1359,7 @@ function closeImageLightbox() {
 
     return `
       <div class="checkout-item">
-        <img loading="lazy" src="${display.images[0]}" alt="${display.name}" class="checkout-item-img">
+        <img loading="lazy" src="${cardImage(display.images[0])}" alt="${display.name}" class="checkout-item-img">
         <div class="checkout-item-details">
           <div class="checkout-item-name">${display.name} <span class="deep-muted"> (${subtitleText}) </span></div>
           ${qtyControlsHTML(row.id, variantId, row.qty)}
@@ -1341,50 +1373,53 @@ function closeImageLightbox() {
   }).join('');
 }
 
-function updateCartItemsData() {
-  const cart = getCart();
-  const lines = cart.map((row, index) => {
+// Cart lines in a plain shape for emails, Telegram, the order sheet and the
+// confirmation page.
+function orderItems() {
+  return getCart().map((row) => {
     const item = cartProduct(row);
     if (!item) return null;
-    const { display, variant } = item;
-    const p = PRODUCTS.find((x) => x.id === row.id);
-    let itemLabel = display.name;
-    if (p && p.attributes) {
-      itemLabel += ` (${display.subtitle})`;
-    } else if (p && p.variants) {
-      itemLabel += ` (${variant.label || variant.subtitle} · ${display.subtitle})`;
-    } else if (display.subtitle) {
-      itemLabel += ` (${display.subtitle})`;
-    }
-    const lineTotal = display.price * row.qty;
-    return `${index + 1}. ${itemLabel}\n   Qty: ${row.qty} × ৳${display.price.toFixed(2)} = ৳${lineTotal.toFixed(2)}`;
+    const { display, variant, p } = item;
+    let label = display.name;
+    if (p.attributes) label += ` (${display.subtitle})`;
+    else if (p.variants) label += ` (${variant.label || variant.subtitle} · ${display.subtitle})`;
+    else if (display.subtitle) label += ` (${display.subtitle})`;
+    return { label, qty: row.qty, unitPrice: display.price, lineTotal: display.price * row.qty };
   }).filter(Boolean);
+}
 
+function updateCartItemsData() {
+  const lines = orderItems().map((i, index) => `${index + 1}. ${i.label}\n   Qty: ${i.qty} × ${money(i.unitPrice)} = ${money(i.lineTotal)}`);
   const cartInput = document.getElementById('cartItemsData');
   if (cartInput) {
     cartInput.value = lines.join('\n\n');
   }
 }
 
+const AREA_LABELS = { inside_dhaka: "Inside Dhaka", outside_dhaka: "Outside Dhaka" };
+
+// The delivery area has no default on purpose: customers outside Dhaka used to
+// check out at the Inside Dhaka rate without noticing.
+function selectedArea() {
+  const checked = document.querySelector('input[name="shipping_method"]:checked');
+  return checked ? checked.value : null;
+}
+
 function updateCheckoutTotals() {
-  const cart = getCart();
-  const subtotal = cart.reduce((sum, row) => {
-    const item = cartProduct(row);
-    return item ? sum + item.display.price * row.qty : sum;
-  }, 0);
-  
-  const shippingChecked = document.querySelector('input[name="shipping_method"]:checked');
-  const shippingMethod = shippingChecked ? shippingChecked.value : 'inside_dhaka';
-  const shippingCost = SHIPPING_RATES[shippingMethod] || SHIPPING_RATES.inside_dhaka;
+  const subtotal = orderItems().reduce((sum, i) => sum + i.lineTotal, 0);
+  const area = selectedArea();
+  const shippingCost = area ? SHIPPING_RATES[area] : 0;
   const total = subtotal + shippingCost;
-  
+
   const subtotalEl = document.getElementById('checkoutSubtotal');
-  if (subtotalEl) subtotalEl.textContent = `৳${subtotal.toFixed(2)}`;
+  if (subtotalEl) subtotalEl.textContent = money(subtotal);
   const shippingEl = document.getElementById('checkoutShipping');
-  if (shippingEl) shippingEl.textContent = `৳${shippingCost.toFixed(2)}`;
+  if (shippingEl) shippingEl.textContent = area ? money(shippingCost) : "Choose an area";
   const totalEl = document.getElementById('checkoutTotal');
-  if (totalEl) totalEl.textContent = `৳${total.toFixed(2)}`;
-  
+  if (totalEl) totalEl.textContent = money(total);
+  const btn = document.getElementById('placeOrderBtn');
+  if (btn && !btn.disabled) btn.textContent = area ? `Place Order · ${money(total)}` : "Place Order";
+
   // Update hidden fields for form submission
   updateCartItemsData();
   const subtotalData = document.getElementById('subtotalData');
@@ -1399,25 +1434,52 @@ function updateShipping() {
   updateCheckoutTotals();
 }
 
-// Character counter for order note
-document.addEventListener('input', function(e) {
-  if (e.target.id === 'orderNote') {
-    const chars = e.target.value.length;
-    document.getElementById('noteChars').textContent = `${chars}/200`;
-  }
-});
+// Accepts numbers the way people type them: Bangla digits, +880 / 880 / 0088
+// prefixes, spaces, dashes and dots. Returns "01XXXXXXXXX", or null if it still
+// isn't a valid Bangladeshi mobile number.
+function normalizePhone(value) {
+  let v = String(value || "").replace(/[০-৯]/g, (d) => String("০১২৩৪৫৬৭৮৯".indexOf(d)));
+  v = v.replace(/[\s\-.()]/g, "");
+  v = v.replace(/^(\+?88|0088)(?=01)/, "");
+  if (/^1[3-9]\d{8}$/.test(v)) v = "0" + v;
+  return /^01[3-9]\d{8}$/.test(v) ? v : null;
+}
+
+function showPhoneError(message) {
+  const el = document.getElementById('phoneError');
+  if (!el) return;
+  el.textContent = message || "";
+  el.hidden = !message;
+}
 
 // Initialize checkout when view is shown
 function initCheckout() {
   updateCheckoutTotals();
   renderCheckoutItems();
-  updateCartItemsData();
   loadFormData();
+  document.querySelectorAll('.ship-time').forEach((el) => {
+    el.textContent = DELIVERY_TIME[el.dataset.area] || "";
+  });
 
-  // Auto-save when user types
-  document.getElementById('checkoutName').addEventListener('input', saveFormData);
-  document.getElementById('checkoutPhone').addEventListener('input', saveFormData);
-  document.getElementById('checkoutAddress').addEventListener('input', saveFormData);
+  // Attach listeners once — this runs on every visit to /checkout.
+  const form = document.getElementById('checkoutForm');
+  if (form.dataset.bound) return;
+  form.dataset.bound = "true";
+  ['checkoutName', 'checkoutPhone', 'checkoutAddress'].forEach((id) => {
+    document.getElementById(id).addEventListener('input', saveFormData);
+  });
+  const phone = document.getElementById('checkoutPhone');
+  phone.addEventListener('blur', () => {
+    if (!phone.value.trim()) return showPhoneError("");
+    const clean = normalizePhone(phone.value);
+    if (clean) {
+      phone.value = clean;
+      saveFormData();
+      showPhoneError("");
+    } else {
+      showPhoneError("Please enter an 11-digit mobile number, e.g. 01712345678");
+    }
+  });
 }
 
 document.addEventListener('input', function(e) {
@@ -1434,6 +1496,96 @@ document.addEventListener('input', function(e) {
     }
   }
 });
+
+/* ==============================
+       Order confirmation (/order)
+       ============================== */
+const LAST_ORDER_KEY = "hayatiq_last_order";
+
+function escapeHtml(text) {
+  return String(text ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+}
+
+// Plain-text version of an order, for copying into Messenger if sending failed.
+function orderText(order) {
+  return [
+    `Order ${order.id}`,
+    ...order.items.map((i) => `${i.label} × ${i.qty} = ${money(i.lineTotal)}`),
+    `Delivery (${order.areaLabel}): ${money(order.delivery)}`,
+    `Total: ${money(order.total)} (cash on delivery)`,
+    `Name: ${order.name}`,
+    `Phone: ${order.phone}`,
+    `Address: ${order.address}`,
+    order.note ? `Note: ${order.note}` : "",
+  ].filter(Boolean).join("\n");
+}
+
+function copyText(text, done = "Copied") {
+  if (navigator.clipboard) navigator.clipboard.writeText(text).then(() => toast(done, "success")).catch(() => {});
+}
+
+function renderOrderPage() {
+  const wrap = document.getElementById("orderWrap");
+  let order = null;
+  try {
+    order = JSON.parse(localStorage.getItem(LAST_ORDER_KEY));
+  } catch (e) {}
+  if (!order) {
+    wrap.innerHTML = `<div class="coming-soon-container">
+        <h2>No recent order</h2>
+        <p class="muted">Orders you place on this phone show up here.</p>
+        <a class="btn button-primary" href="/products">Shop products</a>
+      </div>`;
+    return;
+  }
+  const messenger = `${MESSENGER_URL}?ref=order-${encodeURIComponent(order.id)}`;
+  // Local testing only (js/partial.js deliveryReport): what each channel did.
+  const report = order.report
+    ? `<div class="order-report"><strong>Test details (only shown on your computer)</strong>${order.report
+        .map(([channel, result]) => `<div><span>${escapeHtml(channel)}</span> ${escapeHtml(result)}</div>`)
+        .join("")}</div>`
+    : "";
+
+  if (order.status === "failed") {
+    wrap.innerHTML = `<div class="soft-card order-confirm">
+        <h2>We couldn't send your order</h2>
+        <p>Your cart is saved. Please send us the order below on Messenger and we'll confirm it there, or try again.</p>
+        <pre class="order-text">${escapeHtml(orderText(order))}</pre>
+        <div class="order-actions order-actions-row">
+          <a class="btn button-primary btn-sm" href="${messenger}" target="_blank" rel="noopener"><i class="fa-brands fa-facebook-messenger" aria-hidden="true"></i> Messenger</a>
+          <button type="button" class="btn button-ghost btn-sm" onclick="copyText(orderText(JSON.parse(localStorage.getItem(LAST_ORDER_KEY))), 'Order copied')">Copy order</button>
+          <a class="btn button-ghost btn-sm" href="/checkout">Try again</a>
+        </div>
+        ${report}
+      </div>`;
+    return;
+  }
+
+  const time = DELIVERY_TIME[order.area] || "";
+  wrap.innerHTML = `<div class="order-confirm">
+      ${order.test ? '<p class="order-test-tag">TEST ORDER: nothing was sent</p>' : ""}
+      <div class="order-success">
+        <span class="order-success-icon"><i class="fa-solid fa-circle-check" aria-hidden="true"></i></span>
+        <h2>Thank you, ${escapeHtml(order.name)}!</h2>
+        <p>Your order is placed. We'll call <strong>${escapeHtml(order.phone)}</strong> to confirm it.</p>
+      </div>
+      ${invoiceHtml(order)}
+      <div class="order-next">
+        <h3>What happens next</h3>
+        <ol class="order-steps">
+          <li>We call you to confirm your order.</li>
+          <li>We send it by courier. Delivery ${escapeHtml(order.areaLabel)}: ${escapeHtml(time)}.</li>
+          <li>Check your order when it arrives, then pay the courier in cash.</li>
+        </ol>
+        <p class="muted">${escapeHtml(DAMAGE_PROMISE)}</p>
+      </div>
+      <div class="order-actions order-actions-row">
+        <a class="btn button-primary btn-sm" href="${messenger}" target="_blank" rel="noopener"><i class="fa-brands fa-facebook-messenger" aria-hidden="true"></i> Message us</a>
+        <a class="btn button-ghost btn-sm" href="/products">Continue shopping</a>
+      </div>
+      ${report}
+    </div>`;
+}
 
 const USER_FORM_DATA = "user_form_data";
 
@@ -1465,38 +1617,21 @@ function clearFormData() {
        Toast
        ============================== */
 
-function cssVar(name) {
-  return getComputedStyle(document.documentElement).getPropertyValue(name).trim();
-}
-
-function toast(msg, type = 'info') {
-  const Toast = Swal.mixin({
-    toast: true,
-    position: 'top-end',
-    showConfirmButton: false,
-    timer: 3000,
-    timerProgressBar: true,
-    icon: type,
-  });
-  
-  Toast.fire({
-    title: msg,
-  });
-}
-
-function toastBox(msg, type = 'success') {
-    Swal.fire({
-    title: msg,
-    icon: type,
-    confirmButtonText: 'OK',
-    confirmButtonColor: cssVar('--color-earth'),
-    background: cssVar('--color-almond'),
-    color: cssVar('--color-night'),
-    customClass: {
-      confirmButton: 'swal-confirm-btn',
-      title: 'swal-title'
-    }
-  });
+// Small built-in notice (replaces SweetAlert2). `action` adds a link button,
+// e.g. { label: "Checkout", href: "/checkout" }.
+function toast(msg, type = "info", action = null) {
+  let box = document.getElementById("toastBox");
+  if (!box) {
+    box = document.createElement("div");
+    box.id = "toastBox";
+    box.setAttribute("role", "status");
+    box.setAttribute("aria-live", "polite");
+    document.body.appendChild(box);
+  }
+  box.innerHTML = `<span>${msg}</span>${action ? `<a href="${action.href}" class="toast-action">${action.label}</a>` : ""}`;
+  box.className = `toast-box toast-${type} show`;
+  clearTimeout(toast.timer);
+  toast.timer = setTimeout(() => box.classList.remove("show"), action ? 4000 : 3000);
 }
 
 
@@ -1504,6 +1639,10 @@ function toastBox(msg, type = 'success') {
        Init
        ============================== */
 document.getElementById("year").textContent = new Date().getFullYear();
+const trustLine = document.getElementById("trustLine");
+if (trustLine) {
+  trustLine.textContent = `💵 Cash on delivery · 🚚 Dhaka ${money(SHIPPING_RATES.inside_dhaka)} (${DELIVERY_TIME.inside_dhaka}) · Outside Dhaka ${money(SHIPPING_RATES.outside_dhaka)} (${DELIVERY_TIME.outside_dhaka})`;
+}
 updateCartCount();
 updateWishlistCount();
 renderFeatured();

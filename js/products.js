@@ -35,6 +35,9 @@ const PRODUCTS = [
     topSelling: false,
     // Set to "hot" / "new" / "sale" / "popular" (or leave null) — see README.MD.
     badge: null,
+    // "You may also like" on this product's page: product ids, shown first. Same-category
+    // products and top sellers fill the rest (up to 4). Use [] to rely on those alone.
+    related: ["9", "6", "4"],
     display_order: null,
   },
   {
@@ -57,6 +60,7 @@ const PRODUCTS = [
     reviews: [],
     topSelling: false,
     badge: "new",
+    related: ["9", "8", "4"],
     display_order: null,
   },
   {
@@ -118,6 +122,7 @@ const PRODUCTS = [
     reviews: [],
     topSelling: true,
     badge: null,
+    related: ["8", "6", "4"],
     display_order: 1,
   },
   {
@@ -140,6 +145,7 @@ const PRODUCTS = [
     reviews: [],
     topSelling: false,
     badge: "new",
+    related: ["8", "6", "9"],
     display_order: null,
   },
   // ---- Magnesium Oil Spray ----
@@ -152,8 +158,8 @@ const PRODUCTS = [
     category: "Magnesium Oil Spray",
     images: [
       "./images/hayatiq_magnesium_oil_30.webp",
-      "./images/hayatiq_magnesium_oil_2.jpg",
-      "./images/hayatiq_magnesium_oil_3.jpg",
+      "./images/hayatiq_magnesium_oil_2.webp",
+      "./images/hayatiq_magnesium_oil_3.webp",
     ],
     short: "Nature’s Calm in Every Spray",
     ingredients: ["Magnesium Chloride Brine", "Lavender Essential Oil"],
@@ -195,16 +201,12 @@ const PRODUCTS = [
     // homepage "Find the Right Product" tiles (see NEED_TILES). Leave [] if a product
     // doesn't clearly fit a listed need yet.
     concerns: ["Better Sleep", "Muscle Recovery"],
-    // DEMO PREVIEW DATA — for layout preview only, replace with real reviews before
-    // launch (see README.MD "Adding Customer Reviews"). Remove this comment and the
-    // two entries below once real feedback is added.
-    reviews: [
-      { name: "Nusrat A.", rating: 5, text: "This has genuinely improved my sleep. A few sprays on my feet before bed and I feel so much more relaxed — the scent is mild too, no irritation at all. Highly recommend!" },
-      { name: "Rakibul H.", rating: 4.5, text: "Using this for muscle cramps after workouts and it really helps. Had a bit of tingling the first couple of days but that faded quickly. Would love a bigger bottle option." },
-    ],
+    // Add real customer reviews here as they come in — see README.MD.
+    reviews: [],
     // Set to true to feature this product in the homepage "Top Selling Products" carousel.
     topSelling: false,
     badge: null,
+    related: ["11", "14", "2", "10"],
     display_order: 7,
   },
   {
@@ -216,8 +218,8 @@ const PRODUCTS = [
     category: "Magnesium Oil Spray",
     images: [
       "./images/hayatiq_magnesium_oil_50.webp",
-      "./images/hayatiq_magnesium_oil_2.jpg",
-      "./images/hayatiq_magnesium_oil_3.jpg",
+      "./images/hayatiq_magnesium_oil_2.webp",
+      "./images/hayatiq_magnesium_oil_3.webp",
     ],
     short: "Nature’s Calm in Every Spray",
     ingredients: ["Magnesium Chloride Brine", "Lavender Essential Oil"],
@@ -258,6 +260,7 @@ const PRODUCTS = [
     reviews: [],
     topSelling: false,
     badge: null,
+    related: ["11", "14", "10", "1"],
     display_order: 6,
   },
   {
@@ -307,6 +310,7 @@ const PRODUCTS = [
     reviews: [],
     topSelling: true,
     badge: "hot",
+    related: ["11", "14", "2", "1"],
     display_order: 5,
   },
   // ---- Salves & Balms ----
@@ -329,6 +333,7 @@ const PRODUCTS = [
     reviews: [],
     topSelling: false,
     badge: null,
+    related: ["1", "10", "14"],
     display_order: null,
   },
   // ---- Bath Bombs ----
@@ -350,6 +355,7 @@ const PRODUCTS = [
     reviews: [],
     topSelling: true,
     badge: null,
+    related: ["13", "14"],
     display_order: 8,
     attributes: [
       {
@@ -415,6 +421,7 @@ const PRODUCTS = [
     reviews: [],
     topSelling: false,
     badge: null,
+    related: ["12", "14"],
     display_order: 9,
   },
   // ---- Footsoaks ----
@@ -436,6 +443,7 @@ const PRODUCTS = [
     reviews: [],
     topSelling: false,
     badge: null,
+    related: ["12", "13", "1"],
     display_order: null,
   },
   // ---- Oral Care ----
@@ -480,6 +488,7 @@ const PRODUCTS = [
     reviews: [],
     topSelling: true,
     badge: null,
+    related: ["16"],
     display_order: 4,
   },
   {
@@ -516,6 +525,7 @@ const PRODUCTS = [
     reviews: [],
     topSelling: true,
     badge: null,
+    related: ["15"],
     display_order: null,
     variants: [
       {
@@ -595,6 +605,7 @@ const PRODUCTS = [
     reviews: [],
     topSelling: true,
     badge: "popular",
+    related: ["20", "21", "23"],
     display_order: 2,
     variants: [
       {
@@ -633,6 +644,7 @@ const PRODUCTS = [
     reviews: [],
     topSelling: false,
     badge: null,
+    related: ["23", "18", "21"],
     display_order: null,
   },
   {
@@ -653,6 +665,7 @@ const PRODUCTS = [
     reviews: [],
     topSelling: false,
     badge: null,
+    related: ["22", "18", "23"],
     display_order: null,
   },
   {
@@ -673,6 +686,7 @@ const PRODUCTS = [
     reviews: [],
     topSelling: false,
     badge: null,
+    related: ["21", "18", "23"],
     display_order: null,
   },
   {
@@ -693,6 +707,7 @@ const PRODUCTS = [
     reviews: [],
     topSelling: false,
     badge: null,
+    related: ["20", "18", "21"],
     display_order: null,
   },
 ];

@@ -40,9 +40,8 @@
         <script type="application/ld+json" id="productJsonLd">{}</script>
         <link rel="preconnect" href="https://fonts.googleapis.com">
         <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-        <link rel="preconnect" href="https://cdnjs.cloudflare.com" crossorigin>
         <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600&family=Lora:wght@400;500;600&display=swap" rel="stylesheet">
-        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/7.0.0/css/all.min.css" integrity="sha512-DxV+EoADOkOygM4IR9yXP8Sb2qwgidEmeqAEmDKIOfPRQZOWbXCzLC6vjbZyy0vPisbH2SyW27+ddLVCN+OMzQ==" crossorigin="anonymous" referrerpolicy="no-referrer">
+        <link rel="icon" type="image/webp" href="./images/logo-small.webp">
         <link rel="stylesheet" href="./css/style.css">
     </head>
     <body>
@@ -106,26 +105,16 @@
                     <div class="hero-wrap">
                         <div class="hero-card">
                             <h1>Natural Self-Care for Everyday You</h1>
-                            <p class="muted">Handcrafted wellness rituals made with natural ingredients to nourish your hair, skin, and well-being.</p>
-                            <div class="hero-cta">
-                                <a href="#topProductsGrid" class="btn button-primary" onclick="event.preventDefault(); document.getElementById('topProductsGrid').scrollIntoView({behavior: 'smooth', block: 'start'});">Shop Now</a>
-                            </div>
-                            <p class="hero-messenger-hint">Not sure where to start? <a href="https://m.me/hayatiq.life?ref=hero-help" target="_blank" rel="noopener"><i class="fa-brands fa-facebook-messenger" aria-hidden="true"></i> Chat with us</a></p>
+                            <p class="muted">Handmade in small batches with natural ingredients.</p>
                         </div>
                     </div>
                 </div>
-                <section aria-label="Trust Bar" class="trust-bar-section">
-                    <div class="trust-bar">
-                        <div class="trust-item"><span aria-hidden="true">🚚</span> Nationwide Delivery</div>
-                        <div class="trust-item"><span aria-hidden="true">💵</span> Cash on Delivery</div>
-                        <div class="trust-item"><span aria-hidden="true">⭐</span> Real Customer Reviews</div>
-                        <div class="trust-item"><span aria-hidden="true">💬</span> Messenger Support</div>
-                        <div class="trust-item"><span aria-hidden="true">🌿</span> Handmade in Small Batch</div>
-                    </div>
-                </section>
+                <!-- One readable line with the questions buyers ask first; delivery times
+                     come from DELIVERY_TIME in js/config.js (filled by script.js). -->
+                <p class="trust-line" id="trustLine">💵 Cash on delivery · 🚚 Dhaka ৳80 · Outside Dhaka ৳130</p>
                 <section aria-label="Top Selling Products">
-                    <div class="section-title">
-                        <h2>Top Selling Products</h2>
+                    <div class="section-title section-title-compact">
+                        <h2>Best Sellers</h2>
                         <a href="https://m.me/hayatiq.life?ref=featured-help" target="_blank" rel="noopener" class="ask-advice-link"><i class="fa-brands fa-facebook-messenger" aria-hidden="true"></i> Need Help Choosing?</a>
                     </div>
                     <div class="product-carousel-wrap">
@@ -443,7 +432,7 @@
                     <div id="cartItems"></div>
                     <div style="display:flex;align-items:center;justify-content:space-between;margin-top:.8rem">
                         <strong>Total:</strong>
-                        <strong id="cartTotal">৳0.00</strong>
+                        <strong id="cartTotal">৳0</strong>
                     </div>
                     <div style="margin-top:.8rem;display:flex;gap:.6rem;flex-wrap:wrap">
                         <button class="btn button-ghost" onclick="clearCart()">Clear Cart</button>
@@ -465,32 +454,36 @@
                         <input type="hidden" name="subtotal" id="subtotalData">
                         <input type="hidden" name="shipping" id="shippingData">
                         <input type="hidden" name="total" id="totalData">
+                        <input type="hidden" name="order_id" id="orderIdData">
+                        <input type="hidden" name="delivery_area" id="deliveryAreaData">
+                        <input type="hidden" name="source" id="sourceData">
 
                         <div class="field">
                             <label for="checkoutName">Full Name *</label>
-                            <input id="checkoutName" name="name" required>
+                            <input id="checkoutName" name="name" autocomplete="name" placeholder="Your full name" required>
                         </div>
                         <div class="field">
                             <label for="checkoutPhone">Phone Number *</label>
-                            <input id="checkoutPhone" name="phone" type="tel" required>
+                            <input id="checkoutPhone" name="phone" type="tel" autocomplete="tel" placeholder="01XXXXXXXXX" required>
+                            <small class="field-error" id="phoneError" hidden></small>
                         </div>
                         <div class="field">
                             <label for="checkoutAddress">Delivery Address *</label>
-                            <textarea id="checkoutAddress" name="address" rows="3" required></textarea>
+                            <textarea id="checkoutAddress" name="address" rows="3" autocomplete="street-address" placeholder="House, road, area, thana, district" required></textarea>
                         </div>
 
                         <div class="shipping-field">
                             <label>Shipping Method *</label>
                             <div class="shipping-options">
                                 <label class="shipping-option">
-                                <input type="radio" name="shipping_method" value="inside_dhaka" checked onchange="updateShipping()">
-                                <span>Inside Dhaka</span>
+                                <input type="radio" name="shipping_method" value="inside_dhaka" required onchange="updateShipping()">
+                                <span>Inside Dhaka <small class="ship-time muted" data-area="inside_dhaka"></small></span>
                                 <span class="price">৳80</span>
                                 </label>
 
                                 <label class="shipping-option">
                                 <input type="radio" name="shipping_method" value="outside_dhaka" onchange="updateShipping()">
-                                <span>Outside Dhaka</span>
+                                <span>Outside Dhaka <small class="ship-time muted" data-area="outside_dhaka"></small></span>
                                 <span class="price">৳130</span>
                                 </label>
                             </div>
@@ -503,15 +496,15 @@
                         <div class="soft-card checkout-summary">
                             <div class="summary-row">
                             <span>Subtotal:</span>
-                            <span id="checkoutSubtotal">৳0.00</span>
+                            <span id="checkoutSubtotal">৳0</span>
                             </div>
                             <div class="summary-row">
                             <span>Delivery:</span>
-                            <span id="checkoutShipping">৳80.00</span>
+                            <span id="checkoutShipping">Choose an area</span>
                             </div>
                             <div class="summary-total">
                             <span>Total:</span>
-                            <span id="checkoutTotal">৳0.00</span>
+                            <span id="checkoutTotal">৳0</span>
                             </div>
                         </div>
 
@@ -524,9 +517,12 @@
                         </div>
 
                         <p class="checkout-trust-note"><i class="fa-solid fa-money-bill-wave" aria-hidden="true"></i> Pay in cash when your order arrives — inspect it before you pay. No advance payment required.</p>
-                        <button class="btn button-primary checkout-submit" style="margin-top: 10px;" type="submit">Place Order</button>
+                        <button class="btn button-primary checkout-submit" id="placeOrderBtn" style="margin-top: 10px;" type="submit">Place Order</button>
                     </form>
                 </div>
+            </section>
+            <section id="view-order" class="view" aria-label="Order confirmation">
+                <div id="orderWrap"></div>
             </section>
             <section id="view-notfound" class="view" aria-label="Page Not Found">
                 <div class="coming-soon-container">
@@ -575,11 +571,13 @@
             </div>
             <div class="container" style="padding-bottom:1rem;font-size:.85rem;text-align:center">© <span id="year"></span> HAYATIQ. All rights reserved. Handcrafted with Intention. </div>
         </footer>
-        <button id="floatingCartBtn" class="floating-cart-btn" aria-label="Open cart" onclick="openCartDrawer();">
-            <i class="fa-solid fa-cart-shopping" aria-hidden="true"></i>
-            <span id="floatingCartCount" class="floating-cart-count">0</span>
-            <span id="floatingCartTotal" class="floating-cart-total">৳0.00</span>
-        </button>
+        <div id="floatingCartBtn" class="cart-bar hidden" aria-label="Cart summary">
+            <button type="button" class="cart-bar-summary" onclick="openCartDrawer();">
+                <i class="fa-solid fa-cart-shopping" aria-hidden="true"></i>
+                <span><span id="floatingCartCount">0</span> · <strong id="floatingCartTotal">৳0</strong></span>
+            </button>
+            <a href="/checkout" class="btn button-primary cart-bar-checkout">Checkout</a>
+        </div>
         <div id="cartDrawerOverlay" class="cart-drawer-overlay" onclick="closeCartDrawer()"></div>
         <aside id="cartDrawer" class="cart-drawer" aria-label="Your cart" aria-hidden="true">
             <div class="cart-drawer-header">
@@ -590,7 +588,7 @@
             <div class="cart-drawer-footer">
                 <div class="cart-drawer-total">
                     <span>Total</span>
-                    <strong id="drawerCartTotal">৳0.00</strong>
+                    <strong id="drawerCartTotal">৳0</strong>
                 </div>
                 <div class="cart-drawer-actions">
                     <a href="/cart" class="btn button-ghost" onclick="closeCartDrawer()">View Full Cart</a>
@@ -603,15 +601,12 @@
             <button class="image-lightbox-close" aria-label="Close image" onclick="closeImageLightbox()">✕</button>
             <img id="imageLightboxImg" src="" alt="Enlarged review photo">
         </div>
+        <script src="./js/config.js"></script>
+        <script src="./js/icons.js"></script>
         <script src="./js/visitor.js"></script>
         <script src="./js/products.js"></script>
+        <script src="./js/invoice.js"></script>
         <script src="./js/script.js"></script>
-        <!-- sweetalert -->
-        <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-        <!-- axios -->
-        <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
-
-        <!-- after page load -->
         <script src="./js/partial.js"></script>
     </body>
 </html>
