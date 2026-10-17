@@ -113,7 +113,7 @@ function sendsOn(kind) {
 /* ---- Analytics ----
    Paste the Website ID from cloud.umami.is (Settings → Websites → Edit) to turn on
    Umami. Leave empty to keep it off. */
-const UMAMI_WEBSITE_ID = "";
+const UMAMI_WEBSITE_ID = "64d1b719-e002-47ac-9b7f-a433917061d3";
 
 /* ---- Delivery and support text shown to customers ---- */
 const DELIVERY_TIME = { inside_dhaka: "about 2 days", outside_dhaka: "3–5 days" };
