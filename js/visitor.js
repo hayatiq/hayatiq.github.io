@@ -11,7 +11,7 @@
 // back by that limit is sent later (on the next tab switch, or the next time the site
 // is opened on that device, within VISIT_EMAIL_LATE_MAX_AGE_MS).
 const MIN_VISIT_EMAIL_DURATION_MS = 5000; // ignore visits with under 5 s of time on the page
-const VISIT_EMAIL_LIMIT = { max: 3, windowMs: 10 * 60 * 1000 }; // 3 emails per 10 minutes
+const VISIT_EMAIL_LIMIT = { max: 2, windowMs: 10 * 60 * 1000 }; // 2 emails per 10 minutes
 const VISIT_EMAIL_LATE_MAX_AGE_MS = 24 * 60 * 60 * 1000; // drop held-back summaries after a day
 const VISIT_EMAIL_LOG_KEY = "hayatiq_visit_email_log"; // localStorage: when this device sent summaries
 

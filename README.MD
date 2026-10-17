@@ -483,7 +483,7 @@ only added when the password matches. Keep the URL and password private.
   go to the recipients in `NOTIFY.visitSummaryEmails`. The subject shows what happened: 🎉 order
   placed, 📬 contact message, 🔥 checkout filled but not ordered, 🛒 abandoned checkout, 🛍️ cart,
   👀 browsed. The email includes what's in the cart right now (even items added on an earlier visit).
-- **Limit:** each phone/browser sends at most **3 visit emails per 10 minutes**
+- **Limit:** each phone/browser sends at most **2 visit emails per 10 minutes**
   (`VISIT_EMAIL_LIMIT` in `js/visitor.js`). A summary held back by the limit is sent later, marked
   "(sent late)", when that visitor switches tabs again or next opens the site (within a day).
 - **Your own devices:** open `https://hayatiq.netlify.app/?notrack` once on each phone and browser
