@@ -852,11 +852,12 @@ function renderDetail(id, variantId = null) {
             <div class="usp-badge"><span aria-hidden="true">🌿</span> Natural</div>
             <div class="usp-badge"><span aria-hidden="true">✋</span> Handmade</div>
             <div class="usp-badge"><span aria-hidden="true">✅</span> Quality Checked</div>
-            <div class="usp-badge"><span aria-hidden="true">💵</span> Cash on Delivery</div>
           </div>
-          <p class="hero-trust-line">100% Cash on Delivery — inspect your order before you pay.</p>
-          <p class="muted" style="font-size:.85rem;">🚚 Delivery: Inside Dhaka ৳${SHIPPING_RATES.inside_dhaka} (${DELIVERY_TIME.inside_dhaka}) · Outside Dhaka ৳${SHIPPING_RATES.outside_dhaka} (${DELIVERY_TIME.outside_dhaka})</p>
-          <p class="muted" style="font-size:.85rem;">${DAMAGE_PROMISE} <a href="${FACEBOOK_URL}" target="_blank" rel="noopener" style="text-decoration:underline;">Facebook page</a></p>
+          <ul class="detail-info">
+            <li><span aria-hidden="true">💵</span><span><strong>Cash on delivery</strong>: check your order before you pay.</span></li>
+            <li><span aria-hidden="true">🚚</span><span>Inside Dhaka ${money(SHIPPING_RATES.inside_dhaka)} (${DELIVERY_TIME.inside_dhaka}) · Outside Dhaka ${money(SHIPPING_RATES.outside_dhaka)} (${DELIVERY_TIME.outside_dhaka})</span></li>
+            <li><span aria-hidden="true">💬</span><span>${DAMAGE_PROMISE} <a href="${FACEBOOK_URL}" target="_blank" rel="noopener">Facebook page</a></span></li>
+          </ul>
 
           <div class="accordion-group">
             ${p.how && p.how.length ? `<details class="accordion-item" open>
@@ -1114,7 +1115,10 @@ function renderWishlist() {
   const items = PRODUCTS.filter((p) => ids.includes(p.id));
   grid.innerHTML = items.length
     ? items.map((p) => productCard(p)).join("")
-    : '<p class="muted">Your wishlist is empty. Tap the heart on any product to save it here.</p>';
+    : `<div class="empty-state">
+        <p class="muted">Your wishlist is empty. Tap the ♥ on any product to save it here.</p>
+        <a class="btn button-primary" href="/products">Browse products</a>
+      </div>`;
 }
 
 /* ==============================
@@ -1182,12 +1186,13 @@ function qtyControlsHTML(id, variantId, qty) {
     </div>`;
 }
 
+// One cart line, shared by the cart page, the cart drawer and checkout.
 function cartRowHTML(row, p) {
   const cartItem = cartProduct(row);
   if (!cartItem) {
-    return `<div style="display:flex; align-items:center; justify-content:space-between; gap:.6rem; padding:.5rem 0; border-bottom:1px solid rgba(16,15,15,.06);">
+    return `<div class="cart-line-missing cart-line">
         <span class="muted">This product is no longer available.</span>
-        <button type="button" class="close-btn" title="Remove" onclick="event.preventDefault(); event.stopPropagation(); removeFromCart('${row.id}')">✕</button>
+        <button type="button" class="cart-line-remove" aria-label="Remove" onclick="event.preventDefault(); event.stopPropagation(); removeFromCart('${row.id}')">✕</button>
       </div>`;
   }
   const { display, variant } = cartItem;
@@ -1195,20 +1200,18 @@ function cartRowHTML(row, p) {
   const variantId = p?.attributes ? (row.variantId || "") : (p?.variants ? (row.variantId || variant.id) : "");
   const subtitleText = p?.attributes
     ? display.subtitle
-    : `${p?.variants ? `${variant.label} · ` : ""}${display.subtitle}`;
-  return `<div style="display:grid; grid-template-columns: 64px 1fr auto; gap:.6rem; align-items:center; padding:.5rem 0; border-bottom:1px solid rgba(16,15,15,.06);">
-      <img loading="lazy" src="${cardImage(display.images[0])}" alt="${
-    display.name
-  }" style="width:64px; height:64px; object-fit:cover; border-radius:10px;">
-      <div>
-        <div style="font-weight:600;">${display.name} <span class="deep-muted"> (${subtitleText}) </span></div>
-        ${qtyControlsHTML(row.id, variantId, row.qty)}
-      </div>
-      <div style="display:flex; align-items:center; gap:.4rem;">
-        <strong>${money(display.price * row.qty)}</strong>
-        <button type="button" class="close-btn" title="Remove" onclick="event.preventDefault(); event.stopPropagation(); removeFromCart('${
-          row.id
-        }', '${variantId}')">✕</button>
+    : `${p?.variants ? `${variant.label} · ` : ""}${display.subtitle || ""}`;
+  return `<div class="cart-line">
+      <img class="cart-line-img" loading="lazy" src="${cardImage(display.images[0])}" alt="${display.name}">
+      <div class="cart-line-info">
+        <div class="cart-line-top">
+          <div class="cart-line-name">${display.name}${subtitleText ? `<small>${subtitleText}</small>` : ""}</div>
+          <button type="button" class="cart-line-remove" aria-label="Remove ${display.name}" onclick="event.preventDefault(); event.stopPropagation(); removeFromCart('${row.id}', '${variantId}')">✕</button>
+        </div>
+        <div class="cart-line-bottom">
+          ${qtyControlsHTML(row.id, variantId, row.qty)}
+          <strong>${money(display.price * row.qty)}</strong>
+        </div>
       </div>
     </div>`;
 }
@@ -1216,10 +1219,19 @@ function cartRowHTML(row, p) {
 function renderCart() {
   const holder = document.getElementById("cartItems");
   const list = getCart();
+  const summary = document.getElementById("cartSummary");
   if (list.length === 0) {
-    holder.innerHTML = '<p class="muted">Your cart is empty.</p>';
-    document.getElementById("cartTotal").textContent = money(0);
+    holder.innerHTML = `<div class="empty-state">
+        <p class="muted">Your cart is empty.</p>
+        <a class="btn button-primary" href="/products">Shop products</a>
+      </div>`;
+    if (summary) summary.hidden = true;
     return;
+  }
+  if (summary) summary.hidden = false;
+  const note = document.getElementById("cartDeliveryNote");
+  if (note) {
+    note.textContent = `Delivery is added at checkout: Inside Dhaka ${money(SHIPPING_RATES.inside_dhaka)}, Outside Dhaka ${money(SHIPPING_RATES.outside_dhaka)}.`;
   }
   holder.innerHTML = list
     .map((row) => cartRowHTML(row, PRODUCTS.find((x) => x.id === row.id)))
@@ -1347,30 +1359,7 @@ function closeImageLightbox() {
     return;
   }
   
-  container.innerHTML = cart.map(row => {
-    const p = PRODUCTS.find(x => x.id === row.id);
-    const item = cartProduct(row);
-    if (!item) return "";
-    const { display, variant } = item;
-    const variantId = p?.attributes ? (row.variantId || "") : (p?.variants ? variant.id : "");
-    const subtitleText = p?.attributes
-      ? display.subtitle
-      : `${p?.variants ? `${variant.label} · ` : ""}${display.subtitle}`;
-
-    return `
-      <div class="checkout-item">
-        <img loading="lazy" src="${cardImage(display.images[0])}" alt="${display.name}" class="checkout-item-img">
-        <div class="checkout-item-details">
-          <div class="checkout-item-name">${display.name} <span class="deep-muted"> (${subtitleText}) </span></div>
-          ${qtyControlsHTML(row.id, variantId, row.qty)}
-        </div>
-        <div class="checkout-item-price">
-          <strong>${money(display.price * row.qty)}</strong>
-          <button type="button" class="close-btn" title="Remove" onclick="event.preventDefault(); removeFromCart('${row.id}', '${variantId}')">✕</button>
-        </div>
-      </div>
-    `;
-  }).join('');
+  container.innerHTML = cart.map((row) => cartRowHTML(row, PRODUCTS.find((x) => x.id === row.id))).join("");
 }
 
 // Cart lines in a plain shape for emails, Telegram, the order sheet and the

@@ -394,10 +394,8 @@
             </section>
             <section id="view-contact" class="view" aria-label="Contact">
                 <div class="soft-card">
-                    <div style="display:flex;align-items:center;justify-content:space-between;gap:.8rem;flex-wrap:wrap">
-                        <h2>Contact Us</h2>
-                        <a class="btn button-ghost" href="https://facebook.com/hayatiq.life" target="_blank" rel="noopener">Facebook Page →</a>
-                    </div>
+                    <h2>Contact Us</h2>
+                    <p class="messenger-hint contact-intro">Send us a message below, or <a href="https://m.me/hayatiq.life?ref=contact" target="_blank" rel="noopener"><i class="fa-brands fa-facebook-messenger" aria-hidden="true"></i> chat on Messenger</a>.</p>
                     <form class="contact" method="POST" id="contactForm">
                         <input type="hidden" name="_captcha" value="true">
                         <input type="hidden" name="_template" value="table">
@@ -430,13 +428,11 @@
                 <div class="soft-card">
                     <h2>Your Cart</h2>
                     <div id="cartItems"></div>
-                    <div style="display:flex;align-items:center;justify-content:space-between;margin-top:.8rem">
-                        <strong>Total:</strong>
-                        <strong id="cartTotal">৳0</strong>
-                    </div>
-                    <div style="margin-top:.8rem;display:flex;gap:.6rem;flex-wrap:wrap">
-                        <button class="btn button-ghost" onclick="clearCart()">Clear Cart</button>
+                    <div class="cart-summary" id="cartSummary">
+                        <div class="cart-total-row"><strong>Total</strong><strong id="cartTotal">৳0</strong></div>
+                        <p class="muted cart-delivery-note" id="cartDeliveryNote"></p>
                         <a class="btn button-primary" href="/checkout">Checkout</a>
+                        <button type="button" class="cart-clear" onclick="if (confirm('Remove everything from your cart?')) clearCart()">Clear cart</button>
                     </div>
                     <p class="messenger-hint">Need help before you order? <a href="https://m.me/hayatiq.life?ref=cart-help" target="_blank" rel="noopener"><i class="fa-brands fa-facebook-messenger" aria-hidden="true"></i> Chat with us</a></p>
                 </div>
@@ -444,7 +440,7 @@
             <section id="view-checkout" class="view" aria-label="Checkout">
                 <div class="soft-card">
                     <h2>Checkout</h2>
-                    <p class="messenger-hint">Questions about your order? <a href="https://m.me/hayatiq.life?ref=checkout-help" target="_blank" rel="noopener"><i class="fa-brands fa-facebook-messenger" aria-hidden="true"></i> Chat before you order</a> — Messenger is here to help, checkout still happens right here.</p>
+                    <p class="messenger-hint">Questions first? <a href="https://m.me/hayatiq.life?ref=checkout-help" target="_blank" rel="noopener"><i class="fa-brands fa-facebook-messenger" aria-hidden="true"></i> Chat with us on Messenger</a></p>
                     <form method="POST" id="checkoutForm" class="checkout-form">
                         <input type="hidden" name="_captcha" value="true">
                         <input type="hidden" name="_template" value="table">
@@ -473,7 +469,7 @@
                         </div>
 
                         <div class="shipping-field">
-                            <label>Shipping Method *</label>
+                            <label>Delivery Area *</label>
                             <div class="shipping-options">
                                 <label class="shipping-option">
                                 <input type="radio" name="shipping_method" value="inside_dhaka" required onchange="updateShipping()">
