@@ -2282,6 +2282,12 @@ svg.icon {
   gap: 0.6rem;
 }
 /* Smaller buttons that share one row, also on phones. */
+/* Smaller secondary buttons on the homepage (View All, View More Products, Contact Us). */
+.btn-compact {
+  padding: 0.5rem 1.1rem;
+  font-size: 0.85rem;
+  line-height: 1.2;
+}
 .btn-sm {
   gap: 0.35rem;
   padding: 0.55rem 0.6rem;
