@@ -499,12 +499,32 @@ only added when the password matches. Keep the URL and password private.
 
 ---
 
-# 🖼️ Adding Product Photos
+# 🖼️ Adding or Replacing Product Photos
 
-Each photo needs two files with the same name:
+Each photo needs these files with the same name:
 
 1. `images/<name>.webp` — the main photo, at most about **1,100px wide**.
 2. `images/cards/<name>.webp` — a **600px-wide** copy used on product cards and in the cart.
+3. `images/md/<name>.webp` — an **800px-wide** copy, the product page photo on phones.
+4. `images/og/<name>.jpg` — the picture shown when the product link is shared on Facebook,
+   Messenger or WhatsApp.
 
-[Squoosh](https://squoosh.app) (free, in the browser) does both: open the photo, choose **WebP**,
-set the width, and download. Keeping photos small is what keeps the site fast on mobile data.
+You make only the first one; two commands make the rest. **Every time you add or replace a
+photo:**
+
+1. Make the main photo with [Squoosh](https://squoosh.app) (free, in the browser): open the
+   photo, choose **WebP**, set the width to about 1,100px, and download it.
+2. Save it in `images/` under a **new file name**, even when it replaces an old photo
+   (e.g. `hayatiq_footsoak_2.webp`). Phones keep photos for 7 days, so a new photo saved under
+   the old name may not show for some visitors until then — and the scripts below never
+   redo a card copy that already exists.
+3. Point the product at the new name in `js/products.js` (its `images` list).
+4. Run, from the project folder (needs Pillow once: `pip install pillow`):
+   ```bash
+   python3 tools/photo-sizes.py   # makes images/cards/ and images/md/ copies
+   python3 tools/og-images.py     # makes the link-preview pictures in images/og/
+   ```
+5. Commit the new files from `images/`, `images/cards/`, `images/md/` and `images/og/`
+   together with `js/products.js`. You can delete the old photo's files once no product uses them.
+
+Keeping photos small is what keeps the site fast on mobile data.

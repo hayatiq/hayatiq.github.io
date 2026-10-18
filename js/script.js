@@ -302,7 +302,8 @@ function money(n) {
   if (typeof n === "string") {
     return n;
   }
-  return `৳${Math.round(n).toLocaleString("en-US")}`;
+  // Commas by hand: toLocaleString() costs a slow phone a noticeable pause the first time.
+  return `৳${String(Math.round(n)).replace(/\B(?=(\d{3})+(?!\d))/g, ",")}`;
 }
 
 // Small (600px-wide) copy of a product photo for cards, thumbnails and cart rows;
@@ -310,6 +311,14 @@ function money(n) {
 // in images/ needs a matching file in images/cards/ (see README.MD).
 function cardImage(src) {
   return src.replace("./images/", "./images/cards/");
+}
+
+// The product page's main photo: the 800px copy in images/md/ on phones (enough for
+// their screens, about half the bytes), the full photo on wider screens and in the
+// full-size viewer. tools/photo-sizes.py makes the copies.
+const PHONE_SCREEN = window.matchMedia("(max-width: 800px)").matches;
+function pagePhoto(src) {
+  return PHONE_SCREEN ? src.replace("./images/", "./images/md/") : src;
 }
 
 function productVariants(p) {
@@ -802,7 +811,6 @@ function renderDetail(id, variantId = null) {
   if (activeImageIndex >= images.length) activeImageIndex = 0;
   detailWrap.dataset.productId = p.id;
   detailWrap.dataset.imageIndex = activeImageIndex;
-  const fadeIn = `class="fade-in" onload="this.classList.add('loaded')" onerror="this.classList.add('loaded')"`;
   // Square photos that swipe, with a "2 / 3" count and a row of square thumbnails below.
   const galleryHTML = !hasRealPhoto(p)
     ? `<div class="gallery"><div class="gallery-main">${photoPendingTile(p, "photo-pending-large")}${shareButtonHTML(p)}</div></div>`
@@ -812,9 +820,11 @@ function renderDetail(id, variantId = null) {
             <div class="gallery-track" id="galleryTrack">
               ${images
                 .map(
-                  (src, i) => `<div class="gallery-slide"><img src="${src}" alt="${p.name} ${i + 1}" ${
+                  (src, i) => `<div class="gallery-slide"><img src="${pagePhoto(src)}" alt="${p.name} ${i + 1}" ${
                     i === activeImageIndex ? 'fetchpriority="high"' : 'loading="lazy"'
-                  } ${fadeIn} onclick="openImageLightbox(this.src)"></div>`
+                  } class="fade-in" onload="this.classList.add('loaded')" onerror="${
+                    pagePhoto(src) === src ? "" : `if (!this.dataset.full) { this.dataset.full = 1; this.src = '${src}'; return; } `
+                  }this.classList.add('loaded')" onclick="openImageLightbox('${src}')"></div>`
                 )
                 .join("")}
             </div>

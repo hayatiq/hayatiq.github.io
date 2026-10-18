@@ -120,6 +120,7 @@ const UMAMI_WEBSITE_ID = "64d1b719-e002-47ac-9b7f-a433917061d3";
    Shop Now button and trust chips. Both are in index.html (data-hero). */
 const HOME_HERO = "text";
 document.documentElement.dataset.hero = HOME_HERO;
+if (HOME_HERO === "photo") document.querySelectorAll('[data-hero="photo"] img[data-src]').forEach((img) => (img.src = img.dataset.src));
 
 /* ---- Bangla ----
    true shows the বাংলা / EN switch in the header (js/i18n.js); false hides it and

@@ -444,10 +444,6 @@ if (SHOW_BANGLA) {
 if (LANG === "bn") {
   addProductTranslations();
   document.documentElement.lang = "bn";
-  const font = document.createElement("link");
-  font.rel = "stylesheet";
-  font.href = "https://fonts.googleapis.com/css2?family=Noto+Sans+Bengali:wght@400;500;600;700&display=swap";
-  document.head.appendChild(font);
   translateNode(document.body);
   new MutationObserver((mutations) => {
     mutations.forEach((m) => {

@@ -59,6 +59,7 @@ function productFacts(p, site) {
     description: `${description} Cash on delivery across Bangladesh.`,
     url: `${site}/product/${p.slug}`,
     image,
+    photo: photo && !photo.includes("placeholder") ? photo : "",
     amount: low,
   };
 }
@@ -88,6 +89,16 @@ function productPage(template, facts) {
       /(<meta property="og:url"[^>]*>)/,
       `$1\n        <meta property="product:price:amount" content="${facts.amount}">\n        <meta property="product:price:currency" content="BDT">`
     );
+  }
+  // Start the product photo with the page instead of after all the scripts have run:
+  // the copy renderDetail() will show (pagePhoto() in js/script.js: images/md/ on phones).
+  if (facts.photo) {
+    const md = facts.photo.replace("./images/", "./images/md/");
+    const tags = fs.existsSync(path.join(ROOT, md))
+      ? [`<link rel="preload" as="image" href="${md}" media="(max-width: 800px)" fetchpriority="high">`,
+         `<link rel="preload" as="image" href="${facts.photo}" media="(min-width: 801px)" fetchpriority="high">`]
+      : [`<link rel="preload" as="image" href="${facts.photo}" fetchpriority="high">`];
+    html = html.replace("</head>", `    ${tags.join("\n        ")}\n    </head>`);
   }
   return html;
 }

@@ -1,5 +1,6 @@
-# Netlify build settings. The site needs no build; this only adds link previews
-# for product pages (tools/product-pages.js; it never fails the deploy).
+# Netlify build settings. The site needs no build; these two steps never fail the deploy:
+#  - tools/asset-versions.js: versions css/js links so browsers can keep the files (_headers)
+#  - tools/product-pages.js: link previews for product pages (copies the versioned index.html)
 [build]
   publish = "."
-  command = "node tools/product-pages.js"
+  command = "node tools/asset-versions.js; node tools/product-pages.js"
