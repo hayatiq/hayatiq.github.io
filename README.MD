@@ -1,12 +1,68 @@
+# 🧭 Overview
+
+The Hayatiq shop is a plain HTML/CSS/JavaScript site: no npm, no build tools, no database.
+The live shop is **https://hayatiq.netlify.app**, deployed by Netlify from the `main` branch
+(the old `hayatiq.github.io` address just forwards visitors there).
+
+| What | Where |
+| --- | --- |
+| Products, prices, photos, reviews | `js/products.js` |
+| Shop settings: who gets order emails/Telegram, delivery times, Bangla switch, homepage top section, analytics | `js/config.js` |
+| Delivery charges (`SHIPPING_RATES`), categories on the products page, homepage "Shop by need" chips, site-wide testimonials | `js/script.js` |
+| Bangla text for the interface | `js/i18n.js` |
+| Telegram alerts and the order sheet (runs on Netlify) | `netlify/functions/order.js` |
+| The order sheet's own script | `google-apps-script/orders.gs` |
+| Helper scripts (photos, link previews, local test server) | `tools/` |
+
+## Running it on your computer (and phone)
+
+```bash
+node tools/dev-server.js
+```
+
+Open `http://localhost:8888`. To try it on your phone, connect it to the same Wi-Fi and open
+`http://<your computer's Wi-Fi IP>:8888`. Reload after editing a file (there's no auto-reload).
+
+Away from the live address the site is in **test mode**: a yellow **TEST MODE** bar shows, and
+orders, emails, Telegram alerts and visit summaries go through their normal flow but nothing is
+sent (see "Order Notifications" below for testing real sends).
+
+## Deploying
+
+Push to `main` and Netlify publishes it within a minute. At each deploy Netlify runs two small
+steps (`netlify.toml`); neither can break a deploy:
+
+- `tools/asset-versions.js` gives every css/js link a version, so phones keep those files and
+  only download what changed.
+- `tools/product-pages.js` makes each product link show that product's photo, name and price
+  when shared on Facebook, Messenger or WhatsApp. It also writes `sitemap.xml` for Google
+  (`robots.txt` points to it).
+
+**Trying a change before it goes live:** push a branch and open a pull request on GitHub. Netlify
+adds a **Deploy Preview** link to the pull request: a full copy of the site (in test mode, so
+nothing is sent), where link previews work too. Merge the pull request to go live.
+
+**Link previews** only work on a deployed address, never on your computer: Facebook and WhatsApp
+fetch the link from their own servers. Facebook remembers a link's preview; to refresh one that
+was shared before a change, paste the link into the
+[Sharing Debugger](https://developers.facebook.com/tools/debug/) and click **Scrape Again**.
+
+---
+
 # 🚀 Messenger Product Automation (ManyChat)
 
-Set up auto-replies for products when users click a Messenger link (`m.me/username?ref=product-slug`).
+Set up auto-replies for when someone opens a Messenger link from the site
+(`m.me/hayatiq.life?ref=...`). These are the `ref` values the site uses:
 
-**Also used for category "Notify Me" links:** any category page with zero live products shows a
-"Notify Me" Messenger link using `ref=notify-{category}` (e.g. `ref=notify-skincare`) — see
-`renderCategoryAvailability()`/`renderProducts()` in `script.js`. Follow the same steps below to set up
-a ManyChat automation for each `notify-*` ref if you want an automated reply; until you do, the link
-still works (it opens a normal Messenger conversation), it just won't auto-reply.
+| `ref` | Where the link is |
+| --- | --- |
+| the product's `slug`, e.g. `magnesium-oil` | "Ask a Question" on a product page, and "Ask about this" on Coming Soon products |
+| `notify-<category or need>`, e.g. `notify-hair-care`, `notify-better-sleep` | "Notify me" on a category or need page with no products yet |
+| `order-<order number>`, e.g. `order-HQ-261017-4K7P` | "Ask about this order" on the order page and in My Orders |
+| `cart-help`, `checkout-help`, `featured-help`, `contact`, `page-not-found` | help links on those pages |
+
+Every link works without an automation (it opens a normal Messenger conversation); it just
+won't auto-reply until you set one up.
 
 ---
 
@@ -23,7 +79,7 @@ still works (it opens a normal Messenger conversation), it just won't auto-reply
 * This must match your link:
 
   ```
-  https://m.me/username?ref=scalp-elixir
+  https://m.me/hayatiq.life?ref=scalp-elixir
   ```
 
 ### 3. Bot Field
@@ -60,71 +116,52 @@ still works (it opens a normal Messenger conversation), it just won't auto-reply
 
 # 📧 Sending Email with FormSubmit
 
-Easily send form submissions to your email using [FormSubmit](https://formsubmit.co/).
+Order emails, contact-form messages and visit summaries are sent through
+[FormSubmit](https://formsubmit.co/), so the site needs no email server. The site sends them
+itself (`js/partial.js` and `js/visitor.js`, to `https://formsubmit.co/ajax/<address>`), so
+there's no form `action` to set up.
 
 ---
 
 ## Steps
 
-### 1. Form Action
+### 1. Choose the addresses
 
-Use this URL in your form’s `action`:
+The addresses are in `NOTIFY.emails` in `js/config.js` (`business` and `developer`), and which
+messages each one gets is in the lists below them. See "Order Notifications" below.
 
-```html
-<form action="https://formsubmit.co/YOUR_EMAIL" method="POST">
-```
+### 2. Activate a new address
 
-Replace `YOUR_EMAIL` with the email address where you want messages delivered.
+The first email FormSubmit sends to a new address is an **activation email** instead of the
+message. Open it and click the link once; after that, messages arrive normally.
 
----
+### 3. Mind the quota
 
-### 2. Add Fields
-
-Example form:
-
-```html
-<form action="https://formsubmit.co/youremail@example.com" method="POST">
-  <input type="text" name="name" required placeholder="Your Name">
-  <input type="email" name="email" required placeholder="Your Email">
-  <textarea name="message" required placeholder="Your Message"></textarea>
-  <button type="submit">Send</button>
-</form>
-```
-
----
-
-### 3. Optional Settings
-
-* Add a hidden field to redirect after submission:
-
-  ```html
-  <input type="hidden" name="_next" value="https://yoursite.com/thank-you">
-  ```
-* Add `_captcha=false` to disable captcha.
-
----
+Every email to every recipient is one FormSubmit submission, and FormSubmit limits how many a
+site can send. That's why testing never sends anything (test mode), and why visit summaries are
+capped per device.
 
 ### 4. Test
 
-* Fill out the form on your site.
-* You must confirm the form first time.
-* Check your email inbox for the submission.
+* Send a test from your computer with real sends on (see "Testing real sends locally" below), or
+  place a real order on the live site with a name like "TEST".
+* Check the inbox (and spam folder) for the email.
 
 ---
 
-✅ That’s it! Your form now sends emails without any backend.
+✅ That’s it! Emails go out without any backend.
 
 ---
 
 # 🛒 Adding a Product
 
-Developers can add products by editing `products.js`. Follow these steps carefully to avoid errors.
+Products live only in `js/products.js`. Follow these steps carefully to avoid errors.
 
 ---
 
 ## 1. Locate the Products Array
 
-Open `products.js` and find the constant:
+Open `js/products.js` and find the constant:
 
 ```js
 const PRODUCTS = [
@@ -136,28 +173,30 @@ const PRODUCTS = [
 
 ## 2. Add a New Product Object
 
-Add a new object with all the required keys. Example:
+Copy an existing product of the same kind and change it, or start from this example:
 
 ```js
 {
-  id: "2",
-  name: "Loofah Soap Bar (Neem + Moringa)",
-  slug: "loofah-soap",
-  price: "Coming Soon", // Use a number (e.g., 540) to auto-enable product
-  category: "Salves & Balms",
-  images: [
-    "./images/hayatiq_loofah_soap.jpg",
-    "https://images.unsplash.com/photo-1603921326210-6edd2d60ca68?q=80&w=1200&auto=format&fit=crop",
-  ],
-  short: "Calming balm for pulse points & lips.",
-  ingredients: ["Shea butter", "Lavender", "Beeswax"],
-  how: ["Massage a small amount where needed."],
-  tips: ["Shake well before use", "as deodorant", "muscle relief"],
-  warns: ["Avoid during allergy flare‑ups."],
-  storage: [
-    "Keep bottle tightly sealed. Store in a cool, dry place away from direct sunlight, heat, or children’s reach.",
-    "Use within 6 months of manufacture."
-  ],
+  id: "19",                          // unique, never reused
+  name: "Rosemary Hair Oil",
+  subtitle: "100ml",                 // optional: size or weight, shown under the name
+  slug: "rosemary-hair-oil",         // the page address: /product/rosemary-hair-oil
+  price: 650,                        // a number, or "Coming Soon"
+  category: "Hair Care",
+  images: ["./images/hayatiq_rosemary_oil.webp"],
+  short: "A light rosemary oil for scalp massage.",
+  ingredients: ["Rosemary", "Coconut oil"],
+  how: ["Scalp Massage: Warm a few drops in your palms.; Massage into the scalp for 5 minutes.;"],
+  tips: ["Leave it on overnight for a deeper treatment."],
+  warns: ["Patch test before first use."],
+  storage: ["Store in a cool, dry place away from sunlight."],
+  benefits: [],                      // optional, see below
+  concerns: [],
+  reviews: [],
+  topSelling: false,
+  badge: null,
+  related: [],
+  display_order: null,
 },
 ```
 
@@ -165,11 +204,27 @@ Add a new object with all the required keys. Example:
 
 ## 3. Key Notes
 
-* **All keys are required**. Missing keys may cause errors on the site.
+* **Required keys**: `id`, `name`, `slug`, `price`, `category`, `images`, `short`, `ingredients`,
+  `how`, `tips`, `warns`, `storage` (a product with `variants` may keep `price` and `images` on
+  its variants instead). Everything else is optional.
+* **Content not ready yet?** `ingredients`, `how` and `tips` can be `[]`; the product page just
+  leaves that section out. `warns: PLACEHOLDER_WARNS` and `storage: PLACEHOLDER_STORAGE` give
+  standard "coming soon" text.
+* **No photo yet?** Use `images: ["./images/placeholder.webp"]`. Such products show a green
+  name tile instead of a picture, stay off the homepage and "You may also like", and are listed
+  last. For real photos, see "Adding or Replacing Product Photos" below.
 * **Price Handling**:
 
-  * `"Coming Soon"` → product is not yet available for purchase.
-  * Numeric value (e.g., `540`) → product is live and visible to users.
+  * `"Coming Soon"` → product is not yet available for purchase (its page shows "Coming Soon").
+  * Numeric value (e.g., `540`) → product is live and can be ordered.
+* **Slug**: don't change it once the product is live. It's the product's address, so old links,
+  Messenger refs and Google results would stop working.
+* **How to Use** (`how`): each entry is one tab, written `"Tab Name: point one; point two;"`.
+  Keep the `:` and the `;` after each point. `howToUseNote` (optional) shows one line above the
+  tabs, e.g. `"Shake well before use."`.
+* **Benefits** (`benefits`, optional): up to 3 short ticks under the description, e.g.
+  `["Better sleep", "Muscle cramps"]`. Word them only from the product's own text; never claim
+  something the product copy doesn't say.
 * **Variants**: If one product has options with different prices, weights, or images, keep one
   parent product and add a `variants` array. Each variant needs an `id`, `label`, `price`,
   `subtitle`, and `images`; add `default: true` to one variant when it should be selected first.
@@ -182,44 +237,50 @@ Add a new object with all the required keys. Example:
     { id: "block", label: "Block", subtitle: "500g", price: 750, images: ["./images/block.webp"], default: true },
   ],
   ```
+* **Choices** (shape, scent, color…): for a product made to order from several choices, use
+  `attributes` (each with `id`, `label`, `choices`, and optional `showIf` to show it only after
+  another choice), `defaultSelections`, and `priceMatrix` for choices that cost more. The Bath
+  Bomb (`id: "12"`) is the working example to copy.
+* **Bangla** (`bn`, optional but every product has one): the product's Bangla text. See
+  "Bangla Version" below.
 * **Category Management**:
 
-  * Categories are listed twice in `index.html`: the homepage "Shop by Category" tiles
-    and the `#view-categories` page — both need a matching card/tile when you add a
-    new category. The current categories are Hair Care, Magnesium Oil Spray,
-    Salves & Balms, Bath Bombs, Footsoaks, Oral Care, and Cleaning Supply.
-  * Add new category names there to match your product’s `category` field.
-* **"Shop by Need" tags** (`concerns`, optional): an array of need/concern tags this
+  * A new category has to be added in four places: the homepage "Shop by Category" tiles and the
+    `#view-categories` page in `index.html`, `FILTER_CATEGORIES` in `js/script.js` (the
+    products page chips), and its Bangla name in `BN` in `js/i18n.js`. The current categories
+    are Hair Care, Magnesium Oil Spray, Salves & Balms, Bath Bombs, Footsoaks, Oral Care, and
+    Cleaning Supply.
+  * The product's `category` must match one of these names exactly.
+* **"Shop by need" tags** (`concerns`, optional): an array of need/concern tags this
   product genuinely helps with, e.g. `concerns: ["Better Sleep", "Muscle Recovery"]`.
   Base these on the product's own real usage guidance (its `how`/`tips` fields), not
   guesswork. Leave `concerns: []` if none clearly apply yet. This powers the homepage
-  "Find the Right Product" tiles — see `NEED_TILES` in `script.js` to add a new tile
-  for a tag you've started using (e.g. once a few products are tagged "Stress Relief",
-  add `{ label: "Stress Relief", icon: "fa-...", concern: "Stress Relief" }` there so a
-  tile appears for it).
+  "Shop by need" chips — see `NEED_TILES` in `js/script.js` to add a chip for a new tag
+  (e.g. `{ label: "Stress Relief", icon: "fa-...", concern: "Stress Relief" }`). The icon must
+  exist in `js/icons.js`, and the label needs a Bangla entry in `js/i18n.js`.
 * **"You may also like"** (`related`, optional): a list of product ids shown first on this
   product's page, e.g. `related: ["11", "14"]`. Same-category products and best sellers fill the
   rest (up to 4), so `related: []` still shows suggestions.
+* **Search results** (`seoTitle`, `metaKeywords`, optional): replace the page title and keywords
+  Google sees for this product. The description Google sees is always `short`.
 * **Display order** (`display_order`, optional number): controls the order products
-  appear in **everywhere** a product list renders — Top Selling Products, Shop Our
-  Products, the full Products page, and every category/need filter of it. Lower
-  numbers show first (`1` before `2`). Leave it `null`/unset on any product you don't
-  care about ordering — it'll just sort after any product that does have a number, in
-  its normal position in the `PRODUCTS` array. If two products share the same number
-  (or both are left unset), which one shows first between just those two isn't
-  guaranteed — don't rely on that case to break a tie. Setting it works by re-sorting
-  the whole `PRODUCTS` array once when the site loads (see the `PRODUCTS.sort(...)`
-  call at the end of `products.js`), so you only ever need to set the field — no
-  other code to touch.
+  appear in **everywhere** a product list renders — Best Sellers, Shop Our Products, the
+  full Products page, and every category/need filter of it. Lower numbers show first (`1`
+  before `2`). Leave it `null` on any product you don't care about ordering — it'll sort
+  after every product that does have a number, in its normal position in the `PRODUCTS`
+  array. Two products with the same number keep their order in the array. No other code
+  to touch: the `PRODUCTS.sort(...)` call at the end of `js/products.js` does the rest.
 
 ---
 
 ## 4. Test
 
-1. Save `products.js`.
+1. Save `js/products.js`.
 2. Reload the site.
-3. Check that the product appears correctly in its category.
+3. Check that the product appears correctly in its category, and open its page.
 4. Confirm “Coming Soon” products do not have an active purchase button.
+5. Switch to **বাং** in the header and check the Bangla page too.
+6. After deploying, share the product link in Messenger to check its preview.
 
 ---
 
@@ -230,7 +291,7 @@ Add a new object with all the required keys. Example:
 # 🌟 Adding Customer Reviews
 
 The site has no backend, so reviews aren't submitted through a form — they're added
-manually by editing each product's `reviews` array in `products.js`, the same way
+manually by editing each product's `reviews` array in `js/products.js`, the same way
 you'd edit any other product field.
 
 ## 1. Find the Product
@@ -255,7 +316,7 @@ reviews: [
 
 * `name` — the reviewer's name (or however they'd like to be credited).
 * `rating` — a whole number from 1–5.
-* `text` — the review text.
+* `text` — the review text, shown as written (a review in Bangla stays in Bangla).
 
 Two more optional fields are supported on any review:
 
@@ -275,7 +336,7 @@ Leave both out for a plain text review — nothing changes for existing reviews.
 
 Some customer feedback isn't about one specific product — a Messenger screenshot praising the whole
 ordering experience, for example. That kind of content goes in the separate `TESTIMONIALS` array in
-`script.js` (ships empty, same pattern as `reviews`), not into a single product's `reviews` list:
+`js/script.js` (ships empty, same pattern as `reviews`), not into a single product's `reviews` list:
 
 ```js
 const TESTIMONIALS = [
@@ -296,21 +357,21 @@ as review screenshots: redact personal details and get the customer's okay befor
 
 ## 4. Test
 
-1. Save `products.js` (per-product `reviews`) or `script.js` (`TESTIMONIALS`).
-2. Reload the site and open that product's detail page.
-3. Confirm the average rating/star count and each review card display correctly.
-4. An empty `reviews: []` array correctly shows "No reviews yet." — that's expected
-   for products you haven't added reviews to yet.
+1. Save `js/products.js` (per-product `reviews`) or `js/script.js` (`TESTIMONIALS`).
+2. Reload the site and open that product's page.
+3. Confirm the average rating/star count under the price and each review card in the
+   "Customer Reviews" box display correctly.
+4. A product with `reviews: []` shows no rating and no reviews box at all — that's expected.
 5. Add an entry to `TESTIMONIALS` and confirm the homepage "Customer Love" section
    appears; empty it back out and confirm the section disappears again.
 
-✅ That's it! Reviews you add here show up for every visitor immediately.
+✅ That's it! Reviews you add here show up for every visitor once deployed.
 
 ---
 
 # 🏷️ Adding Product Card Badges
 
-Every product has a `badge` field in `products.js` (ships as `null` — no badge shown).
+Every product has a `badge` field in `js/products.js` (ships as `null` — no badge shown).
 Set it to one of the following to show a small colored badge on that product's card
 in the shop grid:
 
@@ -322,27 +383,60 @@ badge: "popular",  // 👑 amber "Popular" badge
 badge: null,       // no badge (default)
 ```
 
-Badges don't show on "Coming Soon" products (the coming-soon overlay already covers
-the image). The colors are fixed regardless of which theme (`sand`/`cool`/`betterme`)
-is active — shoppers expect "Hot"/"Sale" to look the same everywhere.
+Badges don't show on "Coming Soon" products (their cards show an "Ask about this" Messenger
+button instead). The colors are fixed regardless of which theme (`sand`/`cool`/`betterme`,
+`data-theme` at the top of `index.html`) is active — shoppers expect "Hot"/"Sale" to look the
+same everywhere.
 
 There's a fifth, automatic badge: setting `topSelling: true` on a product shows a gold
 "⭐ Best Seller" badge without needing to also set `badge: "popular"` — an explicit
 `badge` field always takes priority if both are set on the same product.
 
-That same `topSelling` field also controls the homepage "Top Selling Products"
-carousel (a different, carousel-sized card layout from the regular grid — see
-`.product-card-carousel` in `style.css`): a product only appears there once
-`topSelling` is set to `true`, and disappears the moment it's set back to `false`.
-There's no automatic fallback — if nothing is marked `topSelling: true`, the whole
-carousel section hides itself rather than showing an empty row.
+That same `topSelling` field also controls the homepage "Best Sellers" carousel (a
+sideways-scrolling row with its own card size — see `.product-card-carousel` in
+`css/style.css`): a product only appears there once `topSelling` is set to `true`, and
+disappears the moment it's set back to `false`. There's no automatic fallback — if nothing
+is marked `topSelling: true`, the whole section hides itself rather than showing an empty row.
 
 **New Arrival convention:** when a "Coming Soon" product goes live (switch its `price`
 from `"Coming Soon"` to a number), consider also setting `badge: "new"` for the first
 2–4 weeks to flag it as a fresh arrival to returning visitors, then clear it back to
 `null` once that window passes.
 
-✅ That's it! Save `products.js` and reload to see the badge on that product's card.
+✅ That's it! Save `js/products.js` and reload to see the badge on that product's card.
+
+---
+
+# 🇧🇩 Bangla Version
+
+A **বাং / EN** button in the header switches the whole site to Bangla; the choice is remembered
+on that phone. `SHOW_BANGLA` in `js/config.js` turns the button on (`true`) or off (`false`).
+
+- **Interface text** (buttons, headings, messages) is translated in `js/i18n.js`: `BN` for exact
+  text, `BN_PATTERNS` for text with numbers or names in it. **Any new text you add to the site
+  needs a Bangla entry there**, or it stays English in Bangla mode.
+- **Product text** comes from each product's `bn` block in `js/products.js`. It must keep the
+  English shape: the same number of items in each list, in the same order, the same `<b>`/`<i>`
+  tags, and the same number of `;` points in each `how` tab. Fields you leave out stay English.
+
+  ```js
+  bn: {
+    name: "রোজমেরি হেয়ার অয়েল",
+    subtitle: "১০০ মিলি",
+    short: "মাথার ত্বকে ম্যাসাজের জন্য হালকা রোজমেরি অয়েল।",
+    ingredients: ["রোজমেরি", "নারকেল তেল"],
+    how: ["স্ক্যাল্প ম্যাসাজ: কয়েক ফোঁটা হাতের তালুতে গরম করুন।; ৫ মিনিট মাথার ত্বকে ম্যাসাজ করুন।;"],
+    tips: ["আরও ভালো ফলের জন্য সারারাত রেখে দিন।"],
+    warns: ["প্রথমবার ব্যবহারের আগে প্যাচ টেস্ট করুন।"],
+    storage: ["ঠান্ডা, শুকনো জায়গায় রোদ থেকে দূরে রাখুন।"],
+  },
+  ```
+  Variant names go in `bn.variants` (by variant `id`), and choice names in `bn.choices`.
+- Prices keep English digits (৳850), because ৳ and ৮ look almost the same in Bangla. Sizes,
+  counts and dates use Bangla digits.
+- Order emails, Telegram alerts, the order sheet and the PDF invoice always stay English.
+- If a Bangla `how` tab has a different number of points than the English one, it's skipped
+  (the browser console says which one).
 
 ---
 
@@ -361,9 +455,9 @@ Every order gets a number like **HQ-261017-4K7P**. Who gets what is set in one p
 | Order row in the Google Sheet | one shared sheet (owned by whoever creates it) | |
 
 To change it, edit the lists (e.g. `visitSummaryEmails: ["developer"]`); `[]` turns that message
-off. Each email is one FormSubmit submission, so every extra recipient uses quota. The order counts
-as received if any channel works; if all fail, the customer sees their order with a "Send on
-Messenger" button and their cart is kept.
+off, and `orderSheet: false` turns off the sheet. Each email is one FormSubmit submission, so every
+extra recipient uses quota. The order counts as received if any channel works; if all fail, the
+customer sees their order with a "Send on Messenger" button and their cart is kept.
 
 **Secrets never go in the code.** Telegram chat IDs and the sheet address live in Netlify:
 **Site configuration → Environment variables**. After adding or changing a variable, trigger a
@@ -380,6 +474,22 @@ the next deploy.
 | `SHEET_TOKEN` | A password shared with the sheet script | Google Sheet |
 
 A chat or sheet whose variables aren't set yet is simply skipped; nothing breaks.
+
+## What the customer gets
+
+- After ordering, the order page shows the order number and an invoice they can save
+  (**Download PDF**; inside the Facebook app it opens as a picture to long-press and save).
+- **My Orders** (`/orders`) lists the orders placed from that phone, kept only on the phone (latest
+  10, up to 90 days; never the address or phone number). From there they can **Ask about this
+  order** (opens Messenger with `ref=order-<number>` and copies the number) or **Order again**
+  (refills the cart; they still have to press Place Order).
+- Checkout remembers their name, phone, address and delivery area on that phone.
+
+## Limits that protect the quota
+
+Each phone/browser can send at most **5 orders per 20 minutes** and **3 contact messages per
+hour** (`js/partial.js`). Placing the same items again within 30 minutes asks "Place it again?"
+first (`SAME_ORDER_MINUTES` in `js/script.js`), so a double tap doesn't make two orders.
 
 ## Test mode
 
@@ -472,7 +582,8 @@ only added when the password matches. Keep the URL and password private.
 
 - Change each order's **Status** from the dropdown: New → Confirmed → Shipped → Delivered (or
   Cancelled / Returned / Fake). Use **Courier tracking** and **Team notes** freely.
-- Phone numbers that appear on more than one order are highlighted yellow.
+- Phone numbers that appear on more than one order are highlighted yellow. The same order number
+  never gets two rows.
 - To let the business see it, use the sheet's **Share** button.
 - If you edit the script later: **Deploy → Manage deployments → ✏️ Edit → Version: New version →
   Deploy**. This keeps the same URL, so Netlify needs no change.
@@ -490,9 +601,10 @@ only added when the password matches. Keep the URL and password private.
   you use (the Facebook app's browser counts separately). That browser then sends no visit emails
   and no Umami stats; orders still work. `?track` turns it back on.
 - **Umami** (free, no cookies): create a site at [cloud.umami.is](https://cloud.umami.is), copy its
-  **Website ID** into `UMAMI_WEBSITE_ID` in `js/config.js`. It records page views plus these events:
-  `product_view`, `add_to_cart`, `begin_checkout`, `order_placed`, `order_failed`. Compare it with the
-  visit emails for a while to see which numbers you trust.
+  **Website ID** into `UMAMI_WEBSITE_ID` in `js/config.js` (empty turns it off). It records page
+  views plus these events: `product_view`, `add_to_cart`, `begin_checkout`, `order_placed`,
+  `order_failed`, `share`, `order_again`. Compare it with the visit emails for a while to see which
+  numbers you trust.
 - **Tag the links you share** so both reports show which post or ad brought each visitor and order:
   `https://hayatiq.netlify.app/product/magnesium-oil?utm_source=facebook&utm_medium=post&utm_campaign=oct-offer`
   (`utm_source`: facebook / instagram / messenger; `utm_medium`: post / story / bio / ad / reply).

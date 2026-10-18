@@ -1,0 +1,10 @@
+# Search engines: every shop page, but not the cart, checkout or a visitor's own orders.
+# sitemap.xml is written at each deploy by tools/product-pages.js.
+User-agent: *
+Disallow: /cart
+Disallow: /checkout
+Disallow: /order
+Disallow: /wishlist
+Disallow: /preview/
+
+Sitemap: https://hayatiq.netlify.app/sitemap.xml

@@ -44,6 +44,14 @@
         <!-- Product structured data (schema.org), populated per product view by renderDetail() in js/script.js -->
         <script type="application/ld+json" id="productJsonLd">{}</script>
         <link rel="icon" type="image/webp" href="./images/logo-small.webp">
+        <!-- Bangla visitors: the page stays hidden until js/i18n.js has translated it, so
+             it never shows in English first (html.translating in css/style.css). Above
+             the stylesheet, because a script below one waits for it. -->
+        <script>
+            try {
+                if (localStorage.getItem("hayatiq_lang") === "bn") document.documentElement.classList.add("translating");
+            } catch (e) {}
+        </script>
         <link rel="stylesheet" href="./css/style.css">
     </head>
     <body>
@@ -510,6 +518,7 @@
 
                         <p class="checkout-trust-note"><i class="fa-solid fa-money-bill-wave" aria-hidden="true"></i> Pay in cash when your order arrives — inspect it before you pay. No advance payment required.</p>
                         <button class="btn button-primary checkout-submit" id="placeOrderBtn" style="margin-top: 10px;" type="submit">Place Order</button>
+                        <p class="checkout-privacy-note"><i class="fa-solid fa-lock" aria-hidden="true"></i> Your name, phone and address are used only to deliver your order.</p>
                     </form>
                 </div>
             </section>

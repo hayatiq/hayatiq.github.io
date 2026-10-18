@@ -197,6 +197,7 @@ const BN = {
   "Total:": "মোট:",
   "Order Note (Optional)": "অর্ডার নোট (ঐচ্ছিক)",
   "Pay in cash when your order arrives — inspect it before you pay. No advance payment required.": "পণ্য পৌঁছালে নগদে পেমেন্ট করুন — টাকা দেওয়ার আগে দেখে নিন। কোনো অগ্রিম পেমেন্ট লাগবে না।",
+  "Your name, phone and address are used only to deliver your order.": "আপনার নাম, ফোন নম্বর ও ঠিকানা শুধু আপনার অর্ডার পৌঁছে দেওয়ার জন্য ব্যবহার করা হয়।",
   "Place Order": "অর্ডার করুন",
   "Placing order...": "অর্ডার হচ্ছে...",
   "Please enter an 11-digit mobile number, e.g. 01712345678": "১১ সংখ্যার মোবাইল নম্বর দিন, যেমন 01712345678",
@@ -452,3 +453,7 @@ if (LANG === "bn") {
     });
   }).observe(document.body, { childList: true, subtree: true, characterData: true });
 }
+
+// Translated (or English after all): show the page, hidden until now for visitors
+// who picked Bangla (html.translating, set in index.html's head).
+document.documentElement.classList.remove("translating");

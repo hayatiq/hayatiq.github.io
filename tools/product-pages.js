@@ -8,6 +8,9 @@
    description, photo and price in the head — and adds a rewrite to _redirects so
    /product/<slug> serves it. Visitors get the same page; only the head differs.
 
+   It also writes sitemap.xml (the shop pages and every product page) for search
+   engines; robots.txt points them to it.
+
    Never fails the deploy: on any error it logs and exits 0, and product links keep
    working through the normal /* fallback (with the homepage preview).
 
@@ -20,6 +23,8 @@ const vm = require("vm");
 const ROOT = path.resolve(__dirname, "..");
 const PAGE_DIR = "preview"; // served at /preview/<slug>.html
 const MARK = "# Product link previews (added by tools/product-pages.js at deploy)";
+// Pages listed in sitemap.xml besides the products (not the cart, checkout or orders).
+const SITEMAP_PAGES = ["/", "/products", "/categories", "/about", "/contact"];
 
 function loadProducts() {
   const code = fs.readFileSync(path.join(ROOT, "js/products.js"), "utf8");
@@ -121,14 +126,23 @@ function main() {
 
   fs.mkdirSync(outDir, { recursive: true });
   const rules = [];
+  const urls = SITEMAP_PAGES.map((page) => `${live}${page === "/" ? "/" : page}`);
   for (const p of loadProducts()) {
     if (!p.slug || !/^[a-z0-9-]+$/i.test(p.slug)) continue;
     fs.writeFileSync(path.join(outDir, `${p.slug}.html`), productPage(template, productFacts(p, site)));
     rules.push(`/product/${p.slug}  /${PAGE_DIR}/${p.slug}.html  200`);
+    urls.push(`${live}/product/${p.slug}`);
   }
+  // Always the live address (as in robots.txt), even on a deploy preview.
+  const sitemap = `<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+${urls.map((url) => `  <url><loc>${escapeAttr(url)}</loc></url>`).join("\n")}
+</urlset>
+`;
+  fs.writeFileSync(local ? path.join(outDir, "sitemap.xml") : path.join(ROOT, "sitemap.xml"), sitemap);
 
   if (local) {
-    console.log(`product-pages: wrote ${rules.length} pages to ${outDir}\n${rules.join("\n")}`);
+    console.log(`product-pages: wrote ${rules.length} pages and sitemap.xml to ${outDir}\n${rules.join("\n")}`);
     return;
   }
   // Rewrites go above the /* fallback: Netlify uses the first rule that matches.

@@ -1884,6 +1884,14 @@ footer {
 .checkout-trust-note .icon {
   color: var(--color-earth);
 }
+/* Under the Place Order button: quieter than the cash-on-delivery note above it. */
+.checkout-privacy-note {
+  margin: 0.6rem 0 0;
+  font-size: 0.8rem;
+  color: var(--color-night);
+  opacity: 0.7;
+  text-align: center;
+}
 
 .note-chars {
   font-size: 0.8rem;
@@ -2132,6 +2140,25 @@ body.drawer-open {
   border-radius: var(--radius-sm);
   box-shadow: var(--shadow-card);
   cursor: default;
+}
+/* While a photo loads: no picture (never the one opened before), a small spinner. */
+.image-lightbox.loading img {
+  visibility: hidden;
+}
+.image-lightbox.loading::after {
+  content: "";
+  position: absolute;
+  width: 32px;
+  height: 32px;
+  border: 3px solid rgba(255, 255, 255, 0.3);
+  border-top-color: var(--color-white);
+  border-radius: 50%;
+  animation: lightbox-spin 0.8s linear infinite;
+}
+@keyframes lightbox-spin {
+  to {
+    transform: rotate(360deg);
+  }
 }
 .image-lightbox-close {
   position: absolute;
@@ -2512,6 +2539,18 @@ svg.icon {
   padding-top: 0.5rem;
 }
 
+/* Bangla visitors: hidden until js/i18n.js has translated the page (set in index.html's
+   head, removed by i18n.js), so it never shows in English first. Shown anyway after
+   5 s, in case that script never runs. */
+html.translating body {
+  visibility: hidden;
+  animation: show-anyway 0s 5s forwards;
+}
+@keyframes show-anyway {
+  to {
+    visibility: visible;
+  }
+}
 /* Bangla preview (js/i18n.js): Latin text keeps Outfit, Bangla letters use Noto Sans Bengali (the same plain Bangla as Android phones). */
 html[lang="bn"] body,
 html[lang="bn"] body * {

@@ -824,7 +824,7 @@ function renderDetail(id, variantId = null) {
                     i === activeImageIndex ? 'fetchpriority="high"' : 'loading="lazy"'
                   } class="fade-in" onload="this.classList.add('loaded')" onerror="${
                     pagePhoto(src) === src ? "" : `if (!this.dataset.full) { this.dataset.full = 1; this.src = '${src}'; return; } `
-                  }this.classList.add('loaded')" onclick="openImageLightbox('${src}')"></div>`
+                  }this.classList.add('loaded')" onclick="openImageLightbox('${src}', this.currentSrc)"></div>`
                 )
                 .join("")}
             </div>
@@ -1445,11 +1445,25 @@ document.addEventListener("keydown", (e) => {
 // full-size in this shared modal instead of just sitting inline at its small card
 // size — clicking the backdrop, the image itself, the close button, or pressing
 // Escape all close it.
-function openImageLightbox(src) {
+// Never shows the photo opened before: the picture stays hidden (with a spinner) until
+// the new one has loaded. `shown` is the copy already on the page (the product photo's
+// phone-size copy): it appears at once, then the full-size file replaces it once loaded.
+let lightboxPhoto = "";
+function openImageLightbox(src, shown) {
   const modal = document.getElementById("imageLightbox");
   const img = document.getElementById("imageLightboxImg");
   if (!modal || !img) return;
-  img.src = src;
+  lightboxPhoto = src;
+  modal.classList.add("loading");
+  img.onload = img.onerror = () => modal.classList.remove("loading");
+  img.src = shown || src;
+  if (shown && shown !== new URL(src, document.baseURI).href) {
+    const full = new Image();
+    full.onload = () => {
+      if (lightboxPhoto === src) img.src = src;
+    };
+    full.src = src;
+  }
   modal.classList.add("open");
   modal.setAttribute("aria-hidden", "false");
   document.body.classList.add("drawer-open");
@@ -1457,6 +1471,7 @@ function openImageLightbox(src) {
 function closeImageLightbox() {
   const modal = document.getElementById("imageLightbox");
   if (!modal) return;
+  lightboxPhoto = "";
   modal.classList.remove("open");
   modal.setAttribute("aria-hidden", "true");
   document.body.classList.remove("drawer-open");
