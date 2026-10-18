@@ -101,17 +101,76 @@
         </header>
         <main id="app" class="container" tabindex="-1">
             <section id="view-home" class="view active" aria-label="Homepage">
-                <div class="hero">
-                    <div class="hero-wrap">
-                        <div class="hero-card">
-                            <h1>Natural Self-Care for Everyday You</h1>
-                            <p class="muted">Handmade in small batches with natural ingredients.</p>
-                        </div>
+                <!-- Two top sections; HOME_HERO in js/config.js picks one (data-hero). -->
+                <div class="hero-simple" data-hero="text">
+                    <h1>Natural Self-Care for Everyday You</h1>
+                    <p class="muted">Handmade in small batches with natural ingredients.</p>
+                </div>
+                <p class="trust-line" id="trustLineText" data-hero="text">💵 Cash on delivery · 🚚 Dhaka ৳80 · Outside Dhaka ৳130</p>
+                <!-- Photo hero: one product photo and one button. On phones the text sits on the
+                     photo; from 800px it's text left, photo right. -->
+                <div class="hero" data-hero="photo">
+                    <div class="hero-media">
+                        <img src="./images/hayatiq_magnesium_oil_30.webp" alt="HAYATIQ Magnesium Oil Spray with a candle and dried flowers" fetchpriority="high" width="1100" height="1443">
+                    </div>
+                    <div class="hero-content">
+                        <h1>Natural Self-Care for Everyday You</h1>
+                        <p>Handmade in small batches with natural ingredients.</p>
+                        <a href="/products" class="btn button-primary hero-cta">Shop Now <i class="fa-solid fa-arrow-right" aria-hidden="true"></i></a>
                     </div>
                 </div>
-                <!-- One readable line with the questions buyers ask first; delivery times
-                     come from DELIVERY_TIME in js/config.js (filled by script.js). -->
-                <p class="trust-line" id="trustLine">💵 Cash on delivery · 🚚 Dhaka ৳80 · Outside Dhaka ৳130</p>
+                <!-- The questions buyers ask first; delivery charges and times come from
+                     js/config.js (filled by script.js). -->
+                <ul class="trust-chips" id="trustLine" data-hero="photo" aria-label="Delivery and payment"></ul>
+                <section aria-label="Shop by category" class="category-section">
+                    <div class="section-title section-title-compact">
+                        <h2>Shop by Category</h2>
+                    </div>
+                    <div class="category-scroller">
+                        <a class="category-photo" href="/products?cat=Hair%20Care">
+                            <img src="./images/cards/conditioner_bar.webp" alt="" loading="lazy" class="fade-in" onload="this.classList.add('loaded')" onerror="this.classList.add('loaded')">
+                            <span class="category-photo-name">Hair Care</span>
+                            <span class="category-status" data-cat="Hair Care"></span>
+                        </a>
+                        <a class="category-photo" href="/products?cat=Magnesium%20Oil%20Spray">
+                            <img src="./images/cards/hayatiq_magnesium_oil_2x.webp" alt="" loading="lazy" class="fade-in" onload="this.classList.add('loaded')" onerror="this.classList.add('loaded')">
+                            <span class="category-photo-name">Magnesium Oil Spray</span>
+                            <span class="category-status" data-cat="Magnesium Oil Spray"></span>
+                        </a>
+                        <a class="category-photo" href="/products?cat=Oral%20Care">
+                            <img src="./images/cards/hayatiq_copper_tongue_scraper.webp" alt="" loading="lazy" class="fade-in" onload="this.classList.add('loaded')" onerror="this.classList.add('loaded')">
+                            <span class="category-photo-name">Oral Care</span>
+                            <span class="category-status" data-cat="Oral Care"></span>
+                        </a>
+                        <a class="category-photo" href="/products?cat=Cleaning%20Supply">
+                            <img src="./images/cards/hayatiq_dish_soap_bar.webp" alt="" loading="lazy" class="fade-in" onload="this.classList.add('loaded')" onerror="this.classList.add('loaded')">
+                            <span class="category-photo-name">Cleaning Supply</span>
+                            <span class="category-status" data-cat="Cleaning Supply"></span>
+                        </a>
+                        <a class="category-photo" href="/products?cat=Bath%20Bombs">
+                            <img src="./images/cards/hayatiq_bath_bomb_1.webp" alt="" loading="lazy" class="fade-in" onload="this.classList.add('loaded')" onerror="this.classList.add('loaded')">
+                            <span class="category-photo-name">Bath Bombs</span>
+                            <span class="category-status" data-cat="Bath Bombs"></span>
+                        </a>
+                        <a class="category-photo" href="/products?cat=Footsoaks">
+                            <img src="./images/cards/hayatiq_footsoak.webp" alt="" loading="lazy" class="fade-in" onload="this.classList.add('loaded')" onerror="this.classList.add('loaded')">
+                            <span class="category-photo-name">Footsoaks</span>
+                            <span class="category-status" data-cat="Footsoaks"></span>
+                        </a>
+                        <!-- No real salve photo yet: a brand-colored tile instead. -->
+                        <a class="category-photo" href="/products?cat=Salves%20%26%20Balms">
+                            <span class="category-photo-icon" aria-hidden="true"><i class="fa-solid fa-mortar-pestle"></i></span>
+                            <span class="category-photo-name">Salves & Balms</span>
+                            <span class="category-status" data-cat="Salves & Balms"></span>
+                        </a>
+                        <a class="category-photo" href="/products">
+                            <span class="category-photo-icon" aria-hidden="true"><i class="fa-solid fa-bag-shopping"></i></span>
+                            <span class="category-photo-name">All Products</span>
+                        </a>
+                    </div>
+                    <!-- "Shop by need" chips, from NEED_TILES in script.js. -->
+                    <div class="need-chips" id="needTilesGrid" aria-label="Find the Right Product"></div>
+                </section>
                 <section aria-label="Top Selling Products">
                     <div class="section-title section-title-compact">
                         <h2>Best Sellers</h2>
@@ -143,91 +202,33 @@
                         <a href="/products" class="btn button-primary">View More Products</a>
                     </div>
                 </section>
-                <section aria-label="Shop by category" class="category-section">
-                    <div class="section-title">
-                        <h2>Shop by Category</h2>
-                    </div>
-                    <div class="category-tiles">
-                        <a class="category-tile" href="/products?cat=Hair%20Care">
-                            <span class="category-tile-icon" aria-hidden="true"><i class="fa-solid fa-scissors"></i></span>
-                            <span>Hair Care</span>
-                            <span class="category-status" data-cat="Hair Care"></span>
-                        </a>
-                        <a class="category-tile" href="/products?cat=Magnesium%20Oil%20Spray">
-                            <span class="category-tile-icon" aria-hidden="true"><i class="fa-solid fa-spray-can"></i></span>
-                            <span>Magnesium Oil Spray</span>
-                            <span class="category-status" data-cat="Magnesium Oil Spray"></span>
-                        </a>
-                        <a class="category-tile" href="/products?cat=Salves%20%26%20Balms">
-                            <span class="category-tile-icon" aria-hidden="true"><i class="fa-solid fa-mortar-pestle"></i></span>
-                            <span>Salves & Balms</span>
-                            <span class="category-status" data-cat="Salves & Balms"></span>
-                        </a>
-                        <a class="category-tile" href="/products?cat=Bath%20Bombs">
-                            <span class="category-tile-icon" aria-hidden="true"><i class="fa-solid fa-bath"></i></span>
-                            <span>Bath Bombs</span>
-                            <span class="category-status" data-cat="Bath Bombs"></span>
-                        </a>
-                        <a class="category-tile" href="/products?cat=Footsoaks">
-                            <span class="category-tile-icon" aria-hidden="true"><i class="fa-solid fa-shoe-prints"></i></span>
-                            <span>Footsoaks</span>
-                            <span class="category-status" data-cat="Footsoaks"></span>
-                        </a>
-                        <a class="category-tile" href="/products?cat=Oral%20Care">
-                            <span class="category-tile-icon" aria-hidden="true"><i class="fa-solid fa-tooth"></i></span>
-                            <span>Oral Care</span>
-                            <span class="category-status" data-cat="Oral Care"></span>
-                        </a>
-                        <a class="category-tile" href="/products?cat=Cleaning%20Supply">
-                            <span class="category-tile-icon" aria-hidden="true"><i class="fa-solid fa-broom"></i></span>
-                            <span>Cleaning Supply</span>
-                            <span class="category-status" data-cat="Cleaning Supply"></span>
-                        </a>
-                        <a class="category-tile" href="/products">
-                            <span class="category-tile-icon" aria-hidden="true"><i class="fa-solid fa-bag-shopping"></i></span>
-                            <span>All Products</span>
-                        </a>
-                    </div>
-                </section>
-                <section aria-label="Find the Right Product" class="category-section">
-                    <div class="section-title">
-                        <h2>Find the Right Product</h2>
-                    </div>
-                    <div class="category-tiles" id="needTilesGrid"></div>
-                </section>
                 <section aria-label="How to Order">
                     <div class="section-title">
                         <h2>How to Order</h2>
                     </div>
-                    <div class="grid how-it-works-grid">
-                        <div class="soft-card">
-                            <strong>1. Browse & Choose</strong>
-                            <p>Explore our products by category and pick what fits your routine.</p>
-                        </div>
-                        <div class="soft-card">
-                            <strong>2. Add to Cart</strong>
-                            <p>Tap the cart icon on any product — no account needed.</p>
-                        </div>
-                        <div class="soft-card">
-                            <strong>3. Confirm Your Order</strong>
-                            <p>Enter your name, phone, and address, and choose Cash on Delivery.</p>
-                        </div>
-                        <div class="soft-card">
-                            <strong>4. Receive & Pay</strong>
-                            <p>Check your order when it arrives, then pay the courier in cash.</p>
-                        </div>
-                    </div>
-                </section>
-                <section aria-label="What Happens After Ordering">
-                    <div class="soft-card">
-                        <h2>What Happens After You Order</h2>
-                        <ul>
-                            <li>Your order goes straight to our team — no accounts, no waiting on hold.</li>
-                            <li>We prepare and dispatch it for delivery, Inside or Outside Dhaka.</li>
-                            <li>Pay by cash when it arrives — you can check your order before you pay.</li>
-                            <li>Questions anytime? Message us on <a href="https://facebook.com/hayatiq.life" target="_blank" rel="noopener">Facebook</a> — we reply directly.</li>
-                        </ul>
-                    </div>
+                    <ol class="order-steps">
+                        <li>
+                            <span class="order-step-icon" aria-hidden="true"><i class="fa-solid fa-bag-shopping"></i></span>
+                            <strong>Choose</strong>
+                            <span>Add to cart — no account needed.</span>
+                        </li>
+                        <li>
+                            <span class="order-step-icon" aria-hidden="true"><i class="fa-solid fa-pen"></i></span>
+                            <strong>Order</strong>
+                            <span>Just your name, phone and address.</span>
+                        </li>
+                        <li>
+                            <span class="order-step-icon" aria-hidden="true"><i class="fa-solid fa-truck"></i></span>
+                            <strong>We deliver</strong>
+                            <span>Inside or Outside Dhaka, by courier.</span>
+                        </li>
+                        <li>
+                            <span class="order-step-icon" aria-hidden="true"><i class="fa-solid fa-money-bill-wave"></i></span>
+                            <strong>Pay on delivery</strong>
+                            <span>Check your order, then pay in cash.</span>
+                        </li>
+                    </ol>
+                    <p class="order-steps-note">Questions anytime? Message us on <a href="https://facebook.com/hayatiq.life" target="_blank" rel="noopener">Facebook</a> — we reply directly.</p>
                 </section>
                 <section aria-label="Frequently Asked Questions">
                     <div class="section-title">
@@ -257,38 +258,24 @@
                     </div>
                 </section>
                 <section aria-label="About Hayatiq">
-					<div>
-						<div class="soft-card">
-							<h2>Why HAYATIQ?</h2>
-							<p>We believe wellness should be gentle, honest, and effective. Each product is handcrafted in small batches using thoughtfully sourced ingredients, and every batch is tested for quality, stability, and safety before it reaches you. We create products we love to use ourselves, minimal formulas that let your natural glow shine.</p>
-						</div>
-                    </div>
-                </section>
-                <section aria-label="Contact teaser">
-                    <div class="soft-card">
-                        <h2>Let’s Talk</h2>
-                        <p>Have a question about our blends? We’d love to hear from you.</p>
-                        <a class="btn button-primary" href="/contact">Contact Us</a>
+                    <div class="brand-band">
+                        <img src="./images/cards/hayatiq_magnesium_oil_2.webp" alt="" loading="lazy" class="brand-band-img fade-in" onload="this.classList.add('loaded')" onerror="this.classList.add('loaded')">
+                        <div class="brand-band-text">
+                            <h2>Why HAYATIQ?</h2>
+                            <p>We believe wellness should be gentle, honest, and effective. Each product is handcrafted in small batches using thoughtfully sourced ingredients, and every batch is tested for quality, stability, and safety before it reaches you. We create products we love to use ourselves, minimal formulas that let your natural glow shine.</p>
+                            <p class="brand-band-ask">Have a question about our blends? We’d love to hear from you.</p>
+                            <a class="btn button-primary" href="/contact">Contact Us</a>
+                        </div>
                     </div>
                 </section>
             </section>
             <section id="view-products" class="view" aria-label="Product Listing">
                 <div class="section-title products-title-row">
                     <h2>Products</h2>
-                    <div style="display:flex;align-items:center;gap:.6rem;white-space:nowrap;">
-                        <div class="pill pill-small" id="productCount">0 items</div>
-                        <select id="categoryFilter" class="category-filter-header" aria-label="Filter by category">
-                            <option value="">All Categories</option>
-                            <option value="Hair Care">Hair Care</option>
-                            <option value="Magnesium Oil Spray">Magnesium Oil Spray</option>
-                            <option value="Salves & Balms">Salves & Balms</option>
-                            <option value="Bath Bombs">Bath Bombs</option>
-                            <option value="Footsoaks">Footsoaks</option>
-                            <option value="Oral Care">Oral Care</option>
-                            <option value="Cleaning Supply">Cleaning Supply</option>
-                        </select>
-                    </div>
+                    <div class="pill pill-small" id="productCount">0 items</div>
                 </div>
+                <!-- Category chips, filled by setupProductFilters() in script.js. -->
+                <nav class="filter-chips" id="categoryChips" aria-label="Filter by category"></nav>
                 <div class="soft-card" id="categoryNotifyBanner" hidden></div>
                 <div class="products-grid" id="productsGrid"></div>
             </section>
@@ -574,6 +561,18 @@
             </button>
             <a href="/checkout" class="btn button-primary cart-bar-checkout">Checkout</a>
         </div>
+        <!-- Product pages: shown once the page's own Order Now button scrolls out of view
+             (watchOrderBar() in script.js); replaces the cart bar there. -->
+        <div id="orderBar" class="cart-bar order-bar hidden" aria-label="Order this product">
+            <div class="order-bar-info">
+                <span class="order-bar-name" id="orderBarName"></span>
+                <strong id="orderBarPrice"></strong>
+            </div>
+            <button type="button" class="order-bar-cart" id="orderBarCart" onclick="openCartDrawer();" aria-label="Open cart" hidden>
+                <i class="fa-solid fa-cart-shopping" aria-hidden="true"></i><span class="order-bar-count" id="orderBarCount"></span>
+            </button>
+            <button type="button" class="btn button-primary order-bar-btn" onclick="document.querySelector('#detailWrap .detail-order-now')?.click();">Order Now</button>
+        </div>
         <div id="cartDrawerOverlay" class="cart-drawer-overlay" onclick="closeCartDrawer()"></div>
         <aside id="cartDrawer" class="cart-drawer" aria-label="Your cart" aria-hidden="true">
             <div class="cart-drawer-header">
@@ -604,5 +603,6 @@
         <script src="./js/invoice.js"></script>
         <script src="./js/script.js"></script>
         <script src="./js/partial.js"></script>
+        <script src="./js/i18n.js"></script>
     </body>
 </html>

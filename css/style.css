@@ -123,11 +123,13 @@
 *::after {
   box-sizing: border-box;
 }
-html,
-body {
+html {
   height: 100%;
 }
+/* min-height, not height: a body fixed at screen height would stop the sticky
+   header (and test banner) after the first screen. */
 body {
+  min-height: 100%;
   margin: 0;
   background-color: var(--color-almond);
   color: var(--color-night);
@@ -437,49 +439,31 @@ header.site-header {
   transform: rotate(-45deg);
 }
 
-/* Hero */
-.hero {
-  position: relative;
+/* Homepage top section: HOME_HERO in js/config.js sets html[data-hero] to "text"
+   or "photo"; the other one is hidden. */
+html:not([data-hero="photo"]) [data-hero="photo"],
+html[data-hero="photo"] [data-hero="text"] {
+  display: none !important;
 }
-.hero-wrap {
-  display: grid;
-  grid-template-columns: 1fr;
-  align-items: center;
-  gap: 1rem;
-  /* padding: 1.2rem 0 0 0; */
-}
-.hero-card {
+/* "text": the original headline and one trust line. */
+.hero-simple {
   padding: 0.6rem 1rem 0.2rem;
   text-align: center;
 }
-.hero h1 {
+.hero-simple h1 {
+  margin-bottom: 0.25rem;
   font-size: 1.55rem;
   line-height: 1.15;
-  margin-bottom: 0.25rem;
 }
-.hero p {
-  font-size: 0.95rem;
+.hero-simple p {
   margin-bottom: 0.3rem;
+  font-size: 0.95rem;
 }
-/* Trust reassurance line — used on the product detail page's USP strip and the
-   checkout page, so the same explicit COD promise reads consistently everywhere. On
-   the homepage itself this content now lives in the .trust-line below the
-   hero instead (see TRUST_AND_CONVERSION_STRATEGY.md). No text-align is set here on
-   purpose: left-aligned in the flow of the detail page/checkout. */
-.hero-trust-line {
-  margin: 0.4rem 0 0;
-  font-size: 0.78rem;
-  font-weight: 600;
-  color: var(--color-seal-brown);
+@media (min-width: 700px) {
+  .hero-simple h1 {
+    font-size: 2.2rem;
+  }
 }
-.hero-trust-line .icon {
-  color: var(--color-earth);
-}
-
-/* Hero Messenger hint — small, secondary text link under the primary CTA. Deliberately
-   subtle so it supports the primary "Shop Now" action instead of competing with it. */
-/* One readable trust line under the hero (filled from js/config.js by script.js) —
-   the first questions buyers ask: cash on delivery, delivery charge and time. */
 .trust-line {
   margin: 0;
   padding: 0.2rem 0.5rem 0.6rem;
@@ -487,6 +471,122 @@ header.site-header {
   font-size: 0.85rem;
   font-weight: 600;
   color: var(--color-seal-brown);
+}
+
+/* "photo": on phones the text sits on the photo over a dark fade; from 800px it's a
+   white card, text left and photo right. */
+.hero {
+  position: relative;
+  display: flex;
+  align-items: flex-end;
+  min-height: min(68vh, 520px);
+  margin-top: 0.8rem;
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  background: var(--color-surface-soft, #f7f4ef);
+}
+.hero-media {
+  position: absolute;
+  inset: 0;
+}
+.hero-media img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center 35%;
+  display: block;
+}
+.hero-media::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(to top, rgba(14, 33, 26, 0.85) 0%, rgba(14, 33, 26, 0.45) 42%, rgba(14, 33, 26, 0) 72%);
+}
+.hero-content {
+  position: relative;
+  z-index: 1;
+  padding: 1.4rem 1.2rem;
+}
+.hero h1 {
+  margin-bottom: 0.4rem;
+  color: var(--color-white);
+  font-size: 1.9rem;
+  line-height: 1.15;
+}
+.hero p {
+  margin: 0 0 1.1rem;
+  color: rgba(255, 255, 255, 0.9);
+  font-size: 1rem;
+}
+.hero-cta {
+  padding: 0.75rem 1.5rem;
+  background: var(--color-white);
+  color: var(--color-heading, var(--color-seal-brown));
+}
+.hero-cta:hover {
+  background: var(--color-hover, #eaf5ef);
+  color: var(--color-heading, var(--color-seal-brown));
+}
+@media (min-width: 800px) {
+  .hero {
+    display: grid;
+    grid-template-columns: 1fr 1.1fr;
+    align-items: center;
+    min-height: 0;
+    margin-top: 1.2rem;
+    background: var(--color-surface, #fff);
+    box-shadow: var(--shadow-soft);
+  }
+  .hero-media {
+    position: relative;
+    order: 2;
+    height: 460px;
+  }
+  .hero-media::after {
+    display: none;
+  }
+  .hero-content {
+    padding: 2.5rem 3rem;
+  }
+  .hero h1 {
+    color: var(--color-seal-brown);
+    font-size: 2.6rem;
+  }
+  .hero p {
+    color: var(--color-text-light, #6d766f);
+    font-size: 1.1rem;
+  }
+  .hero-cta {
+    background: var(--color-earth);
+    color: var(--color-white);
+  }
+  .hero-cta:hover {
+    background: var(--color-button-hover, var(--color-earth));
+    color: var(--color-white);
+  }
+}
+
+/* Cash on delivery, delivery charges and times, under the hero. */
+.trust-chips {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.4rem;
+  margin: 0.8rem 0 0;
+  padding: 0;
+  list-style: none;
+}
+.trust-chips li {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.35rem 0.7rem;
+  border: 1px solid var(--color-border, #e6ded3);
+  border-radius: 999px;
+  background: var(--color-surface, #fff);
+  color: var(--color-seal-brown);
+  font-size: 0.8rem;
+  font-weight: 600;
 }
 .section-title-compact {
   margin-bottom: 0.5rem;
@@ -596,50 +696,8 @@ header.site-header {
 
 /* Category tiles */
 .category-section {
-  padding-top: 0.3rem;
+  padding-top: 1.4rem;
 }
-.category-tiles {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 0.5rem;
-}
-@media (min-width: 420px) {
-  .category-tiles {
-    grid-template-columns: repeat(4, 1fr);
-  }
-}
-.category-tile {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 0.4rem;
-  padding: 0.7rem 0.4rem;
-  border-radius: var(--radius-lg);
-  background: var(--color-sand);
-  border: 1px solid rgba(16, 15, 15, 0.06);
-  box-shadow: var(--shadow-soft);
-  text-align: center;
-  font-weight: 600;
-  font-size: 0.85rem;
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
-}
-.category-tile:hover {
-  transform: translateY(-3px);
-  box-shadow: var(--shadow-card);
-}
-/* Font Awesome icons instead of raster images — always crisp, and colored via
-   currentColor so they read clearly no matter what the active theme/background is. */
-.category-tile-icon {
-  width: 42px;
-  height: 42px;
-  display: grid;
-  place-items: center;
-  border-radius: 50%;
-  background: var(--color-category-icon);
-  color: var(--color-seal-brown);
-  font-size: 1.15rem;
-}
-
 /* Category availability status — never hides a category, only labels it honestly
    (see TRUST_AND_CONVERSION_STRATEGY.md §C). Used on both the homepage tiles and the
    full Categories page. */
@@ -667,24 +725,6 @@ header.site-header {
   color: var(--color-earth);
   font-weight: 600;
   text-decoration: underline;
-}
-
-/* How It Works condensed grid */
-.how-it-works-grid {
-  grid-template-columns: 1fr;
-}
-.how-it-works-grid p {
-  margin: 0.2rem 0 0;
-}
-@media (min-width: 480px) {
-  .how-it-works-grid {
-    grid-template-columns: repeat(2, 1fr);
-  }
-}
-@media (min-width: 700px) {
-  .how-it-works-grid {
-    grid-template-columns: repeat(4, 1fr);
-  }
 }
 
 /* Sections */
@@ -818,21 +858,19 @@ section {
 
 /* Product subtitle styles */
 .product-subtitle {
-  font-family: 'Lora', serif;
-  font-size: .9rem;
-  color: var(--color-seal-brown);
+  font-size: 0.85rem;
+  color: var(--color-text-light, #6d766f);
   margin: 0.15rem 0 0.3rem;
-  font-weight: 500;
+  font-weight: 400;
   line-height: 1.3;
 }
 
 .product-subtitle-detail {
-    font-family: 'Lora', serif;
-    font-size: 1.1rem;
-    color: var(--color-seal-brown);
-    margin-bottom: 0.3rem;
-    font-weight: 600;
-    line-height: 1.3;
+  font-size: 1rem;
+  color: var(--color-text-light, #6d766f);
+  margin-bottom: 0.3rem;
+  font-weight: 500;
+  line-height: 1.3;
 }
 
 .product-price {
@@ -897,38 +935,6 @@ section {
   .detail {
     grid-template-columns: minmax(0, 1.1fr) minmax(0, 0.9fr);
   }
-}
-.gallery-main {
-  border-radius: var(--radius-lg);
-  overflow: hidden;
-  background: var(--color-white);
-  border: 1px solid rgba(16, 15, 15, 0.06);
-}
-/* Fix shaking: keep main gallery at fixed aspect ratio */
-.gallery-main img {
-  width: 100%;
-  aspect-ratio: 4/3;
-  height: auto;
-  object-fit: cover;
-  display: block;
-}
-.thumbs {
-  display: grid;
-  grid-auto-flow: column;
-  grid-auto-columns: 22%;
-  gap: 0.5rem;
-  overflow-x: auto;
-  padding-bottom: 0.2rem;
-}
-.thumbs img {
-  border-radius: 10px;
-  height: 70px;
-  object-fit: cover;
-  border: 2px solid transparent;
-  cursor: pointer;
-}
-.thumbs img.active {
-  border-color: var(--color-seal-brown);
 }
 .variant-picker {
   display: grid;
@@ -1466,12 +1472,6 @@ footer {
   color: var(--color-seal-brown);
 }
 
-/* Main gallery image opens the shared #imageLightbox on click (see script.js) —
-   just needs the zoom-in cursor hint here; the modal styling itself lives with
-   .image-lightbox further down. */
-.gallery-main {
-  cursor: zoom-in;
-}
 
 /* coming soon container */
 .coming-soon-container {
@@ -1879,14 +1879,6 @@ footer {
 
 /* Responsive */
 @media (min-width: 700px) {
-  .hero-wrap {
-    grid-template-columns: 1fr;
-    gap: 1.2rem;
-    /* padding-top: 1.4rem; */
-  }
-  .hero h1 {
-    font-size: 2.2rem;
-  }
   .section-title h2 {
     font-size: 1.8rem;
   }
@@ -2144,16 +2136,11 @@ body.drawer-open {
   }
 }
 
-/* Products page title and filters row */
+/* Products page title row */
 .products-title-row {
   flex-wrap: nowrap;
   justify-content: space-between;
-}
-.products-title-row > div {
-  flex-wrap: nowrap;
-  flex: 0 1 auto;
-  min-width: 0;
-  max-width: 100%;
+  align-items: center;
 }
 
 /* Products page pill size */
@@ -2161,51 +2148,6 @@ body.drawer-open {
   font-size: 0.75rem;
   padding: 0.35rem 0.6rem;
   flex-shrink: 0;
-}
-
-/* Category filter in header */
-.category-filter-header {
-  appearance: none;
-  padding: 0.5rem 0.8rem;
-  padding-right: 2rem;
-  border-radius: var(--radius-sm);
-  border: 1px solid rgba(16, 15, 15, 0.15);
-  background: var(--color-white);
-  color: var(--color-night);
-  font-size: 0.85rem;
-  font-weight: 500;
-  outline: none;
-  cursor: pointer;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10' viewBox='0 0 12 12'%3E%3Cpath fill='%23100f0f' d='M6 9L1 4h10z'/%3E%3C/svg%3E");
-  background-repeat: no-repeat;
-  background-position: right 0.6rem center;
-  background-size: 10px;
-  transition: border-color 0.2s ease, box-shadow 0.2s ease;
-  width: clamp(120px, 34vw, 165px);
-  max-width: 100%;
-}
-.category-filter-header:hover,
-.category-filter-header:focus {
-  border-color: var(--color-seal-brown);
-  box-shadow: 0 0 0 3px rgba(31, 63, 51, 0.08);
-}
-@media (max-width: 420px) {
-  .products-title-row {
-    flex-wrap: wrap;
-    gap: 0.6rem;
-  }
-  .products-title-row > div {
-    width: 100%;
-    justify-content: space-between;
-  }
-  .category-filter-header {
-    width: auto;
-    min-width: 150px;
-  }
-}
-.category-filter-header option {
-  background: var(--color-white);
-  color: var(--color-night);
 }
 
 /* Test-mode banner (js/config.js) — shown on every address except the live shop,
@@ -2531,4 +2473,525 @@ svg.icon {
 .related-products {
   grid-column: 1 / -1;
   padding-top: 0.5rem;
+}
+
+/* Bangla preview (js/i18n.js): Latin text keeps Outfit, Bangla letters use Noto Sans Bengali (the same plain Bangla as Android phones). */
+html[lang="bn"] body,
+html[lang="bn"] body * {
+  font-family: "Outfit", "Noto Sans Bengali", system-ui, sans-serif !important;
+}
+/* A small pill in the green header bar, about the size of the icons next to it. */
+.lang-toggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 40px;
+  height: 28px;
+  padding: 0 0.5rem;
+  border: 1px solid rgba(255, 255, 255, 0.55);
+  border-radius: 999px;
+  background: transparent;
+  color: var(--color-white);
+  font-size: 0.8rem;
+  font-weight: 600;
+  line-height: 1;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.lang-toggle:hover {
+  background: rgba(255, 255, 255, 0.12);
+}
+@media (max-width: 420px) {
+  /* Room for the switch on small phones: tighter icon spacing, smaller name. */
+  .nav-right:has(.lang-toggle) {
+    gap: 0.35rem;
+  }
+  .nav:has(.lang-toggle) .brand-name {
+    font-size: 1.35rem;
+  }
+}
+@media (min-width: 800px) {
+  /* On desktop .nav-right holds only the switch; put it after the menu. */
+  .nav-right:has(.lang-toggle) {
+    order: 3;
+    margin-left: 0.6rem;
+  }
+  .nav:has(.lang-toggle) .nav-links {
+    margin-left: auto;
+  }
+}
+
+/* ---------- Homepage: category photos, need chips, order steps, brand band ---------- */
+/* A sideways row of photo tiles on phones, one row of 8 from 900px. */
+.category-scroller {
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: 110px;
+  gap: 0.7rem;
+  margin: 0 -1rem;
+  padding: 0.2rem 1rem 0.6rem;
+  overflow-x: auto;
+  scroll-snap-type: x proximity;
+  scroll-padding: 0 1rem;
+  scrollbar-width: none;
+}
+.category-scroller::-webkit-scrollbar {
+  display: none;
+}
+.category-photo {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.15rem;
+  text-align: center;
+  scroll-snap-align: start;
+}
+.category-photo img,
+.category-photo-icon {
+  width: 100%;
+  aspect-ratio: 1 / 1;
+  border-radius: 18px;
+  background: var(--color-surface-soft, #f7f4ef);
+  box-shadow: var(--shadow-soft);
+  object-fit: cover;
+  transition: transform 0.25s ease, opacity 0.4s ease;
+}
+.category-photo-icon {
+  display: grid;
+  place-items: center;
+  background: var(--color-earth);
+  color: var(--color-white);
+  font-size: 2rem;
+}
+.category-photo:hover img,
+.category-photo:hover .category-photo-icon {
+  transform: translateY(-3px);
+}
+.category-photo-name {
+  margin-top: 0.35rem;
+  color: var(--color-seal-brown);
+  font-size: 0.85rem;
+  font-weight: 600;
+  line-height: 1.25;
+}
+@media (min-width: 900px) {
+  .category-scroller {
+    grid-auto-flow: row;
+    grid-template-columns: repeat(8, minmax(0, 1fr));
+    margin: 0;
+    padding: 0.2rem 0 0.6rem;
+    overflow: visible;
+  }
+}
+
+.need-chips {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  margin: 0.5rem -1rem 0;
+  padding: 0 1rem 0.2rem;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+.need-chips::-webkit-scrollbar {
+  display: none;
+}
+.need-chips-label {
+  flex: 0 0 auto;
+  margin-right: 0.2rem;
+  color: var(--color-text-light, #6d766f);
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+.need-chip {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.4rem 0.8rem;
+  border-radius: 999px;
+  background: var(--color-category-icon);
+  color: var(--color-seal-brown);
+  font-size: 0.82rem;
+  font-weight: 600;
+}
+.need-chip-empty {
+  opacity: 0.55;
+}
+
+.order-steps {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.6rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  counter-reset: step;
+}
+.order-steps li {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  padding: 0.9rem 0.8rem;
+  border-radius: var(--radius);
+  background: var(--color-surface, #fff);
+  box-shadow: var(--shadow-soft);
+  color: var(--color-text-light, #6d766f);
+  font-size: 0.82rem;
+  line-height: 1.4;
+}
+.order-steps li::before {
+  counter-increment: step;
+  content: counter(step);
+  position: absolute;
+  top: 0.6rem;
+  right: 0.8rem;
+  color: var(--color-border, #e6ded3);
+  font-size: 1.5rem;
+  font-weight: 700;
+}
+html[lang="bn"] .order-steps li::before {
+  content: counter(step, bengali);
+}
+.order-steps li strong {
+  color: var(--color-seal-brown);
+  font-size: 0.95rem;
+}
+.order-step-icon {
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  margin-bottom: 0.3rem;
+  border-radius: 50%;
+  background: var(--color-category-icon);
+  color: var(--color-earth);
+}
+.order-steps-note {
+  margin: 0.8rem 0 0;
+  color: var(--color-text-light, #6d766f);
+  font-size: 0.85rem;
+  text-align: center;
+}
+.order-steps-note a {
+  color: var(--color-earth);
+  font-weight: 600;
+  text-decoration: underline;
+}
+@media (min-width: 800px) {
+  .order-steps {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+
+/* "Why HAYATIQ?" and the contact prompt, in one photo card. */
+.brand-band {
+  display: grid;
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  background: var(--color-surface, #fff);
+  box-shadow: var(--shadow-soft);
+}
+.brand-band-img {
+  display: block;
+  width: 100%;
+  aspect-ratio: 16 / 10;
+  object-fit: cover;
+}
+.brand-band-text {
+  padding: 1.2rem 1.1rem 1.4rem;
+}
+.brand-band-text p {
+  font-size: 0.95rem;
+}
+.brand-band-text .brand-band-ask {
+  margin: 1rem 0 0.7rem;
+  color: var(--color-seal-brown);
+  font-weight: 600;
+}
+@media (min-width: 800px) {
+  .brand-band {
+    grid-template-columns: 1fr 1.2fr;
+  }
+  .brand-band-img {
+    height: 360px;
+    aspect-ratio: auto;
+  }
+  .brand-band-text {
+    align-self: center;
+    padding: 2.2rem 2.4rem;
+  }
+}
+
+/* ---------- Products page: category chips ---------- */
+.filter-chips {
+  display: flex;
+  gap: 0.45rem;
+  margin: 0 -1rem 0.9rem;
+  padding: 0.1rem 1rem 0.3rem;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+.filter-chips::-webkit-scrollbar {
+  display: none;
+}
+.filter-chip {
+  flex: 0 0 auto;
+  padding: 0.45rem 0.9rem;
+  border: 1px solid var(--color-border, #e6ded3);
+  border-radius: 999px;
+  background: var(--color-surface, #fff);
+  color: var(--color-seal-brown);
+  font-size: 0.85rem;
+  font-weight: 600;
+  white-space: nowrap;
+}
+.filter-chip.active {
+  border-color: var(--color-earth);
+  background: var(--color-earth);
+  color: var(--color-white);
+}
+@media (min-width: 800px) {
+  .filter-chips {
+    flex-wrap: wrap;
+    margin: 0 0 1rem;
+    padding: 0;
+    overflow: visible;
+  }
+}
+
+/* A product still on the placeholder photo: brand-colored tile with its name. */
+.photo-pending {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.6rem;
+  width: 100%;
+  height: 100%;
+  padding: 1rem;
+  background: linear-gradient(160deg, var(--color-earth), var(--color-seal-brown));
+  color: var(--color-white);
+  font-size: 0.9rem;
+  font-weight: 600;
+  line-height: 1.3;
+  text-align: center;
+}
+.photo-pending .brand-logo {
+  width: 44px;
+  height: 44px;
+  flex-basis: 44px;
+  background-color: var(--color-white);
+}
+.photo-pending-large {
+  aspect-ratio: 1 / 1;
+  border-radius: var(--radius-lg);
+  font-size: 1.3rem;
+}
+
+/* ---------- Product page ---------- */
+/* Photos: one square photo that swipes, a "2 / 3" count, and square thumbnails below. */
+.gallery-main {
+  position: relative;
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  background: var(--color-surface-soft, #f7f4ef);
+}
+.gallery-track {
+  display: flex;
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  scrollbar-width: none;
+}
+.gallery-track::-webkit-scrollbar {
+  display: none;
+}
+.gallery-slide {
+  flex: 0 0 100%;
+  scroll-snap-align: center;
+}
+.gallery-slide img {
+  display: block;
+  width: 100%;
+  aspect-ratio: 1 / 1;
+  object-fit: cover;
+  cursor: zoom-in;
+}
+.gallery-count {
+  position: absolute;
+  right: 0.7rem;
+  bottom: 0.7rem;
+  padding: 0.15rem 0.55rem;
+  border-radius: 999px;
+  background: rgba(16, 15, 15, 0.55);
+  color: var(--color-white);
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+.thumbs {
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: calc((100% - 3 * 0.5rem) / 4.5);
+  gap: 0.5rem;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+.thumbs::-webkit-scrollbar {
+  display: none;
+}
+.thumb {
+  aspect-ratio: 1 / 1;
+  padding: 0;
+  border: 2px solid transparent;
+  border-radius: 12px;
+  overflow: hidden;
+  background: var(--color-surface-soft, #f7f4ef);
+  opacity: 0.75;
+  cursor: pointer;
+  transition: opacity 0.2s ease, border-color 0.2s ease;
+}
+.thumb.active,
+.thumb:hover {
+  border-color: var(--color-earth);
+  opacity: 1;
+}
+.thumb img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+@media (min-width: 900px) {
+  /* Keeps the square photo and its thumbnails on one desktop screen. */
+  .gallery {
+    width: 100%;
+    max-width: 540px;
+    justify-self: center;
+  }
+  .thumbs {
+    grid-auto-columns: 84px;
+  }
+}
+.detail-price {
+  font-size: 1.25rem;
+}
+.benefit-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  margin: 0.2rem 0 0;
+  padding: 0;
+  list-style: none;
+}
+.benefit-list li {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.3rem 0.7rem;
+  border-radius: 999px;
+  background: var(--color-hover, #eaf5ef);
+  color: var(--color-heading, var(--color-seal-brown));
+  font-size: 0.82rem;
+  font-weight: 600;
+}
+.benefit-list .icon {
+  color: var(--color-earth);
+  font-size: 0.75rem;
+}
+
+/* Slim "Order Now" bar on product pages (#orderBar; shares .cart-bar's position). */
+.order-bar-info {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-width: 0;
+  line-height: 1.25;
+}
+.order-bar-name {
+  overflow: hidden;
+  color: var(--color-text-light, #6d766f);
+  font-size: 0.78rem;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+.order-bar-info strong {
+  color: var(--color-seal-brown);
+  font-size: 1.05rem;
+}
+.order-bar-cart {
+  position: relative;
+  display: grid;
+  place-items: center;
+  flex: 0 0 42px;
+  height: 42px;
+  border: 1px solid var(--color-border, #e6ded3);
+  border-radius: 50%;
+  background: var(--color-white);
+  color: var(--color-earth);
+  font-size: 1.1rem;
+  cursor: pointer;
+}
+.order-bar-cart[hidden] {
+  display: none;
+}
+.order-bar-count {
+  position: absolute;
+  top: -4px;
+  right: -4px;
+  display: grid;
+  place-items: center;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 4px;
+  border-radius: 999px;
+  background: var(--color-earth);
+  color: var(--color-white);
+  font-size: 0.68rem;
+  font-weight: 700;
+}
+.order-bar-btn {
+  padding: 0.65rem 1.4rem;
+}
+
+/* ---------- Small touches ---------- */
+/* Cart icons bounce when something is added (bumpCart() in script.js). */
+@keyframes cart-bump {
+  30% {
+    transform: scale(1.25);
+  }
+  60% {
+    transform: scale(0.92);
+  }
+}
+.bump {
+  animation: cart-bump 0.45s ease;
+}
+/* Photos fade in once loaded (onload adds .loaded). */
+img.fade-in {
+  opacity: 0;
+  transition: opacity 0.4s ease, transform 0.35s ease;
+}
+img.fade-in.loaded {
+  opacity: 1;
+}
+@media (prefers-reduced-motion: reduce) {
+  img.fade-in {
+    transition: none;
+  }
+  .bump {
+    animation: none;
+  }
+}
+/* Phones: the header stays at the top while scrolling (--header-top puts it below
+   the test banner, set by script.js), with a shadow once content scrolls under it. */
+@media (max-width: 799px) {
+  header.site-header {
+    position: sticky;
+    top: var(--header-top, 0);
+    transition: box-shadow 0.2s ease;
+  }
+  header.site-header.is-stuck {
+    box-shadow: 0 4px 16px rgba(16, 15, 15, 0.18);
+  }
 }

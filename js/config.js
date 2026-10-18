@@ -115,6 +115,12 @@ function sendsOn(kind) {
    Umami. Leave empty to keep it off. */
 const UMAMI_WEBSITE_ID = "64d1b719-e002-47ac-9b7f-a433917061d3";
 
+/* ---- Homepage top section ----
+   "text": headline and one trust line (the original). "photo": photo hero with a
+   Shop Now button and trust chips. Both are in index.html (data-hero). */
+const HOME_HERO = "text";
+document.documentElement.dataset.hero = HOME_HERO;
+
 /* ---- Delivery and support text shown to customers ---- */
 const DELIVERY_TIME = { inside_dhaka: "about 2 days", outside_dhaka: "3–5 days" };
 const DAMAGE_PROMISE = "If anything arrives damaged, message us on Facebook and we'll sort it out.";

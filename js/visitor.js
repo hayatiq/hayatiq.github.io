@@ -329,25 +329,19 @@ function formatVisitSummaryMessage(sessionData, intent) {
   }
 
   const shopping = [];
+  // One item per line, like the Telegram order message.
+  const list = (title, items) => {
+    if (items.length) shopping.push(`• ${title}:\n${items.map((i) => `    – ${i}`).join("\n")}`);
+  };
   const cart = sessionData.cartNow;
-  if (cart && cart.items.length) shopping.push(`• Cart right now (${taka(cart.subtotal)}): ${cart.items.join(", ")}`);
-  if (sessionData.productsViewed.length) {
-    shopping.push(`• Products Viewed: ${sessionData.productsViewed.map((p) => p.productName).join(", ")}`);
-  }
-  const adds = sessionData.cartActions.filter((a) => a.action === "add_to_cart").map((a) => a.product || "item");
-  if (adds.length) shopping.push(`• Added to Cart: ${adds.join(", ")}`);
-  const removes = sessionData.cartActions.filter((a) => a.action === "remove_from_cart").map((a) => a.product || "item");
-  if (removes.length) shopping.push(`• Removed from Cart: ${removes.join(", ")}`);
+  if (cart && cart.items.length) list(`Cart right now (${taka(cart.subtotal)})`, cart.items);
+  list("Products Viewed", sessionData.productsViewed.map((p) => p.productName));
+  list("Added to Cart", sessionData.cartActions.filter((a) => a.action === "add_to_cart").map((a) => a.product || "item"));
+  list("Removed from Cart", sessionData.cartActions.filter((a) => a.action === "remove_from_cart").map((a) => a.product || "item"));
   if (sessionData.cartActions.some((a) => a.action === "clear_cart")) shopping.push("• Cleared the cart");
-  if (sessionData.variantSelections.length) {
-    shopping.push(`• Options Selected: ${sessionData.variantSelections.map((v) => `${v.product || "Product"}: ${v.variant || "Default"}`).join(", ")}`);
-  }
-  if (sessionData.wishlistActions.length) {
-    shopping.push(`• Wishlist: ${sessionData.wishlistActions.map((w) => `${w.action} ${w.product || ""}`.trim()).join(", ")}`);
-  }
-  if (sessionData.filterActions.length) {
-    shopping.push(`• Filters Applied: ${[...new Set(sessionData.filterActions.map((a) => `${a.type}: ${a.value}`))].join(", ")}`);
-  }
+  list("Options Selected", sessionData.variantSelections.map((v) => `${v.product || "Product"}: ${v.variant || "Default"}`));
+  list("Wishlist", sessionData.wishlistActions.map((w) => `${w.action} ${w.product || ""}`.trim()));
+  list("Filters Applied", [...new Set(sessionData.filterActions.map((a) => `${a.type}: ${a.value}`))]);
   if (sessionData.socialClicks.length) {
     shopping.push(`• Social / Messenger Clicks: ${[...new Set(sessionData.socialClicks.map((c) => c.platform))].join(", ")} (${sessionData.socialClicks.length})`);
   }

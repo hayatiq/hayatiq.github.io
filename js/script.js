@@ -330,6 +330,18 @@ function isLiveProduct(p) {
   return productVariants(p).some((v) => typeof v.price === "number");
 }
 
+// False while a product still uses images/placeholder.webp. Such products stay off
+// the homepage and "You may also like", sit at the end of /products, and show a
+// brand-colored tile instead of the placeholder picture.
+function hasRealPhoto(p) {
+  const images = productVariants(p)[0].images || p.images || [];
+  return Boolean(images[0]) && !images[0].includes("placeholder");
+}
+
+function photoPendingTile(p, extraClass = "") {
+  return `<div class="photo-pending ${extraClass}"><span class="brand-logo" aria-hidden="true"></span><span>${p.name}</span></div>`;
+}
+
 // Owner-assignable badge presets — set a product's `badge` field to one of these
 // keys (see README.MD). Fixed marketing colors, not theme tokens: shoppers expect
 // "Hot"/"New"/"Sale" to look the same regardless of which site palette is active.
@@ -359,7 +371,9 @@ function productCard(p, opts = {}) {
       <article class="${cardClass}" aria-label="${p.name}">
         <a href="/product/${p.slug}">
           <div class="product-media">
-            <img ${opts.eager ? 'fetchpriority="high"' : 'loading="lazy"'} src="${cardImage(display.images[0])}" alt="${p.name}">
+            ${hasRealPhoto(p)
+              ? `<img ${opts.eager ? 'fetchpriority="high"' : 'loading="lazy"'} src="${cardImage(display.images[0])}" alt="${p.name}" class="fade-in" onload="this.classList.add('loaded')" onerror="this.classList.add('loaded')">`
+              : photoPendingTile(p)}
             ${isComingSoon ? `<div class="coming-soon-overlay">
               <span>Coming Soon</span>
               <button class="coming-soon-ask" onclick="event.preventDefault(); event.stopPropagation(); window.open('https://m.me/hayatiq.life?ref=${p.slug}', '_blank');"><i class="fa-brands fa-facebook-messenger" aria-hidden="true"></i> Ask about this</button>
@@ -384,7 +398,7 @@ function productCard(p, opts = {}) {
 function renderFeatured() {
   if (!featuredGrid) return;
   const shown = new Set(topProducts().map((p) => p.id));
-  featuredGrid.innerHTML = PRODUCTS.filter((p) => !shown.has(p.id)).slice(0, 8).map((p) => productCard(p)).join("");
+  featuredGrid.innerHTML = PRODUCTS.filter((p) => !shown.has(p.id) && hasRealPhoto(p)).slice(0, 8).map((p) => productCard(p)).join("");
 }
 
 // Opt-in only via `topSelling: true` — no automatic fallback to other live products.
@@ -433,12 +447,11 @@ function needTileHref(tile) {
 function renderNeedTiles() {
   const grid = document.getElementById("needTilesGrid");
   if (!grid) return;
-  grid.innerHTML = NEED_TILES.map((tile) => {
+  // Only the needs: categories (Hair Care, Oral Care) already have photo tiles above.
+  grid.innerHTML = `<span class="need-chips-label">Shop by need:</span>` + NEED_TILES.filter((tile) => tile.concern).map((tile) => {
     const count = needTileLiveCount(tile);
-    return `<a class="category-tile" href="${needTileHref(tile)}">
-        <span class="category-tile-icon" aria-hidden="true"><i class="fa-solid ${tile.icon}"></i></span>
-        <span>${tile.label}</span>
-        <span class="category-status${count === 0 ? " category-status-empty" : ""}">${count > 0 ? count + " available" : "Coming Soon"}</span>
+    return `<a class="need-chip${count === 0 ? " need-chip-empty" : ""}" href="${needTileHref(tile)}">
+        <i class="fa-solid ${tile.icon}" aria-hidden="true"></i><span>${tile.label}</span>
       </a>`;
   }).join("");
 }
@@ -473,6 +486,7 @@ function renderProducts(category, concern) {
   let items = PRODUCTS;
   if (category) items = items.filter((p) => p.category === category);
   if (concern) items = items.filter((p) => (p.concerns || []).includes(concern));
+  items = [...items.filter(hasRealPhoto), ...items.filter((p) => !hasRealPhoto(p))];
   productsGrid.innerHTML = items.map((p) => productCard(p)).join("");
   productCount.textContent = `${items.length} item${
     items.length !== 1 ? "s" : ""
@@ -489,40 +503,32 @@ function renderProducts(category, concern) {
   }
 }
 
+// Category chips above the product grid; each is a normal link, so the router
+// handles it. A ?concern= filter (from the "Shop by need" chips) gets its own chip.
+const FILTER_CATEGORIES = ["Hair Care", "Magnesium Oil Spray", "Oral Care", "Cleaning Supply", "Bath Bombs", "Footsoaks", "Salves & Balms"];
+
 function setupProductFilters() {
-  const categoryFilter = document.getElementById("categoryFilter");
-
-  if (!categoryFilter) return;
-
-  const updateFilters = () => {
-    const params = new URLSearchParams(location.search);
-    const category = params.get("cat");
-    const concern = params.get("concern");
-    categoryFilter.value = category || "";
-    renderProducts(category, concern);
-  };
-
-  // Attach the change handler only once: navigate() calls this on every visit to
-  // /products, and a fresh listener each time made every change re-render 2x, 4x, 8x…
-  if (!categoryFilter.dataset.bound) {
-    categoryFilter.dataset.bound = "true";
-    categoryFilter.addEventListener("change", () => {
-      const selectedCategory = categoryFilter.value;
-      if (selectedCategory) {
-        goTo(`/products?cat=${encodeURIComponent(selectedCategory)}`);
-      } else {
-        goTo("/products");
-      }
-    });
+  const chips = document.getElementById("categoryChips");
+  const params = new URLSearchParams(location.search);
+  const category = params.get("cat");
+  const concern = params.get("concern");
+  if (chips) {
+    const chip = (label, href, active) =>
+      `<a href="${href}" class="filter-chip${active ? " active" : ""}"${active ? ' aria-current="true"' : ""}>${label}</a>`;
+    chips.innerHTML = [
+      chip("All", "/products", !category && !concern),
+      concern ? chip(concern, `/products?concern=${encodeURIComponent(concern)}`, true) : "",
+      ...FILTER_CATEGORIES.map((c) => chip(c, `/products?cat=${encodeURIComponent(c)}`, c === category)),
+    ].join("");
+    chips.querySelector(".active")?.scrollIntoView({ block: "nearest", inline: "center" });
   }
-
-  updateFilters();
+  renderProducts(category, concern);
 }
 
 function accordionItem(title, arr, { open = false } = {}) {
   // No shared `name` grouping on purpose — each section opens/closes independently
   // instead of auto-closing others, so opening one can't jump the page layout.
-  return `<details class="accordion-item" ${open ? "open" : ""}>
+  return `<details class="accordion-item" data-section="${title}" ${open ? "open" : ""}>
       <summary>${title}</summary>
       <div class="accordion-panel"><ul>${arr.map((i) => `<li>${i}</li>`).join("")}</ul></div>
     </details>`;
@@ -784,36 +790,42 @@ function renderDetail(id, variantId = null) {
     return;
   }
   
-  let activeImageIndex = 0;
   // Keep the chosen photo only when re-rendering the same product (e.g. after picking
   // an option), not when moving to another product from "You may also like".
-  const existingThumbs = detailWrap.dataset.productId === p.id ? document.querySelectorAll("#thumbs img") : [];
+  const images = display.images || [];
+  let activeImageIndex = detailWrap.dataset.productId === p.id ? Number(detailWrap.dataset.imageIndex) || 0 : 0;
+  if (activeImageIndex >= images.length) activeImageIndex = 0;
   detailWrap.dataset.productId = p.id;
-  if (existingThumbs.length) {
-    existingThumbs.forEach((t, i) => {
-      if (t.classList.contains("active")) activeImageIndex = i;
-    });
-  }
-  const main = display.images[activeImageIndex] || display.images[0];
+  detailWrap.dataset.imageIndex = activeImageIndex;
+  const fadeIn = `class="fade-in" onload="this.classList.add('loaded')" onerror="this.classList.add('loaded')"`;
+  // Square photos that swipe, with a "2 / 3" count and a row of square thumbnails below.
+  const galleryHTML = !hasRealPhoto(p)
+    ? `<div class="gallery">${photoPendingTile(p, "photo-pending-large")}</div>`
+    : `<div class="gallery">
+          <div class="gallery-main">
+            <div class="gallery-track" id="galleryTrack">
+              ${images
+                .map(
+                  (src, i) => `<div class="gallery-slide"><img src="${src}" alt="${p.name} ${i + 1}" ${
+                    i === activeImageIndex ? 'fetchpriority="high"' : 'loading="lazy"'
+                  } ${fadeIn} onclick="openImageLightbox(this.src)"></div>`
+                )
+                .join("")}
+            </div>
+            ${images.length > 1 ? `<span class="gallery-count" id="galleryCount">${activeImageIndex + 1} / ${images.length}</span>` : ""}
+          </div>
+          <div class="thumbs" id="thumbs">${images
+            .map(
+              (src, i) => `<button type="button" class="thumb${i === activeImageIndex ? " active" : ""}" data-index="${i}" aria-label="Photo ${i + 1}"><img loading="lazy" src="${cardImage(src)}" alt=""></button>`
+            )
+            .join("")}</div>
+        </div>`;
 
-  const openAccordions = Array.from(document.querySelectorAll("#detailWrap details[open] summary")).map((s) => s.textContent.trim());
+  // By data-section, not the summary text, which js/i18n.js may have translated.
+  const openAccordions = Array.from(document.querySelectorAll("#detailWrap details[open]")).map((d) => d.dataset.section);
 
   detailWrap.innerHTML = `
-        <div class="gallery">
-          <div class="gallery-main"><img id="mainImg" src="${main}" fetchpriority="high" alt="${
-    p.name
-  }" onclick="openImageLightbox(this.src)"></div>
-          <div class="thumbs" id="thumbs">
-             ${display.images
-              .map(
-                (src, i) =>
-                  `<img loading="lazy" src="${cardImage(src)}" alt="${p.name} ${i + 1}" class="${
-                    i === activeImageIndex ? "active" : ""
-                  }" data-src="${src}">`
-              )
-              .join("")}
-          </div>
-        </div>
+        ${galleryHTML}
         <div style="display:grid; gap:.8rem;">
           <div>
             <h2 style="margin-bottom:.2rem;">${p.name}${p.variants && display.label ? ` ${display.label}` : ""}</h2>
@@ -824,11 +836,18 @@ function renderDetail(id, variantId = null) {
                  </div>
                </div>` : (p.subtitle ? `<span class="product-subtitle-detail">${p.subtitle}</span>` : ''))}
             ${p.variants && !isGenericCustom ? `<span class="product-subtitle-detail">${display.subtitle}</span>` : ""}
-            <div class="product-price" style="font-size:1.1rem;">${money(
+            <div class="product-price detail-price" id="detailPrice">${money(
                finalPrice
             )}</div>
             ${customAttributesHTML}
             <p class="muted">${p.short}</p>
+            ${
+              p.benefits && p.benefits.length
+                ? `<ul class="benefit-list">${p.benefits
+                    .map((b) => `<li><i class="fa-solid fa-check" aria-hidden="true"></i><span>${b}</span></li>`)
+                    .join("")}</ul>`
+                : ""
+            }
             ${
               reviews.length
                 ? `<div class="muted" aria-label="Average rating"><span class="stars" title="Average: ${avg.toFixed(
@@ -887,18 +906,8 @@ function renderDetail(id, variantId = null) {
         </div>
         ${renderRelated(p)}
       `;
-  // thumbs interactivity
-  const thumbs = document.getElementById("thumbs");
-  const mainImg = document.getElementById("mainImg");
-  thumbs.querySelectorAll("img").forEach((img) => {
-    img.addEventListener("click", () => {
-      thumbs
-        .querySelectorAll("img")
-        .forEach((t) => t.classList.remove("active"));
-      img.classList.add("active");
-      mainImg.src = img.dataset.src;
-    });
-  });
+  setupGallery(images.length);
+  watchOrderBar();
   // How to use tabs functionality
   document.querySelectorAll('.how-to-use-tab').forEach(tab => {
     tab.addEventListener('click', () => {
@@ -919,10 +928,59 @@ function renderDetail(id, variantId = null) {
   });
 }
 
+// The active thumbnail and the "2 / 3" count follow the swiped photo; tapping a
+// thumbnail scrolls to that photo.
+function setupGallery(count) {
+  const track = document.getElementById("galleryTrack");
+  if (!track || count < 2) return;
+  const setActive = (index) => {
+    detailWrap.dataset.imageIndex = index;
+    document.querySelectorAll("#thumbs .thumb").forEach((b) => {
+      b.classList.toggle("active", Number(b.dataset.index) === index);
+    });
+    const counter = document.getElementById("galleryCount");
+    if (counter) counter.textContent = `${index + 1} / ${count}`;
+  };
+  const showSlide = (index, smooth = true) =>
+    track.scrollTo({ left: index * track.clientWidth, behavior: smooth ? "smooth" : "auto" });
+  const start = Number(detailWrap.dataset.imageIndex) || 0;
+  if (start) requestAnimationFrame(() => showSlide(start, false));
+  track.addEventListener(
+    "scroll",
+    () => {
+      const index = Math.round(track.scrollLeft / track.clientWidth);
+      if (index !== Number(detailWrap.dataset.imageIndex)) setActive(index);
+    },
+    { passive: true }
+  );
+  document.querySelectorAll("#thumbs .thumb").forEach((b) => {
+    b.addEventListener("click", () => showSlide(Number(b.dataset.index)));
+  });
+}
+
+// The slim "Order Now" bar (#orderBar) shows on a product page once its own buttons
+// have scrolled up out of view; updateFloatingCartButton() shows it in place of the
+// cart bar.
+var orderBarOn = false;
+var orderBarObserver = null;
+function watchOrderBar() {
+  if (orderBarObserver) orderBarObserver.disconnect();
+  orderBarOn = false;
+  const actions = document.querySelector("#detailWrap .detail-actions");
+  if (actions && "IntersectionObserver" in window) {
+    orderBarObserver = new IntersectionObserver(([entry]) => {
+      orderBarOn = !entry.isIntersecting && entry.boundingClientRect.top < 0;
+      updateFloatingCartButton();
+    });
+    orderBarObserver.observe(actions);
+  }
+  updateFloatingCartButton();
+}
+
 // "You may also like": the product's own `related` ids first (see products.js), then
 // other live products from the same category, then top sellers, up to 4 in total.
 function relatedProducts(p, limit = 4) {
-  const live = (x) => x && x.id !== p.id && isLiveProduct(x);
+  const live = (x) => x && x.id !== p.id && isLiveProduct(x) && hasRealPhoto(x);
   const picked = (p.related || []).map((id) => PRODUCTS.find((x) => x.id === id)).filter(live);
   const add = (list, more) => list.concat(more.filter((x) => live(x) && !list.includes(x)));
   let items = add(picked, PRODUCTS.filter((x) => x.category === p.category));
@@ -1032,9 +1090,19 @@ function addToCart(id, variantId = null, redirect = null, showToast = true, sele
   const label = cartLineLabel(p, resolvedVariantId, selections);
   if (typeof trackCartAction === "function") trackCartAction("add_to_cart", { product: label });
   trackEvent("add_to_cart", { product: label });
+  bumpCart();
   // Every add confirms itself and offers the next step, instead of a silent counter change.
   if (showToast) toast(`Added to cart: ${label}`, "success", { label: "Checkout", href: "/checkout" });
 }
+// A small bounce on the cart icons, so an add is felt as well as read.
+function bumpCart() {
+  document.querySelectorAll(".site-header .cart, .cart-bar-summary .icon, .order-bar-cart").forEach((el) => {
+    el.classList.remove("bump");
+    void el.offsetWidth; // restart the animation
+    el.classList.add("bump");
+  });
+}
+
 function removeFromCart(id, variantId = null) {
   const p = PRODUCTS.find((x) => x.id === id);
   if (typeof trackCartAction === "function") trackCartAction("remove_from_cart", { product: p ? cartLineLabel(p, variantId || null) : id });
@@ -1143,9 +1211,21 @@ function updateFloatingCartButton() {
   totalEl.textContent = money(total);
 
   const path = location.pathname;
-  const hide = count === 0 || path.startsWith("/cart") || path.startsWith("/checkout") || path.startsWith("/order");
+  const showOrderBar = path.startsWith("/product/") && orderBarOn;
+  const orderBar = document.getElementById("orderBar");
+  if (orderBar) {
+    orderBar.classList.toggle("hidden", !showOrderBar);
+    if (showOrderBar) {
+      document.getElementById("orderBarName").textContent = document.querySelector("#detailWrap h2")?.textContent || "";
+      document.getElementById("orderBarPrice").textContent = document.getElementById("detailPrice")?.textContent || "";
+      const cartBtn = document.getElementById("orderBarCart");
+      cartBtn.hidden = count === 0;
+      document.getElementById("orderBarCount").textContent = count;
+    }
+  }
+  const hide = showOrderBar || count === 0 || path.startsWith("/cart") || path.startsWith("/checkout") || path.startsWith("/order");
   bar.classList.toggle("hidden", hide);
-  document.body.classList.toggle("has-cart-bar", !hide);
+  document.body.classList.toggle("has-cart-bar", !hide || showOrderBar);
 }
 
 function updateQty(id, variantId, qty) {
@@ -1628,9 +1708,37 @@ function toast(msg, type = "info", action = null) {
        Init
        ============================== */
 document.getElementById("year").textContent = new Date().getFullYear();
+const trustLineText = document.getElementById("trustLineText");
+if (trustLineText) {
+  trustLineText.textContent = `💵 Cash on delivery · 🚚 Dhaka ${money(SHIPPING_RATES.inside_dhaka)} (${DELIVERY_TIME.inside_dhaka}) · Outside Dhaka ${money(SHIPPING_RATES.outside_dhaka)} (${DELIVERY_TIME.outside_dhaka})`;
+}
 const trustLine = document.getElementById("trustLine");
 if (trustLine) {
-  trustLine.textContent = `💵 Cash on delivery · 🚚 Dhaka ${money(SHIPPING_RATES.inside_dhaka)} (${DELIVERY_TIME.inside_dhaka}) · Outside Dhaka ${money(SHIPPING_RATES.outside_dhaka)} (${DELIVERY_TIME.outside_dhaka})`;
+  trustLine.innerHTML = [
+    ["💵", "Cash on delivery"],
+    ["🚚", `Dhaka ${money(SHIPPING_RATES.inside_dhaka)} · ${DELIVERY_TIME.inside_dhaka}`],
+    ["📦", `Outside Dhaka ${money(SHIPPING_RATES.outside_dhaka)} · ${DELIVERY_TIME.outside_dhaka}`],
+    ["🌿", "Handmade"],
+  ]
+    .map(([icon, text]) => `<li><span aria-hidden="true">${icon}</span><span>${text}</span></li>`)
+    .join("");
+}
+// Phones: the header sticks to the top (css/style.css); a shadow appears once the
+// page has scrolled under it.
+const siteHeader = document.querySelector(".site-header");
+if (siteHeader) {
+  // Off the live site the test banner is also pinned to the top: sit just below it.
+  const banner = document.querySelector(".test-mode-banner");
+  const placeHeader = () => {
+    siteHeader.style.setProperty("--header-top", banner ? `${banner.offsetHeight}px` : "0px");
+  };
+  const markStuck = () => siteHeader.classList.toggle("is-stuck", window.scrollY > 0 && siteHeader.getBoundingClientRect().top <= (banner ? banner.offsetHeight : 0));
+  placeHeader();
+  // The banner's height changes when the font loads or the screen turns.
+  if (banner && "ResizeObserver" in window) new ResizeObserver(placeHeader).observe(banner);
+  else window.addEventListener("resize", placeHeader);
+  window.addEventListener("scroll", markStuck, { passive: true });
+  markStuck();
 }
 updateCartCount();
 updateWishlistCount();
