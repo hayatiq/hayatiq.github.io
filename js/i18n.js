@@ -230,6 +230,20 @@ const BN = {
   "Copy order": "অর্ডার কপি",
   "Try again": "আবার চেষ্টা",
 
+  // Share, My orders
+  "Copy link": "লিংক কপি",
+  "Link copied": "লিংক কপি হয়েছে",
+  "My Orders": "আমার অর্ডার",
+  "My orders": "আমার অর্ডার",
+  "No orders on this phone yet.": "এই ফোন থেকে এখনো কোনো অর্ডার করা হয়নি।",
+  "Orders placed on this phone. For updates, message us with the order number.": "এই ফোন থেকে করা অর্ডার। অর্ডারের খবর জানতে অর্ডার নম্বরসহ আমাদের মেসেজ করুন।",
+  "Ask about this order": "এই অর্ডার নিয়ে জিজ্ঞেস করুন",
+  "Order again": "আবার অর্ডার করুন",
+  "Remove": "মুছে ফেলুন",
+  "Test": "টেস্ট",
+  "These products are no longer available.": "এই পণ্যগুলো আর পাওয়া যাচ্ছে না।",
+  "Long-press the invoice to save it.": "ইনভয়েস সেভ করতে ছবিতে চেপে ধরে রাখুন।",
+
   // Notices
   "Added to wishlist": "পছন্দের তালিকায় যোগ হয়েছে",
   "Removed from wishlist": "পছন্দের তালিকা থেকে সরানো হয়েছে",
@@ -272,6 +286,7 @@ const BN_PATTERNS = [
   [/^Dhaka (৳[\d,]+) · (.+)$/, (m, price, time) => `ঢাকা ${price} · ${bn(time) || time}`],
   [/^Outside Dhaka (৳[\d,]+) · (.+)$/, (m, price, time) => `ঢাকার বাইরে ${price} · ${bn(time) || time}`],
   [/^(\d+) \/ (\d+)$/, (m, a, b) => `${bnNum(a)} / ${bnNum(b)}`],
+  [/^You placed this same order (\d+) min ago \((.+)\)\. Place it again\?$/, (m, n, id) => `আপনি ${bnNum(n)} মিনিট আগে ঠিক এই অর্ডারটি করেছেন (${id})। আবার অর্ডার করবেন?`],
   [/^× (\d+)$/, (m, n) => `× ${bnNum(n)}`],
   [/^(\d+)(g|ml)(\+?)$/, (m, n, unit, plus) => `${bnNum(n)} ${unit === "g" ? "গ্রাম" : "মিলি"}${plus}`],
   [/^(\d+) (\w{3}) (\d{4}), (\d+):(\d+) (am|pm)$/, (m, d, mon, y, h, min, ap) => bnNum(`${d} ${BN_MONTHS[mon] || mon} ${y}, ${h}:${min}`) + (ap === "am" ? " AM" : " PM")],
@@ -400,6 +415,11 @@ function translateNode(root) {
     const translated = placeholder && bn(placeholder);
     if (translated) el.setAttribute("placeholder", translated);
   });
+}
+
+// For text shown outside the page (e.g. a confirm() box): translated in Bangla mode.
+function tr(text) {
+  return LANG === "bn" ? translateText(text) : text;
 }
 
 function setLanguage(lang) {

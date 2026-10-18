@@ -1,0 +1,5 @@
+# Netlify build settings. The site needs no build; this only adds link previews
+# for product pages (tools/product-pages.js; it never fails the deploy).
+[build]
+  publish = "."
+  command = "node tools/product-pages.js"

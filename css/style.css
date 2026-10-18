@@ -2625,7 +2625,7 @@ html[lang="bn"] body * {
   opacity: 0.55;
 }
 
-.order-steps {
+.home-steps {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 0.6rem;
@@ -2634,7 +2634,7 @@ html[lang="bn"] body * {
   list-style: none;
   counter-reset: step;
 }
-.order-steps li {
+.home-steps li {
   position: relative;
   display: flex;
   flex-direction: column;
@@ -2647,7 +2647,7 @@ html[lang="bn"] body * {
   font-size: 0.82rem;
   line-height: 1.4;
 }
-.order-steps li::before {
+.home-steps li::before {
   counter-increment: step;
   content: counter(step);
   position: absolute;
@@ -2657,14 +2657,14 @@ html[lang="bn"] body * {
   font-size: 1.5rem;
   font-weight: 700;
 }
-html[lang="bn"] .order-steps li::before {
+html[lang="bn"] .home-steps li::before {
   content: counter(step, bengali);
 }
-.order-steps li strong {
+.home-steps li strong {
   color: var(--color-seal-brown);
   font-size: 0.95rem;
 }
-.order-step-icon {
+.home-step-icon {
   display: grid;
   place-items: center;
   width: 36px;
@@ -2674,19 +2674,19 @@ html[lang="bn"] .order-steps li::before {
   background: var(--color-category-icon);
   color: var(--color-earth);
 }
-.order-steps-note {
+.home-steps-note {
   margin: 0.8rem 0 0;
   color: var(--color-text-light, #6d766f);
   font-size: 0.85rem;
   text-align: center;
 }
-.order-steps-note a {
+.home-steps-note a {
   color: var(--color-earth);
   font-weight: 600;
   text-decoration: underline;
 }
 @media (min-width: 800px) {
-  .order-steps {
+  .home-steps {
     grid-template-columns: repeat(4, minmax(0, 1fr));
   }
 }
@@ -2999,5 +2999,161 @@ img.fade-in.loaded {
   }
   header.site-header.is-stuck {
     box-shadow: 0 4px 16px rgba(16, 15, 15, 0.18);
+  }
+}
+
+/* ---------- Share a product (shareButtonHTML()/openShare() in script.js) ---------- */
+.gallery-share {
+  position: absolute;
+  top: 0.7rem;
+  right: 0.7rem;
+  z-index: 2;
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  border: 0;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.92);
+  color: var(--color-seal-brown);
+  box-shadow: 0 2px 10px rgba(16, 15, 15, 0.15);
+  cursor: pointer;
+}
+.gallery-share .icon {
+  width: 1.1rem;
+  height: 1.1rem;
+}
+.share-menu {
+  position: absolute;
+  top: 3.4rem;
+  right: 0.7rem;
+  z-index: 3;
+  display: grid;
+  min-width: 150px;
+  padding: 0.3rem;
+  border-radius: var(--radius-sm);
+  background: var(--color-white);
+  box-shadow: var(--shadow-card);
+}
+.share-menu button {
+  padding: 0.6rem 0.8rem;
+  border: 0;
+  border-radius: 6px;
+  background: none;
+  color: var(--color-seal-brown);
+  font: inherit;
+  font-size: 0.9rem;
+  font-weight: 600;
+  text-align: left;
+  cursor: pointer;
+}
+.share-menu button:hover {
+  background: var(--color-hover, #eaf5ef);
+}
+
+/* ---------- My orders (renderMyOrders() in script.js) ---------- */
+.my-orders-link[hidden] {
+  display: none !important;
+}
+.my-orders-note {
+  margin: 0 0 0.9rem;
+  font-size: 0.9rem;
+}
+.my-orders {
+  display: grid;
+  gap: 0.8rem;
+}
+@media (min-width: 800px) {
+  .my-orders {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    align-items: start;
+  }
+}
+.my-order {
+  display: grid;
+  gap: 0.6rem;
+  padding: 1rem;
+  border-radius: var(--radius);
+  background: var(--color-surface, #fff);
+  box-shadow: var(--shadow-soft);
+}
+.my-order-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.2rem 0.5rem;
+  color: var(--color-seal-brown);
+}
+.my-order-date {
+  margin-left: auto;
+  color: var(--color-text-light, #6d766f);
+  font-size: 0.8rem;
+}
+.my-order-test {
+  padding: 0.05rem 0.45rem;
+  border-radius: 999px;
+  background: #fff3cd;
+  color: #7a5b00;
+  font-size: 0.7rem;
+  font-weight: 700;
+}
+.my-order-items {
+  display: grid;
+  gap: 0.25rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font-size: 0.88rem;
+}
+.my-order-items li {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.8rem;
+}
+.my-order-items li span:last-child {
+  flex-shrink: 0;
+  color: var(--color-text-light, #6d766f);
+}
+.my-order-total {
+  display: flex;
+  justify-content: space-between;
+  padding-top: 0.5rem;
+  border-top: 1px dashed var(--color-border, #e6ded3);
+  color: var(--color-seal-brown);
+}
+.my-order-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+}
+.my-order-remove {
+  margin-left: auto;
+  padding: 0.4rem 0.2rem;
+  border: 0;
+  background: none;
+  color: var(--color-text-light, #6d766f);
+  font: inherit;
+  font-size: 0.82rem;
+  text-decoration: underline;
+  cursor: pointer;
+}
+.order-more-link {
+  margin: 0.4rem 0 0;
+  text-align: center;
+  font-size: 0.9rem;
+}
+.order-more-link a {
+  color: var(--color-earth);
+  font-weight: 600;
+  text-decoration: underline;
+}
+/* Narrow desktops: a little less space per menu link, so "My Orders" fits on one line. */
+@media (min-width: 800px) and (max-width: 899px) {
+  .nav-links {
+    gap: 0.2rem;
+  }
+  .nav-links a {
+    padding: 0.5rem 0.55rem;
   }
 }

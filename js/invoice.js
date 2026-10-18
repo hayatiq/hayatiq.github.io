@@ -78,6 +78,8 @@ function invoiceHtml(order) {
 
 /* ---- PDF ---- */
 
+const IN_APP_BROWSER = /FBAN|FBAV|FB_IAB|FBIOS|Instagram|MessengerForiOS|MessengerLite/i.test(navigator.userAgent);
+
 async function downloadInvoice(button) {
   let order = null;
   try {
@@ -87,6 +89,13 @@ async function downloadInvoice(button) {
   if (button) button.disabled = true;
   try {
     const canvas = await drawInvoice(order);
+    // Facebook/Instagram/Messenger in-app browsers can't save a downloaded file: show
+    // the invoice as a picture instead, which can be long-pressed and saved.
+    if (IN_APP_BROWSER) {
+      openImageLightbox(canvas.toDataURL("image/jpeg", 0.9));
+      toast("Long-press the invoice to save it.", "success");
+      return;
+    }
     const jpeg = await new Promise((resolve) => canvas.toBlob(resolve, "image/jpeg", 0.92));
     const pdf = imagePdf(new Uint8Array(await jpeg.arrayBuffer()), canvas.width, canvas.height, `Hayatiq invoice ${order.id}`);
     const link = document.createElement("a");

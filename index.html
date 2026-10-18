@@ -20,12 +20,17 @@
         <meta property="og:description" content="Premium handmade natural products for your everyday wellness rituals. Magnesium oil, hair care, salves & balms, bath bombs, and more.">
         <meta property="og:type" content="website">
         <meta property="og:url" content="https://hayatiq.netlify.app">
-        <meta property="og:image" content="./images/logo.webp">
+        <!-- Absolute address: link-preview crawlers don't resolve "./" paths. Product
+             pages get their own photo at deploy (tools/product-pages.js). -->
+        <meta property="og:image" content="https://hayatiq.netlify.app/images/og/hayatiq_magnesium_oil_30.jpg">
+        <meta property="og:image:width" content="1200">
+        <meta property="og:image:height" content="630">
 
         <!-- Twitter Card Meta Tags -->
         <meta name="twitter:card" content="summary_large_image">
         <meta name="twitter:title" content="Hayatiq - Natural Wellness Products">
         <meta name="twitter:description" content="Handcrafted natural products for mindful living">
+        <meta name="twitter:image" content="https://hayatiq.netlify.app/images/og/hayatiq_magnesium_oil_30.jpg">
 
         <!-- Additional SEO -->
         <meta name="robots" content="index, follow">
@@ -40,7 +45,7 @@
         <script type="application/ld+json" id="productJsonLd">{}</script>
         <link rel="preconnect" href="https://fonts.googleapis.com">
         <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-        <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600&family=Lora:wght@400;500;600&display=swap" rel="stylesheet">
+        <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600&display=swap" rel="stylesheet">
         <link rel="icon" type="image/webp" href="./images/logo-small.webp">
         <link rel="stylesheet" href="./css/style.css">
     </head>
@@ -80,6 +85,8 @@
                 <a href="/categories" data-link>Categories</a>
                 <a href="/about" data-link>About</a>
                 <a href="/contact" data-link>Contact</a>
+                <!-- Shown once this phone has placed an order (updateMyOrdersLinks()). -->
+                <a href="/orders" data-link class="my-orders-link" hidden>My Orders</a>
                 <a href="/wishlist" aria-label="Wishlist" class="wishlist-link desktop-cart">
                     <span class="wishlist-icon-wrap">
                     <i class="fa-solid fa-heart" aria-hidden="true"></i>
@@ -206,29 +213,29 @@
                     <div class="section-title">
                         <h2>How to Order</h2>
                     </div>
-                    <ol class="order-steps">
+                    <ol class="home-steps">
                         <li>
-                            <span class="order-step-icon" aria-hidden="true"><i class="fa-solid fa-bag-shopping"></i></span>
+                            <span class="home-step-icon" aria-hidden="true"><i class="fa-solid fa-bag-shopping"></i></span>
                             <strong>Choose</strong>
                             <span>Add to cart — no account needed.</span>
                         </li>
                         <li>
-                            <span class="order-step-icon" aria-hidden="true"><i class="fa-solid fa-pen"></i></span>
+                            <span class="home-step-icon" aria-hidden="true"><i class="fa-solid fa-pen"></i></span>
                             <strong>Order</strong>
                             <span>Just your name, phone and address.</span>
                         </li>
                         <li>
-                            <span class="order-step-icon" aria-hidden="true"><i class="fa-solid fa-truck"></i></span>
+                            <span class="home-step-icon" aria-hidden="true"><i class="fa-solid fa-truck"></i></span>
                             <strong>We deliver</strong>
                             <span>Inside or Outside Dhaka, by courier.</span>
                         </li>
                         <li>
-                            <span class="order-step-icon" aria-hidden="true"><i class="fa-solid fa-money-bill-wave"></i></span>
+                            <span class="home-step-icon" aria-hidden="true"><i class="fa-solid fa-money-bill-wave"></i></span>
                             <strong>Pay on delivery</strong>
                             <span>Check your order, then pay in cash.</span>
                         </li>
                     </ol>
-                    <p class="order-steps-note">Questions anytime? Message us on <a href="https://facebook.com/hayatiq.life" target="_blank" rel="noopener">Facebook</a> — we reply directly.</p>
+                    <p class="home-steps-note">Questions anytime? Message us on <a href="https://facebook.com/hayatiq.life" target="_blank" rel="noopener">Facebook</a> — we reply directly.</p>
                 </section>
                 <section aria-label="Frequently Asked Questions">
                     <div class="section-title">
@@ -507,6 +514,12 @@
             <section id="view-order" class="view" aria-label="Order confirmation">
                 <div id="orderWrap"></div>
             </section>
+            <section id="view-orders" class="view" aria-label="My Orders">
+                <div class="section-title">
+                    <h2>My Orders</h2>
+                </div>
+                <div id="ordersWrap"></div>
+            </section>
             <section id="view-notfound" class="view" aria-label="Page Not Found">
                 <div class="coming-soon-container">
                     <div style="font-size:3rem;">🧭</div>
@@ -532,6 +545,7 @@
                         <a href="/about">About</a>
                         <a href="/products">Products</a>
                         <a href="/categories">Categories</a>
+                        <a href="/orders" class="my-orders-link" hidden>My Orders</a>
                     </div>
                 </div>
                 <div class="footer-col">

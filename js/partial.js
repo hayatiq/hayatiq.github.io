@@ -229,6 +229,16 @@ document.getElementById("checkoutForm").addEventListener("submit", async functio
     return;
   }
 
+  // The same items from this phone a few minutes ago: most likely a double tap or a
+  // resubmit, so ask before sending it again.
+  const cartRows = getCart();
+  const twin = recentSameOrder(orderSignature(phone, cartRows));
+  if (twin) {
+    const minutes = Math.max(1, Math.round((now - Date.parse(twin.createdAt)) / 60000));
+    const ask = `You placed this same order ${minutes} min ago (${twin.id}). Place it again?`;
+    if (!confirm(typeof tr === "function" ? tr(ask) : ask)) return;
+  }
+
   isCheckoutSubmitting = true;
   submitBtn.disabled = true;
   submitBtn.classList.add("is-submitting");
@@ -289,6 +299,7 @@ document.getElementById("checkoutForm").addEventListener("submit", async functio
     }
     trackEvent("order_placed", { order: order.id, total: order.total });
     saveFormData();
+    saveMyOrder(order, cartRows, !delivered);
     if (delivered) {
       orders.push(now);
       localStorage.setItem(limitKey, JSON.stringify(orders));

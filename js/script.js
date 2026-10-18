@@ -37,6 +37,7 @@ const routes = {
   wishlist: document.getElementById("view-wishlist"),
   notfound: document.getElementById("view-notfound"),
   order: document.getElementById("view-order"),
+  orders: document.getElementById("view-orders"),
 };
 
 function setActiveNav(path) {
@@ -52,10 +53,9 @@ function setActiveNav(path) {
 // don't linger once you navigate away from it.
 const SITE_KEYWORDS = document.querySelector('meta[name="keywords"]')?.getAttribute("content") || "";
 // Open Graph/Twitter images need an absolute URL (relative ones aren't reliably
-// resolved by social crawlers) — index.html's tag ships a "./"-relative path since
-// it's also read by the browser itself (which resolves it fine via <base href="/">).
+// resolved by social crawlers); index.html's tag already is one.
 const SITE_IMAGE_RAW = document.querySelector('meta[property="og:image"]')?.getAttribute("content") || "";
-const SITE_IMAGE = SITE_IMAGE_RAW ? `${SITE_URL}${SITE_IMAGE_RAW.replace(/^\./, "")}` : "";
+const SITE_IMAGE = /^https?:/.test(SITE_IMAGE_RAW) ? SITE_IMAGE_RAW : SITE_IMAGE_RAW ? `${SITE_URL}${SITE_IMAGE_RAW.replace(/^\./, "")}` : "";
 const SITE_ROBOTS = document.querySelector('meta[name="robots"]')?.getAttribute("content") || "index, follow";
 
 // SEO: keep <title>, meta description/keywords, canonical, and Open Graph/Twitter
@@ -171,6 +171,11 @@ function navigate() {
     routes.order.classList.add("active");
     renderOrderPage();
     setPageMeta("Your Order — Hayatiq", "Your Hayatiq order confirmation.", { path: "/order", noindex: true });
+    resetProductJsonLd();
+  } else if (path === "/orders") {
+    routes.orders.classList.add("active");
+    renderMyOrders();
+    setPageMeta("My Orders — Hayatiq", "Orders placed on this phone.", { path: "/orders", noindex: true });
     resetProductJsonLd();
   } else if (path === "/wishlist") {
     routes.wishlist.classList.add("active");
@@ -800,9 +805,10 @@ function renderDetail(id, variantId = null) {
   const fadeIn = `class="fade-in" onload="this.classList.add('loaded')" onerror="this.classList.add('loaded')"`;
   // Square photos that swipe, with a "2 / 3" count and a row of square thumbnails below.
   const galleryHTML = !hasRealPhoto(p)
-    ? `<div class="gallery">${photoPendingTile(p, "photo-pending-large")}</div>`
+    ? `<div class="gallery"><div class="gallery-main">${photoPendingTile(p, "photo-pending-large")}${shareButtonHTML(p)}</div></div>`
     : `<div class="gallery">
           <div class="gallery-main">
+            ${shareButtonHTML(p)}
             <div class="gallery-track" id="galleryTrack">
               ${images
                 .map(
@@ -926,6 +932,49 @@ function renderDetail(id, variantId = null) {
       document.getElementById(target).classList.add('active');
     });
   });
+}
+
+/* ---------- Share a product ---------- */
+// A share icon on the product photo: the phone's own share sheet (WhatsApp,
+// Messenger, …) where the browser has one; otherwise, e.g. inside Facebook's in-app
+// browser, a small menu with WhatsApp / Facebook / Copy link.
+const SHARE_ICON = '<svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="M8.6 13.5l6.8 4M15.4 6.5l-6.8 4"/></svg>';
+
+// One round button on the corner of the product photo.
+function shareButtonHTML(p) {
+  return `<button type="button" class="gallery-share" aria-label="Share" onclick="openShare('${p.id}', this)">${SHARE_ICON}</button>`;
+}
+
+// Where there's no share sheet: a small menu under the button; any tap closes it.
+function openShare(id, button) {
+  if (typeof navigator.share === "function") return shareProduct(id, "native");
+  const open = button.parentElement.querySelector(".share-menu");
+  closeShareMenus();
+  if (open) return;
+  const item = (method, label) => `<button type="button" role="menuitem" onclick="shareProduct('${id}', '${method}')">${label}</button>`;
+  button.insertAdjacentHTML(
+    "afterend",
+    `<div class="share-menu" role="menu">${item("whatsapp", "WhatsApp")}${item("facebook", "Facebook")}${item("copy", "Copy link")}</div>`
+  );
+  setTimeout(() => document.addEventListener("click", closeShareMenus, { once: true }));
+}
+
+function closeShareMenus() {
+  document.querySelectorAll(".share-menu").forEach((menu) => menu.remove());
+}
+
+function shareProduct(id, method) {
+  const p = PRODUCTS.find((x) => x.id === id);
+  if (!p) return;
+  // The live address, except on a Netlify test copy (deploy preview), which shares its own.
+  const base = location.hostname.endsWith(".netlify.app") ? location.origin : SITE_URL;
+  const url = `${base}/product/${p.slug}`;
+  const text = `${p.name} — HAYATIQ`;
+  trackEvent("share", { product: p.name, method });
+  if (method === "native") navigator.share({ title: text, text, url }).catch(() => {});
+  else if (method === "whatsapp") window.open(`https://wa.me/?text=${encodeURIComponent(`${text}\n${url}`)}`, "_blank", "noopener");
+  else if (method === "facebook") window.open(`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(url)}`, "_blank", "noopener");
+  else copyText(url, "Link copied");
 }
 
 // The active thumbnail and the "2 / 3" count follow the swiped photo; tapping a
@@ -1501,6 +1550,7 @@ function updateCheckoutTotals() {
 
 function updateShipping() {
   updateCheckoutTotals();
+  saveFormData();
 }
 
 // Accepts numbers the way people type them: Bangla digits, +880 / 880 / 0088
@@ -1589,8 +1639,25 @@ function orderText(order) {
   ].filter(Boolean).join("\n");
 }
 
+// Falls back to the old copy command where the clipboard API is missing or blocked
+// (some in-app browsers); if that fails too, shows the text so it can be copied by hand.
 function copyText(text, done = "Copied") {
-  if (navigator.clipboard) navigator.clipboard.writeText(text).then(() => toast(done, "success")).catch(() => {});
+  const fallback = () => {
+    const box = document.createElement("textarea");
+    box.value = text;
+    box.setAttribute("readonly", "");
+    box.style.cssText = "position:fixed;top:0;left:0;opacity:0;";
+    document.body.appendChild(box);
+    box.select();
+    let copied = false;
+    try {
+      copied = document.execCommand("copy");
+    } catch (e) {}
+    box.remove();
+    copied ? toast(done, "success") : toast(text);
+  };
+  if (navigator.clipboard && window.isSecureContext) navigator.clipboard.writeText(text).then(() => toast(done, "success"), fallback);
+  else fallback();
 }
 
 function renderOrderPage() {
@@ -1652,7 +1719,137 @@ function renderOrderPage() {
         <a class="btn button-primary btn-sm" href="${messenger}" target="_blank" rel="noopener"><i class="fa-brands fa-facebook-messenger" aria-hidden="true"></i> Message us</a>
         <a class="btn button-ghost btn-sm" href="/products">Continue shopping</a>
       </div>
+      <p class="order-more-link"><a href="/orders">My orders</a></p>
       ${report}
+    </div>`;
+}
+
+/* ==============================
+       My orders (this phone only)
+       ============================== */
+// A record of orders placed from this browser, kept in localStorage only: the latest
+// MY_ORDERS_MAX, none older than MY_ORDERS_DAYS. It never shows the address or phone
+// (a shared phone shouldn't reveal them) and has no delivery status: the team has it.
+// `sig` (a hash of phone + cart) lets checkout spot the same order placed twice.
+const MY_ORDERS_KEY = "hayatiq_orders";
+const MY_ORDERS_MAX = 10;
+const MY_ORDERS_DAYS = 90;
+const SAME_ORDER_MINUTES = 30;
+
+function getMyOrders() {
+  let list = [];
+  try {
+    list = JSON.parse(localStorage.getItem(MY_ORDERS_KEY)) || [];
+  } catch (e) {}
+  const since = Date.now() - MY_ORDERS_DAYS * 86400000;
+  return list.filter((o) => o && o.id && Date.parse(o.createdAt) > since).slice(0, MY_ORDERS_MAX);
+}
+
+function setMyOrders(list) {
+  try {
+    localStorage.setItem(MY_ORDERS_KEY, JSON.stringify(list.slice(0, MY_ORDERS_MAX)));
+  } catch (e) {}
+  updateMyOrdersLinks();
+}
+
+// The menu and footer links show only once this phone has an order.
+function updateMyOrdersLinks() {
+  const any = getMyOrders().length > 0;
+  document.querySelectorAll(".my-orders-link").forEach((a) => (a.hidden = !any));
+}
+
+function orderSignature(phone, cart) {
+  const rows = cart.map((r) => `${r.id}:${r.variantId || ""}:${r.qty}`).sort().join(",");
+  let hash = 5381;
+  for (const ch of `${phone}|${rows}`) hash = ((hash * 33) ^ ch.charCodeAt(0)) >>> 0;
+  return hash.toString(36);
+}
+
+// The same items from the same phone within SAME_ORDER_MINUTES, if any.
+function recentSameOrder(sig) {
+  const since = Date.now() - SAME_ORDER_MINUTES * 60000;
+  return getMyOrders().find((o) => o.sig === sig && Date.parse(o.createdAt) > since) || null;
+}
+
+function saveMyOrder(order, cart, test) {
+  const entry = {
+    id: order.id,
+    createdAt: order.createdAt,
+    items: order.items.map(({ label, qty, lineTotal }) => ({ label, qty, lineTotal })),
+    total: order.total,
+    cart: cart.map(({ id, variantId, selections, qty }) => ({ id, variantId, selections, qty })),
+    sig: orderSignature(order.phone, cart),
+    ...(test ? { test: true } : {}),
+  };
+  setMyOrders([entry, ...getMyOrders().filter((o) => o.id !== order.id)]);
+}
+
+function removeMyOrder(id) {
+  setMyOrders(getMyOrders().filter((o) => o.id !== id));
+  renderMyOrders();
+}
+
+// Puts the same products back in the cart and opens checkout; nothing is sent until
+// the customer places the order there. Products no longer sold are skipped.
+function orderAgain(id) {
+  const order = getMyOrders().find((o) => o.id === id);
+  if (!order) return;
+  const cart = getCart();
+  let added = 0;
+  (order.cart || []).forEach((row) => {
+    const p = PRODUCTS.find((x) => x.id === row.id);
+    if (!p || !isLiveProduct(p)) return;
+    if (p.variants && !p.variants.some((v) => v.id === row.variantId)) return;
+    const key = cartRowVariantId(row, p);
+    const existing = cart.find((i) => i.id === row.id && cartRowVariantId(i, p) === key);
+    if (existing) existing.qty = Math.min(99, existing.qty + row.qty);
+    else cart.push({ ...row });
+    added += 1;
+  });
+  if (!added) {
+    toast("These products are no longer available.", "warning");
+    return;
+  }
+  setCart(cart);
+  bumpCart();
+  trackEvent("order_again", { order: id });
+  goTo("/checkout");
+}
+
+function renderMyOrders() {
+  const wrap = document.getElementById("ordersWrap");
+  if (!wrap) return;
+  const orders = getMyOrders();
+  if (!orders.length) {
+    wrap.innerHTML = `<div class="empty-state">
+        <p>No orders on this phone yet.</p>
+        <a class="btn button-primary btn-sm" href="/products">Shop products</a>
+      </div>`;
+    return;
+  }
+  const e = escapeHtml;
+  wrap.innerHTML = `
+    <p class="muted my-orders-note">Orders placed on this phone. For updates, message us with the order number.</p>
+    <div class="my-orders">
+      ${orders
+        .map(
+          (o) => `<article class="my-order">
+          <div class="my-order-head">
+            <strong>${e(o.id)}</strong>${o.test ? ' <span class="my-order-test">Test</span>' : ""}
+            <span class="my-order-date">${e(orderDate(o))}</span>
+          </div>
+          <ul class="my-order-items">
+            ${o.items.map((i) => `<li><span>${e(i.label)}</span><span>× ${i.qty}</span></li>`).join("")}
+          </ul>
+          <div class="my-order-total"><span>Total</span><strong>${money(o.total)}</strong></div>
+          <div class="my-order-actions">
+            <a class="btn button-primary btn-sm" href="${MESSENGER_URL}?ref=order-${encodeURIComponent(o.id)}" target="_blank" rel="noopener" onclick="copyText('${e(o.id)}', 'Order number copied')"><i class="fa-brands fa-facebook-messenger" aria-hidden="true"></i> Ask about this order</a>
+            <button type="button" class="btn button-ghost btn-sm" onclick="orderAgain('${e(o.id)}')">Order again</button>
+            <button type="button" class="my-order-remove" onclick="removeMyOrder('${e(o.id)}')">Remove</button>
+          </div>
+        </article>`
+        )
+        .join("")}
     </div>`;
 }
 
@@ -1662,7 +1859,8 @@ function saveFormData() {
   const formData = {
     name: document.getElementById('checkoutName').value,
     phone: document.getElementById('checkoutPhone').value,
-    address: document.getElementById('checkoutAddress').value
+    address: document.getElementById('checkoutAddress').value,
+    area: selectedArea() || ""
   };
   localStorage.setItem(USER_FORM_DATA, JSON.stringify(formData));
 }
@@ -1674,6 +1872,12 @@ function loadFormData() {
     document.getElementById('checkoutName').value = formData.name || '';
     document.getElementById('checkoutPhone').value = formData.phone || '';
     document.getElementById('checkoutAddress').value = formData.address || '';
+    // The area this phone chose last time (there is still no default for new buyers).
+    const area = formData.area && document.querySelector(`input[name="shipping_method"][value="${formData.area}"]`);
+    if (area && !selectedArea()) {
+      area.checked = true;
+      updateCheckoutTotals();
+    }
   }
 }
 
@@ -1742,6 +1946,7 @@ if (siteHeader) {
 }
 updateCartCount();
 updateWishlistCount();
+updateMyOrdersLinks();
 renderFeatured();
 renderCategoryAvailability();
 renderNeedTiles();

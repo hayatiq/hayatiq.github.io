@@ -1,2 +1,5 @@
 # Local secrets for tools/dev-server.js (see .env.example)
 .env
+
+# Made on Netlify at deploy by tools/product-pages.js
+preview/
