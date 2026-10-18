@@ -1,10 +1,9 @@
 /* ==============================
-       Bangla / English (local preview)
+       Bangla / English
        ============================== */
-// A বাংলা / EN switch in the header, for previewing the site in Bangla. It only
-// appears off the live address for now. In Bangla mode every piece of text on the
-// page is swapped for its translation, including text rendered later (the same way
-// js/icons.js swaps icons):
+// A বাংলা / EN switch in the header (on or off with SHOW_BANGLA in js/config.js).
+// In Bangla mode every piece of text on the page is swapped for its translation,
+// including text rendered later (the same way js/icons.js swaps icons):
 // - interface text: BN (exact text) and BN_PATTERNS (text with numbers or names in it)
 // - product names and content: each product's `bn` block in js/products.js
 // - text joined from those, like "Bar · 85g" or "Name (option)": bnLoose()
@@ -14,10 +13,9 @@
 // The choice is kept in localStorage; switching reloads the page.
 
 const LANG_KEY = "hayatiq_lang";
-const LANG_PREVIEW = !LIVE_HOSTS.includes(location.hostname);
 const LANG = (() => {
   try {
-    return LANG_PREVIEW && localStorage.getItem(LANG_KEY) === "bn" ? "bn" : "en";
+    return SHOW_BANGLA && localStorage.getItem(LANG_KEY) === "bn" ? "bn" : "en";
   } catch (e) {
     return "en";
   }
@@ -413,7 +411,7 @@ function setLanguage(lang) {
 
 // The switch sits in the header bar, first in .nav-right (before the wishlist and
 // cart icons on phones; css/style.css moves .nav-right to the far right on desktop).
-if (LANG_PREVIEW) {
+if (SHOW_BANGLA) {
   const navRight = document.querySelector(".nav-right");
   if (navRight) {
     navRight.insertAdjacentHTML(

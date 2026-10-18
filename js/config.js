@@ -121,6 +121,11 @@ const UMAMI_WEBSITE_ID = "64d1b719-e002-47ac-9b7f-a433917061d3";
 const HOME_HERO = "text";
 document.documentElement.dataset.hero = HOME_HERO;
 
+/* ---- Bangla ----
+   true shows the বাংলা / EN switch in the header (js/i18n.js); false hides it and
+   keeps the site in English. */
+const SHOW_BANGLA = true;
+
 /* ---- Delivery and support text shown to customers ---- */
 const DELIVERY_TIME = { inside_dhaka: "about 2 days", outside_dhaka: "3–5 days" };
 const DAMAGE_PROMISE = "If anything arrives damaged, message us on Facebook and we'll sort it out.";
