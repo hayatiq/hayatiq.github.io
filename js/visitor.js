@@ -20,6 +20,7 @@ const USER_BEHAVIOR_KEY = "user_behavior"; // localStorage: last 10 visits on th
 const VISIT_SESSION_KEY = "current_visit_data"; // sessionStorage: the visit in progress
 const VISIT_ACTIVE_KEY = "hayatiq_visit_active"; // sessionStorage: this tab already counted
 const LAST_ACTIVE_SESSION_KEY = "hayatiq_last_active_visit"; // localStorage: recent session state for refresh & quick re-entry
+const RELOAD_FLAG_KEY = "hayatiq_page_reloading"; // sessionStorage: flag to distinguish reload vs tab close
 
 let inactiveFlushTimer = null;
 
@@ -89,6 +90,9 @@ function updateSession(change) {
 // page, so the first page and product a visitor sees are never lost.
 (function startVisit() {
   if (isBot()) return;
+  try {
+    sessionStorage.removeItem(RELOAD_FLAG_KEY);
+  } catch (e) {}
   const now = Date.now();
   const recent = readJSON(localStorage, LAST_ACTIVE_SESSION_KEY, null);
   const isRecentVisit = recent && recent.sessionData && (now - recent.lastActiveTime < VISIT_INACTIVE_DELAY_MS);
@@ -243,6 +247,15 @@ function parseUserAgent(ua) {
   return `${os} (${browser})`;
 }
 
+function deviceTypeWord(ua) {
+  if (!ua) return "device";
+  if (/Android/i.test(ua) && !/Tablet/i.test(ua)) return "phone";
+  if (/iPhone/i.test(ua)) return "phone";
+  if (/iPad|Tablet/i.test(ua)) return "tablet";
+  if (/Windows|Macintosh|Linux/i.test(ua)) return "computer";
+  return "device";
+}
+
 function activeTime(sessionData) {
   return sessionData.pages.reduce((sum, p) => sum + (p.duration || 0), 0);
 }
@@ -345,9 +358,10 @@ function formatVisitSummaryMessage(sessionData, intent) {
   sections.push(intent.level);
   sections.push("==================================================\n");
 
+  const devWord = deviceTypeWord(navigator.userAgent);
   sections.push("⏱️ SESSION OVERVIEW");
   sections.push(`• Visit ID: ${sessionData.visitId}${sessionData.emailsSent ? ` (update ${sessionData.emailsSent + 1})` : ""}`);
-  sections.push(`• Time on site: ${formatDuration(activeTime(sessionData))} (Visit #${localStorage.getItem("visit_count") || "1"} on this phone)`);
+  sections.push(`• Time on site: ${formatDuration(activeTime(sessionData))} (Visit #${localStorage.getItem("visit_count") || "1"} on this ${devWord})`);
   sections.push(`• Started: ${new Date(sessionData.startTimestamp).toLocaleString("en-GB", { timeZone: "Asia/Dhaka" })} (Dhaka time)`);
   sections.push(`• Source: ${typeof sourceLabel === "function" ? sourceLabel(source) : source.referrer || "Direct"}`);
   sections.push(`• Landing page: ${source.landing || "/"}`);
@@ -514,6 +528,11 @@ function flushVisit() {
   }
   saveSession(s);
   saveSessionToHistory(s);
+  writeJSON(localStorage, LAST_ACTIVE_SESSION_KEY, {
+    visitId: s.visitId,
+    lastActiveTime: Date.now(),
+    sessionData: s,
+  });
   sendHeldBackVisits(s.visitId);
 }
 
@@ -585,9 +604,35 @@ document.addEventListener("visibilitychange", () => {
     resumeActiveSession();
   }
 });
+// Detect if user initiates a reload (F5, Ctrl+R, Cmd+R, or clicking language switch)
+window.addEventListener("keydown", (e) => {
+  if (e.key === "F5" || ((e.ctrlKey || e.metaKey) && (e.key === "r" || e.key === "R"))) {
+    try {
+      sessionStorage.setItem(RELOAD_FLAG_KEY, "1");
+    } catch (err) {}
+  }
+}, true);
+
+document.addEventListener("click", (e) => {
+  if (e.target && e.target.closest && e.target.closest(".lang-toggle")) {
+    try {
+      sessionStorage.setItem(RELOAD_FLAG_KEY, "1");
+    } catch (err) {}
+  }
+}, true);
+
 window.addEventListener("pagehide", () => {
   if (isBot()) return;
-  saveActiveSnapshot();
+  const isReloading = sessionStorage.getItem(RELOAD_FLAG_KEY) === "1";
+  if (isReloading) {
+    saveActiveSnapshot();
+  } else {
+    if (inactiveFlushTimer) {
+      clearTimeout(inactiveFlushTimer);
+      inactiveFlushTimer = null;
+    }
+    flushVisit();
+  }
 });
 setTimeout(() => {
   if (!isBot()) sendHeldBackVisits(getVisitSession().visitId);
