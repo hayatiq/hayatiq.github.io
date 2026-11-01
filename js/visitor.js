@@ -10,7 +10,8 @@
 // Each device sends at most VISIT_EMAIL_LIMIT.max summaries per window; a summary held
 // back by that limit is sent later (on the next tab switch, or the next time the site
 // is opened on that device, within VISIT_EMAIL_LATE_MAX_AGE_MS).
-const MIN_VISIT_EMAIL_DURATION_MS = 5000; // ignore visits with under 5 s of time on the page
+const MIN_VISIT_EMAIL_DURATION_MS = 1000; // Count visits from 1 s of time on the page
+const VISIT_INACTIVE_DELAY_MS = 60 * 1000; // 1-minute grace window before sending a summary email
 const VISIT_EMAIL_LIMIT = { max: 2, windowMs: 10 * 60 * 1000 }; // 2 emails per 10 minutes
 const VISIT_EMAIL_LATE_MAX_AGE_MS = 24 * 60 * 60 * 1000; // drop held-back summaries after a day
 const VISIT_EMAIL_LOG_KEY = "hayatiq_visit_email_log"; // localStorage: when this device sent summaries
@@ -18,6 +19,22 @@ const VISIT_EMAIL_LOG_KEY = "hayatiq_visit_email_log"; // localStorage: when thi
 const USER_BEHAVIOR_KEY = "user_behavior"; // localStorage: last 10 visits on this phone
 const VISIT_SESSION_KEY = "current_visit_data"; // sessionStorage: the visit in progress
 const VISIT_ACTIVE_KEY = "hayatiq_visit_active"; // sessionStorage: this tab already counted
+const LAST_ACTIVE_SESSION_KEY = "hayatiq_last_active_visit"; // localStorage: recent session state for refresh & quick re-entry
+
+let inactiveFlushTimer = null;
+
+// Detect automated bots, link scrapers (e.g., Facebook / Meta crawler) and headless browsers
+function isBot() {
+  if (typeof navigator !== "undefined" && navigator.webdriver) return true;
+  if (typeof window !== "undefined" && window.screen) {
+    if (window.screen.width === 2000 && window.screen.height === 2000) return true;
+    if (window.screen.width === 0 || window.screen.height === 0) return true;
+  }
+  const ua = typeof navigator !== "undefined" ? (navigator.userAgent || "") : "";
+  const botRegex = /\b(bot|crawler|spider|slurp|facebookexternalhit|facebot|meta-externalagent|headlesschrome|googlebot|bingbot)\b/i;
+  if (botRegex.test(ua)) return true;
+  return false;
+}
 
 function readJSON(storage, key, fallback) {
   try {
@@ -71,7 +88,22 @@ function updateSession(change) {
 // Start (or continue) the visit right away, before the router records the landing
 // page, so the first page and product a visitor sees are never lost.
 (function startVisit() {
-  if (!sessionStorage.getItem(VISIT_ACTIVE_KEY)) {
+  if (isBot()) return;
+  const now = Date.now();
+  const recent = readJSON(localStorage, LAST_ACTIVE_SESSION_KEY, null);
+  const isRecentVisit = recent && recent.sessionData && (now - recent.lastActiveTime < VISIT_INACTIVE_DELAY_MS);
+
+  if (isRecentVisit) {
+    // Reconnect to the session active within the last 1 minute (page refresh or quick return)
+    const s = recent.sessionData;
+    s.currentPage = null;
+    s.pageStartTime = now;
+    s.pendingEmail = false;
+    saveSession(s);
+    try {
+      sessionStorage.setItem(VISIT_ACTIVE_KEY, "1");
+    } catch (e) {}
+  } else if (!sessionStorage.getItem(VISIT_ACTIVE_KEY)) {
     try {
       sessionStorage.setItem(VISIT_ACTIVE_KEY, "1");
     } catch (e) {}
@@ -82,7 +114,7 @@ function updateSession(change) {
     // Same tab after a refresh: keep the visit, restart the clock for this page.
     updateSession((s) => {
       s.currentPage = null;
-      s.pageStartTime = Date.now();
+      s.pageStartTime = now;
     });
   }
 })();
@@ -171,6 +203,7 @@ function getBehavior() {
 }
 
 function saveSessionToHistory(sessionData) {
+  if (isBot()) return;
   const behavior = getBehavior();
   behavior.visitHistory = (behavior.visitHistory || []).filter((v) => v.visitId !== sessionData.visitId);
   behavior.visitHistory.unshift(sessionData);
@@ -387,6 +420,7 @@ function captureOpenForms() {
 }
 
 function visitEmailsAllowed() {
+  if (isBot()) return false;
   return !NO_TRACK && sendsOn("visitSummaryEmails") && recipients("visitSummaryEmails").length > 0;
 }
 
@@ -411,15 +445,34 @@ function sendVisitSummary(s, late = false) {
   s.pendingEmail = false;
 }
 
-// Sends summaries of earlier visits on this device that the limit held back.
+// Sends summaries of earlier visits on this device that the limit held back or that closed before flush.
 function sendHeldBackVisits(currentVisitId) {
-  if (!visitEmailsAllowed()) return;
+  if (isBot() || !visitEmailsAllowed()) return;
+  const now = Date.now();
+
+  // Send any abandoned session left in LAST_ACTIVE_SESSION_KEY that ended > 1 minute ago
+  const recent = readJSON(localStorage, LAST_ACTIVE_SESSION_KEY, null);
+  if (recent && recent.sessionData && recent.sessionData.visitId !== currentVisitId) {
+    if (now - recent.lastActiveTime >= VISIT_INACTIVE_DELAY_MS) {
+      const s = recent.sessionData;
+      const signature = visitSignature(s);
+      if (activeTime(s) >= MIN_VISIT_EMAIL_DURATION_MS && signature !== s.lastSentSignature) {
+        if (visitEmailRoom() > 0) {
+          sendVisitSummary(s, true);
+        }
+      }
+      try {
+        localStorage.removeItem(LAST_ACTIVE_SESSION_KEY);
+      } catch (e) {}
+    }
+  }
+
   const behavior = getBehavior();
   const history = behavior.visitHistory || [];
   let changed = false;
   history.forEach((v) => {
     if (!v.pendingEmail || v.visitId === currentVisitId) return;
-    if (Date.now() - v.startTimestamp > VISIT_EMAIL_LATE_MAX_AGE_MS) {
+    if (now - v.startTimestamp > VISIT_EMAIL_LATE_MAX_AGE_MS) {
       v.pendingEmail = false; // too old to be useful
     } else if (visitEmailRoom() > 0) {
       sendVisitSummary(v, true);
@@ -432,6 +485,7 @@ function sendHeldBackVisits(currentVisitId) {
 // Runs when the visitor switches away or leaves. Sends at most one email per change,
 // within the per-device limit.
 function flushVisit() {
+  if (isBot()) return;
   captureOpenForms();
   const s = getVisitSession();
   closePageSegment(s);
@@ -463,6 +517,49 @@ function flushVisit() {
   sendHeldBackVisits(s.visitId);
 }
 
+function saveActiveSnapshot() {
+  if (isBot()) return null;
+  captureOpenForms();
+  const s = getVisitSession();
+  closePageSegment(s);
+  s.cartNow = cartSnapshot();
+  saveSession(s);
+  writeJSON(localStorage, LAST_ACTIVE_SESSION_KEY, {
+    visitId: s.visitId,
+    lastActiveTime: Date.now(),
+    sessionData: s,
+  });
+  return s;
+}
+
+// Delays email sending by 1 minute when a visitor switches away or goes inactive.
+// If they return within 1 minute, the timer is cleared and the session continues seamlessly.
+function scheduleInactiveFlush() {
+  if (isBot()) return;
+  saveActiveSnapshot();
+
+  if (inactiveFlushTimer) {
+    clearTimeout(inactiveFlushTimer);
+    inactiveFlushTimer = null;
+  }
+
+  inactiveFlushTimer = setTimeout(() => {
+    inactiveFlushTimer = null;
+    flushVisit();
+  }, VISIT_INACTIVE_DELAY_MS);
+}
+
+// Resumes the active session and cancels the 1-minute delay timer upon user return.
+function resumeActiveSession() {
+  if (inactiveFlushTimer) {
+    clearTimeout(inactiveFlushTimer);
+    inactiveFlushTimer = null;
+  }
+  updateSession((s) => {
+    s.pageStartTime = Date.now();
+  });
+}
+
 function sendVisitEmail(sessionData, to, late = false) {
   const intent = getVisitorIntent(sessionData);
   const source = typeof sourceLabel === "function" ? sourceLabel(sessionData.source || {}) : "";
@@ -481,17 +578,20 @@ function sendVisitEmail(sessionData, to, late = false) {
 }
 
 document.addEventListener("visibilitychange", () => {
+  if (isBot()) return;
   if (document.hidden) {
-    flushVisit();
+    scheduleInactiveFlush();
   } else {
-    // Back from another app: same visit, the clock restarts for the current page.
-    updateSession((s) => {
-      s.pageStartTime = Date.now();
-    });
+    resumeActiveSession();
   }
 });
-window.addEventListener("pagehide", flushVisit);
-setTimeout(() => sendHeldBackVisits(getVisitSession().visitId), 5000);
+window.addEventListener("pagehide", () => {
+  if (isBot()) return;
+  saveActiveSnapshot();
+});
+setTimeout(() => {
+  if (!isBot()) sendHeldBackVisits(getVisitSession().visitId);
+}, 5000);
 
 // Page views come from navigate() in script.js on every route change (link click,
 // back/forward or first load). Product pages are named after the product.
