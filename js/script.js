@@ -112,6 +112,15 @@ function setBreadcrumbJsonLd(items) {
 // answers these addresses with a 404 status (_redirects); `noindex` is a second guard.
 function renderNotFound(path) {
   routes.notfound.classList.add("active");
+  // Best sellers with a real photo, topped up with other live products, up to 4.
+  const picks = [...topProducts(), ...PRODUCTS]
+    .filter((p, i, all) => all.indexOf(p) === i && isLiveProduct(p) && hasRealPhoto(p))
+    .slice(0, 4);
+  const grid = document.getElementById("notFoundProducts");
+  if (grid) {
+    grid.innerHTML = picks.map((p) => productCard(p)).join("");
+    document.getElementById("notFoundPicks").hidden = !picks.length;
+  }
   setPageMeta(
     "Page Not Found — Hayatiq",
     "The page you're looking for doesn't exist or may have moved.",
