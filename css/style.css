@@ -481,7 +481,8 @@ html[data-hero="photo"] [data-hero="text"] {
   padding: 0.6rem 1rem 0.2rem;
   text-align: center;
 }
-.hero-simple h1 {
+.hero-simple h1,
+.hero-simple h2 {
   margin-bottom: 0.25rem;
   font-size: 1.55rem;
   line-height: 1.15;
@@ -491,7 +492,8 @@ html[data-hero="photo"] [data-hero="text"] {
   font-size: 0.95rem;
 }
 @media (min-width: 700px) {
-  .hero-simple h1 {
+  .hero-simple h1,
+  .hero-simple h2 {
     font-size: 2.2rem;
   }
 }
@@ -538,7 +540,8 @@ html[data-hero="photo"] [data-hero="text"] {
   z-index: 1;
   padding: 1.4rem 1.2rem;
 }
-.hero h1 {
+.hero h1,
+.hero h2 {
   margin-bottom: 0.4rem;
   color: var(--color-white);
   font-size: 1.9rem;
@@ -579,7 +582,8 @@ html[data-hero="photo"] [data-hero="text"] {
   .hero-content {
     padding: 2.5rem 3rem;
   }
-  .hero h1 {
+  .hero h1,
+  .hero h2 {
     color: var(--color-seal-brown);
     font-size: 2.6rem;
   }
@@ -770,6 +774,7 @@ section {
   gap: 0.5rem 0.8rem;
   margin-bottom: 0.8rem;
 }
+.section-title h1,
 .section-title h2 {
   font-size: 1.6rem;
 }
@@ -1918,6 +1923,7 @@ footer {
 
 /* Responsive */
 @media (min-width: 700px) {
+  .section-title h1,
   .section-title h2 {
     font-size: 1.8rem;
   }
@@ -3226,4 +3232,24 @@ img.fade-in.loaded {
   .nav-links a {
     padding: 0.5rem 0.55rem;
   }
+}
+
+/* Product page: the product name is the page's main heading (h1), sized like the
+   h2 it replaced; a small Home › Category trail sits above it. */
+.detail-title {
+  font-size: 1.5em;
+}
+.breadcrumb {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  align-items: center;
+  margin-bottom: 0.35rem;
+  font-size: 0.85rem;
+  color: var(--color-text-light, #6d766f);
+}
+.breadcrumb a {
+  color: inherit;
+  text-decoration: underline;
+  text-underline-offset: 2px;
 }

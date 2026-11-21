@@ -97,13 +97,19 @@ function setPageMeta(title, description, opts = {}) {
 function resetProductJsonLd() {
   const script = document.getElementById("productJsonLd");
   if (script) script.textContent = "{}";
+  setBreadcrumbJsonLd(null);
+}
+
+// Home › Category › Product for search results (BreadcrumbList in js/seo.js); null clears it.
+function setBreadcrumbJsonLd(items) {
+  const script = document.getElementById("breadcrumbJsonLd");
+  if (script) script.textContent = items ? jsonForScript(breadcrumbJsonLd(items, SITE_URL)) : "{}";
 }
 
 // Shown for any path that isn't a known route or resolves to no real product (e.g. a
 // stale/mistyped Messenger ref link or product URL) — keeps a wrong URL from either
-// silently rendering the wrong product or looking identical to the homepage. `noindex`
-// keeps it out of search results even though the server still returns 200 for it (see
-// _redirects — Netlify has no server-side routing to return a real 404 status from).
+// silently rendering the wrong product or looking identical to the homepage. Netlify
+// answers these addresses with a 404 status (_redirects); `noindex` is a second guard.
 function renderNotFound(path) {
   routes.notfound.classList.add("active");
   setPageMeta(
@@ -130,17 +136,36 @@ function navigate() {
           trackEvent("product_view", { product: product.name });
           renderDetail(product.id);
         }
+  } else if (path.startsWith("/category/")) {
+    // A category's own page: /category/hair-care (js/seo.js has the slugs).
+    const cat = categoryFromSlug(decodeURIComponent(path.slice("/category/".length)));
+    if (!cat) {
+      renderNotFound(path);
+    } else {
+      routes.products.classList.add("active");
+      setupProductFilters(cat, null);
+      const names = PRODUCTS.filter((p) => p.category === cat && isLiveProduct(p)).map((p) => p.name);
+      setPageMeta(
+        `${cat} in Bangladesh — HAYATIQ`,
+        names.length
+          ? `Shop HAYATIQ ${cat.toLowerCase()}: ${[...new Set(names)].join(", ")}. Handmade in Bangladesh, cash on delivery.`
+          : `HAYATIQ ${cat.toLowerCase()} is coming soon. Handmade in Bangladesh, cash on delivery.`,
+        { path: categoryPath(cat) }
+      );
+      resetProductJsonLd();
+      setBreadcrumbJsonLd([{ name: "Home", path: "/" }, { name: cat, path: categoryPath(cat) }]);
+    }
+  } else if (path.startsWith("/products") && categoryFromSlug(categorySlug(new URLSearchParams(search).get("cat") || ""))) {
+    // Old /products?cat=Hair%20Care links (Messenger posts, bookmarks) move to the category's own page.
+    history.replaceState(null, "", categoryPath(new URLSearchParams(search).get("cat")));
+    return navigate();
   } else if (path.startsWith("/products")) {
     routes.products.classList.add("active");
-    const params = new URLSearchParams(search);
-    const cat = params.get("cat");
-    const concern = params.get("concern");
-    renderProducts(cat, concern);
-    setupProductFilters();
-    const topic = concern || cat;
+    const concern = new URLSearchParams(search).get("concern");
+    setupProductFilters(null, concern);
     setPageMeta(
-      `${topic ? topic + " " : ""}Products — Hayatiq`,
-      `Shop ${topic ? topic.toLowerCase() + " " : ""}products from Hayatiq — handcrafted natural wellness essentials.`,
+      `${concern ? concern + " " : ""}Products — Hayatiq`,
+      `Shop ${concern ? concern.toLowerCase() + " " : ""}products from Hayatiq — handcrafted natural wellness essentials.`,
       { path: "/products" + search }
     );
     resetProductJsonLd();
@@ -352,6 +377,13 @@ function hasRealPhoto(p) {
   return Boolean(images[0]) && !images[0].includes("placeholder");
 }
 
+// "HAYATIQ Magnesium Oil Spray, 30% Concentration · 100ml": the size or strength tells
+// image search (and screen readers) which of several similar products this is.
+function photoAlt(p, display = p) {
+  const detail = display.label || display.subtitle || p.subtitle || "";
+  return `HAYATIQ ${p.name}${detail ? `, ${detail}` : ""}`.replace(/"/g, "&quot;");
+}
+
 function photoPendingTile(p, extraClass = "") {
   return `<div class="photo-pending ${extraClass}"><span class="brand-logo" aria-hidden="true"></span><span>${p.name}</span></div>`;
 }
@@ -386,7 +418,7 @@ function productCard(p, opts = {}) {
         <a href="/product/${p.slug}">
           <div class="product-media">
             ${hasRealPhoto(p)
-              ? `<img ${opts.eager ? 'fetchpriority="high"' : 'loading="lazy"'} src="${cardImage(display.images[0])}" alt="${p.name}" class="fade-in" onload="this.classList.add('loaded')" onerror="this.classList.add('loaded')">`
+              ? `<img ${opts.eager ? 'fetchpriority="high"' : 'loading="lazy"'} src="${cardImage(display.images[0])}" alt="${photoAlt(p, display)}" class="fade-in" onload="this.classList.add('loaded')" onerror="this.classList.add('loaded')">`
               : photoPendingTile(p)}
             ${isComingSoon ? `<div class="coming-soon-overlay">
               <span>Coming Soon</span>
@@ -454,7 +486,7 @@ function needTileLiveCount(tile) {
 }
 function needTileHref(tile) {
   return tile.category
-    ? `/products?cat=${encodeURIComponent(tile.category)}`
+    ? categoryPath(tile.category)
     : `/products?concern=${encodeURIComponent(tile.concern)}`;
 }
 
@@ -519,20 +551,19 @@ function renderProducts(category, concern) {
 
 // Category chips above the product grid; each is a normal link, so the router
 // handles it. A ?concern= filter (from the "Shop by need" chips) gets its own chip.
-const FILTER_CATEGORIES = ["Hair Care", "Magnesium Oil Spray", "Oral Care", "Cleaning Supply", "Bath Bombs", "Footsoaks", "Salves & Balms"];
+const FILTER_CATEGORIES = CATEGORIES; // js/seo.js
 
-function setupProductFilters() {
+function setupProductFilters(category, concern) {
   const chips = document.getElementById("categoryChips");
-  const params = new URLSearchParams(location.search);
-  const category = params.get("cat");
-  const concern = params.get("concern");
+  const heading = document.getElementById("productsHeading");
+  if (heading) heading.textContent = category || concern || "Products";
   if (chips) {
     const chip = (label, href, active) =>
       `<a href="${href}" class="filter-chip${active ? " active" : ""}"${active ? ' aria-current="true"' : ""}>${label}</a>`;
     chips.innerHTML = [
       chip("All", "/products", !category && !concern),
       concern ? chip(concern, `/products?concern=${encodeURIComponent(concern)}`, true) : "",
-      ...FILTER_CATEGORIES.map((c) => chip(c, `/products?cat=${encodeURIComponent(c)}`, c === category)),
+      ...FILTER_CATEGORIES.map((c) => chip(c, categoryPath(c), c === category)),
     ].join("");
     chips.querySelector(".active")?.scrollIntoView({ block: "nearest", inline: "center" });
   }
@@ -755,8 +786,8 @@ function renderDetail(id, variantId = null) {
   }
 
   setPageMeta(
-    p.seoTitle || `${p.name} — Hayatiq`,
-    p.short || `${p.name} — handcrafted natural wellness from Hayatiq.`,
+    productTitle(p, PRODUCTS),
+    stripHtml(p.metaDescription || p.short) || `${p.name} — handcrafted natural wellness from Hayatiq.`,
     {
       path: `/product/${p.slug}`,
       keywords: p.metaKeywords,
@@ -764,38 +795,19 @@ function renderDetail(id, variantId = null) {
     }
   );
   const jsonLdScript = document.getElementById("productJsonLd");
-  if (jsonLdScript) {
-    jsonLdScript.textContent = JSON.stringify({
-      "@context": "https://schema.org/",
-      "@type": "Product",
-      name: p.name,
-       image: display.images,
-      description: p.short,
-       sku: selectedId ? `${p.id}-${selectedId}` : p.id,
-      offers: {
-        "@type": "Offer",
-        priceCurrency: "BDT",
-        ...(typeof display.price === "number" ? { price: display.price } : {}),
-        availability: isComingSoon ? "https://schema.org/PreOrder" : "https://schema.org/InStock",
-      },
-      ...(reviews.length
-        ? {
-            aggregateRating: {
-              "@type": "AggregateRating",
-              ratingValue: avg.toFixed(1),
-              reviewCount: reviews.length,
-            },
-          }
-        : {}),
-    });
-  }
+  if (jsonLdScript) jsonLdScript.textContent = jsonForScript(productJsonLd(p, SITE_URL, selectedId));
+  setBreadcrumbJsonLd([
+    { name: "Home", path: "/" },
+    { name: p.category, path: categoryPath(p.category) },
+    { name: p.name, path: `/product/${p.slug}` },
+  ]);
 
   if (isComingSoon) {
     const [main] = display.images || ["./images/placeholder.webp"];
     detailWrap.innerHTML = `
       <div class="coming-soon-container">
         ${main ? `<img src="${main}" alt="${p.name}" class="coming-soon-image" loading="lazy">` : ''}
-        <h2>${p.name}</h2>
+        <h1 class="detail-title">${p.name}</h1>
         <div style="font-size:1.2rem; color:var(--color-earth); margin:1rem 0; font-weight:600;">Coming Soon</div>
         <p class="muted">This product will be available shortly. Check back soon!</p>
         <a class="btn button-primary" href="/products" style="margin-top:1.5rem;">Back to Products</a>
@@ -820,7 +832,7 @@ function renderDetail(id, variantId = null) {
             <div class="gallery-track" id="galleryTrack">
               ${images
                 .map(
-                  (src, i) => `<div class="gallery-slide"><img src="${pagePhoto(src)}" alt="${p.name} ${i + 1}" ${
+                  (src, i) => `<div class="gallery-slide"><img src="${pagePhoto(src)}" alt="${photoAlt(p, display)}${images.length > 1 ? `, photo ${i + 1} of ${images.length}` : ""}" ${
                     i === activeImageIndex ? 'fetchpriority="high"' : 'loading="lazy"'
                   } class="fade-in" onload="this.classList.add('loaded')" onerror="${
                     pagePhoto(src) === src ? "" : `if (!this.dataset.full) { this.dataset.full = 1; this.src = '${src}'; return; } `
@@ -844,7 +856,8 @@ function renderDetail(id, variantId = null) {
         ${galleryHTML}
         <div style="display:grid; gap:.8rem;">
           <div>
-            <h2 style="margin-bottom:.2rem;">${p.name}${p.variants && display.label ? ` ${display.label}` : ""}</h2>
+            <nav class="breadcrumb" aria-label="Breadcrumb"><a href="/">Home</a><span aria-hidden="true">›</span><a href="${categoryPath(p.category)}">${p.category}</a></nav>
+            <h1 class="detail-title" style="margin-bottom:.2rem;">${p.name}${p.variants && display.label ? ` ${display.label}` : ""}</h1>
             ${isGenericCustom ? `<span class="product-subtitle-detail">${finalSubtitle}</span>` : (p.variants ? `<div class="variant-picker" role="group" aria-label="Choose ${p.name} option">
                  <span>Choose an option</span>
                  <div class="variant-badges">

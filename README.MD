@@ -261,8 +261,12 @@ Copy an existing product of the same kind and change it, or start from this exam
 * **"You may also like"** (`related`, optional): a list of product ids shown first on this
   product's page, e.g. `related: ["11", "14"]`. Same-category products and best sellers fill the
   rest (up to 4), so `related: []` still shows suggestions.
-* **Search results** (`seoTitle`, `metaKeywords`, optional): replace the page title and keywords
-  Google sees for this product. The description Google sees is always `short`.
+* **Search results** (`seoTitle`, `metaDescription`, `metaKeywords`, optional): replace the page
+  title, the description under it, and the keywords Google sees for this product. Without them the
+  title is the product name and the description is `short`. Keep the title under about 60 characters
+  and the description under about 155, and only state facts (no health claims). After any product
+  change, run `node tools/check-seo.js` (it checks titles are unique, the facts cards are valid, and
+  every product and category page is complete).
 * **Display order** (`display_order`, optional number): controls the order products
   appear in **everywhere** a product list renders — Best Sellers, Shop Our Products, the
   full Products page, and every category/need filter of it. Lower numbers show first (`1`

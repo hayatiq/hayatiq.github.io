@@ -1,0 +1,99 @@
+#!/usr/bin/env node
+/* Self-check for what search engines and AI tools read. Run before deploying:
+
+     node tools/check-seo.js
+
+   It builds the product and category pages into a temp folder with
+   tools/product-pages.js --out (writes nothing into the repo) and checks each one:
+   one <h1> with the right name, valid Product/Breadcrumb/site JSON-LD with absolute
+   photo URLs and the price, the product text in the page, unique titles, descriptions
+   that fit search results, the sitemap, and that _redirects serves every route
+   js/script.js knows and answers 404 for the rest. Exits 1 on any problem.
+*/
+const assert = require("assert");
+const { execFileSync } = require("child_process");
+const fs = require("fs");
+const os = require("os");
+const path = require("path");
+const vm = require("vm");
+
+const ROOT = path.resolve(__dirname, "..");
+const out = fs.mkdtempSync(path.join(os.tmpdir(), "hayatiq-seo-"));
+execFileSync(process.execPath, [path.join(__dirname, "product-pages.js"), "--out", out], { stdio: "pipe" });
+
+const read = (file) => fs.readFileSync(path.join(ROOT, file), "utf8");
+const shop = {};
+vm.runInNewContext(`${read("js/seo.js")}\n${read("js/products.js")}\nthis.s = { PRODUCTS, CATEGORIES, categorySlug };`, shop);
+const { PRODUCTS, CATEGORIES, categorySlug } = shop.s;
+
+const problems = [];
+const check = (ok, msg) => ok || problems.push(msg);
+const jsonLd = (html, id) => {
+  const m = html.match(new RegExp(`<script type="application/ld\\+json" id="${id}">([^<]*)</script>`));
+  if (!m) return null;
+  try { return JSON.parse(m[1]); } catch (e) { return "invalid"; }
+};
+const h1s = (html) => [...html.matchAll(/<h1[^>]*>([^<]*)<\/h1>/g)].map((m) => m[1].replace(/&amp;/g, "&"));
+const meta = (html, name) => (html.match(new RegExp(`<meta name="${name}" content="([^"]*)"`)) || [])[1] || "";
+const title = (html) => (html.match(/<title>([^<]*)<\/title>/) || [])[1] || "";
+
+const titles = new Map();
+for (const p of PRODUCTS) {
+  const file = path.join(out, `${p.slug}.html`);
+  if (!fs.existsSync(file)) { problems.push(`${p.slug}: no page`); continue; }
+  const html = fs.readFileSync(file, "utf8");
+  const where = `/product/${p.slug}`;
+  check(JSON.stringify(h1s(html)) === JSON.stringify([p.name]), `${where}: h1s are ${JSON.stringify(h1s(html))}, want only "${p.name}"`);
+  const ld = jsonLd(html, "productJsonLd");
+  check(ld && ld !== "invalid" && ld["@type"] === "Product", `${where}: Product JSON-LD missing or invalid`);
+  if (ld && ld !== "invalid") {
+    check((ld.image || []).every((u) => u.startsWith("https://")), `${where}: JSON-LD photo URLs must be absolute`);
+    const prices = (p.variants || [p]).map((v) => v.price).filter((n) => typeof n === "number");
+    if (prices.length) check(ld.offers && (ld.offers.price === Math.min(...prices) || ld.offers.lowPrice === Math.min(...prices)), `${where}: JSON-LD price is wrong`);
+    check(ld.brand && ld.brand.name === "HAYATIQ", `${where}: JSON-LD brand missing`);
+  }
+  const crumbs = jsonLd(html, "breadcrumbJsonLd");
+  check(crumbs && crumbs !== "invalid" && crumbs.itemListElement.length === 3, `${where}: breadcrumb JSON-LD missing`);
+  check(jsonLd(html, "siteJsonLd") && jsonLd(html, "siteJsonLd") !== "invalid", `${where}: site JSON-LD missing or invalid`);
+  check(html.includes(`<link rel="canonical" href="https://hayatiq.netlify.app${where}"`), `${where}: wrong canonical`);
+  const body = html.slice(html.indexOf('id="detailWrap"'));
+  check(body.includes(`href="/category/${categorySlug(p.category)}"`), `${where}: no link to its category`);
+  const first = (p.ingredients || [])[0];
+  if (first) check(body.includes(first), `${where}: ingredients not in the page`);
+  const t = title(html);
+  check(!titles.has(t), `${where}: same title as ${titles.get(t)} ("${t}")`);
+  titles.set(t, where);
+  check(meta(html, "description").length <= 200, `${where}: description too long`);
+}
+
+for (const cat of CATEGORIES) {
+  const slug = categorySlug(cat);
+  const file = path.join(out, `category-${slug}.html`);
+  if (!fs.existsSync(file)) { problems.push(`${cat}: no category page`); continue; }
+  const html = fs.readFileSync(file, "utf8");
+  check(JSON.stringify(h1s(html)) === JSON.stringify([cat]), `/category/${slug}: h1s are ${JSON.stringify(h1s(html))}`);
+  for (const p of PRODUCTS.filter((x) => x.category === cat)) check(html.includes(`href="/product/${p.slug}"`), `/category/${slug}: no link to ${p.slug}`);
+  check(html.includes(`<link rel="canonical" href="https://hayatiq.netlify.app/category/${slug}"`), `/category/${slug}: wrong canonical`);
+}
+
+const sitemap = fs.readFileSync(path.join(out, "sitemap.xml"), "utf8");
+for (const cat of CATEGORIES) check(sitemap.includes(`/category/${categorySlug(cat)}<`), `sitemap: no /category/${categorySlug(cat)}`);
+for (const p of PRODUCTS) check(sitemap.includes(`/product/${p.slug}<`), `sitemap: no /product/${p.slug}`);
+
+// Every route the router knows must be served with 200; the last rule must be the 404.
+const redirects = read("_redirects").split("\n").map((l) => l.trim()).filter((l) => l && !l.startsWith("#"));
+const served = redirects.filter((l) => / 200$/.test(l)).map((l) => l.split(/\s+/)[0]);
+const routes = [...read("js/script.js").matchAll(/path === "(\/[a-z]+)"/g)].map((m) => m[1]);
+for (const r of [...routes, "/products", "/product/*", "/category/*"]) check(served.includes(r), `_redirects: ${r} is not served with 200`);
+check(redirects[redirects.length - 1].replace(/\s+/g, " ") === "/* /index.html 404", "_redirects: the last rule should be /* /index.html 404");
+
+// The homepage itself keeps its single headline and valid site JSON-LD.
+const index = read("index.html");
+check(jsonLd(index, "siteJsonLd") && jsonLd(index, "siteJsonLd") !== "invalid", "index.html: site JSON-LD invalid");
+
+fs.rmSync(out, { recursive: true, force: true });
+if (problems.length) {
+  console.error(`check-seo: ${problems.length} problem(s)\n- ${problems.join("\n- ")}`);
+  process.exit(1);
+}
+console.log(`check-seo: ok (${PRODUCTS.length} product pages, ${CATEGORIES.length} category pages, ${routes.length + 3} routes)`);

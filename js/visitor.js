@@ -646,6 +646,7 @@ window.addEventListener("route-changed", () => {
   const params = new URLSearchParams(location.search);
   trackPageView(pageName);
   if (params.get("cat")) trackProductFilter("category", params.get("cat"));
+  if (parts[0] === "category" && parts[1]) trackProductFilter("category", categoryFromSlug(decodeURIComponent(parts[1])) || parts[1]);
   if (params.get("concern")) trackProductFilter("need", params.get("concern"));
 });
 

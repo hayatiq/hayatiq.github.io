@@ -43,6 +43,10 @@
         <title>Hayatiq — Handcrafted with Intention</title>
         <!-- Product structured data (schema.org), populated per product view by renderDetail() in js/script.js -->
         <script type="application/ld+json" id="productJsonLd">{}</script>
+        <!-- Home › Category › Product; filled per page (js/script.js, and at deploy by tools/product-pages.js). -->
+        <script type="application/ld+json" id="breadcrumbJsonLd">{}</script>
+        <!-- Who runs the shop, on every page. Add the Daraz/Packly shop links to sameAs once known. -->
+        <script type="application/ld+json" id="siteJsonLd">{"@context": "https://schema.org/", "@graph": [{"@type": "Organization", "@id": "https://hayatiq.netlify.app/#organization", "name": "HAYATIQ", "url": "https://hayatiq.netlify.app/", "logo": "https://hayatiq.netlify.app/images/logo.webp", "description": "Handmade natural wellness products from Dhaka, Bangladesh: magnesium oil spray, shampoo and conditioner bars, oral care and non-toxic cleaning supplies.", "address": {"@type": "PostalAddress", "addressLocality": "Dhaka", "addressCountry": "BD"}, "areaServed": {"@type": "Country", "name": "Bangladesh"}, "sameAs": ["https://www.facebook.com/hayatiq.life", "https://www.instagram.com/hayatiq.life/"]}, {"@type": "WebSite", "@id": "https://hayatiq.netlify.app/#website", "name": "HAYATIQ", "url": "https://hayatiq.netlify.app/", "inLanguage": "en", "publisher": {"@id": "https://hayatiq.netlify.app/#organization"}}]}</script>
         <link rel="icon" type="image/webp" href="./images/logo-small.webp">
         <!-- Bangla visitors: the page stays hidden until js/i18n.js has translated it, so
              it never shows in English first (html.translating in css/style.css). Above
@@ -144,38 +148,38 @@
                         <h2>Shop by Category</h2>
                     </div>
                     <div class="category-scroller">
-                        <a class="category-photo" href="/products?cat=Hair%20Care">
+                        <a class="category-photo" href="/category/hair-care">
                             <img src="./images/cards/conditioner_bar.webp" alt="" loading="lazy" class="fade-in" onload="this.classList.add('loaded')" onerror="this.classList.add('loaded')">
                             <span class="category-photo-name">Hair Care</span>
                             <span class="category-status" data-cat="Hair Care"></span>
                         </a>
-                        <a class="category-photo" href="/products?cat=Magnesium%20Oil%20Spray">
+                        <a class="category-photo" href="/category/magnesium-oil-spray">
                             <img src="./images/cards/hayatiq_magnesium_oil_2x.webp" alt="" loading="lazy" class="fade-in" onload="this.classList.add('loaded')" onerror="this.classList.add('loaded')">
                             <span class="category-photo-name">Magnesium Oil Spray</span>
                             <span class="category-status" data-cat="Magnesium Oil Spray"></span>
                         </a>
-                        <a class="category-photo" href="/products?cat=Oral%20Care">
+                        <a class="category-photo" href="/category/oral-care">
                             <img src="./images/cards/hayatiq_copper_tongue_scraper.webp" alt="" loading="lazy" class="fade-in" onload="this.classList.add('loaded')" onerror="this.classList.add('loaded')">
                             <span class="category-photo-name">Oral Care</span>
                             <span class="category-status" data-cat="Oral Care"></span>
                         </a>
-                        <a class="category-photo" href="/products?cat=Cleaning%20Supply">
+                        <a class="category-photo" href="/category/cleaning-supply">
                             <img src="./images/cards/hayatiq_dish_soap_bar.webp" alt="" loading="lazy" class="fade-in" onload="this.classList.add('loaded')" onerror="this.classList.add('loaded')">
                             <span class="category-photo-name">Cleaning Supply</span>
                             <span class="category-status" data-cat="Cleaning Supply"></span>
                         </a>
-                        <a class="category-photo" href="/products?cat=Bath%20Bombs">
+                        <a class="category-photo" href="/category/bath-bombs">
                             <img src="./images/cards/hayatiq_bath_bomb_1.webp" alt="" loading="lazy" class="fade-in" onload="this.classList.add('loaded')" onerror="this.classList.add('loaded')">
                             <span class="category-photo-name">Bath Bombs</span>
                             <span class="category-status" data-cat="Bath Bombs"></span>
                         </a>
-                        <a class="category-photo" href="/products?cat=Footsoaks">
+                        <a class="category-photo" href="/category/footsoaks">
                             <img src="./images/cards/hayatiq_footsoak.webp" alt="" loading="lazy" class="fade-in" onload="this.classList.add('loaded')" onerror="this.classList.add('loaded')">
                             <span class="category-photo-name">Footsoaks</span>
                             <span class="category-status" data-cat="Footsoaks"></span>
                         </a>
                         <!-- No real salve photo yet: a brand-colored tile instead. -->
-                        <a class="category-photo" href="/products?cat=Salves%20%26%20Balms">
+                        <a class="category-photo" href="/category/salves-and-balms">
                             <span class="category-photo-icon" aria-hidden="true"><i class="fa-solid fa-mortar-pestle"></i></span>
                             <span class="category-photo-name">Salves & Balms</span>
                             <span class="category-status" data-cat="Salves & Balms"></span>
@@ -288,7 +292,7 @@
             </section>
             <section id="view-products" class="view" aria-label="Product Listing">
                 <div class="section-title products-title-row">
-                    <h2>Products</h2>
+                    <h2 id="productsHeading">Products</h2>
                     <div class="pill pill-small" id="productCount">0 items</div>
                 </div>
                 <!-- Category chips, filled by setupProductFilters() in script.js. -->
@@ -305,7 +309,7 @@
                 </div>
                 <div class="grid" style="grid-template-columns:repeat(1,minmax(0,1fr))">
                     <div class="soft-card category-card">
-                        <a href="/products?cat=Hair%20Care" class="category-card-link">
+                        <a href="/category/hair-care" class="category-card-link">
                             <span class="icon-img" aria-hidden="true">
                                 <i class="fa-solid fa-scissors"></i>
                             </span>
@@ -317,7 +321,7 @@
                         <span class="category-notify" data-cat="Hair Care" hidden></span>
                     </div>
                     <div class="soft-card category-card">
-                        <a href="/products?cat=Magnesium%20Oil%20Spray" class="category-card-link">
+                        <a href="/category/magnesium-oil-spray" class="category-card-link">
                             <span class="icon-img" aria-hidden="true">
                                 <i class="fa-solid fa-spray-can"></i>
                             </span>
@@ -329,7 +333,7 @@
                         <span class="category-notify" data-cat="Magnesium Oil Spray" hidden></span>
                     </div>
                     <div class="soft-card category-card">
-                        <a href="/products?cat=Salves%20%26%20Balms" class="category-card-link">
+                        <a href="/category/salves-and-balms" class="category-card-link">
                             <span class="icon-img" aria-hidden="true">
                                 <i class="fa-solid fa-mortar-pestle"></i>
                             </span>
@@ -341,7 +345,7 @@
                         <span class="category-notify" data-cat="Salves & Balms" hidden></span>
                     </div>
                     <div class="soft-card category-card">
-                        <a href="/products?cat=Bath%20Bombs" class="category-card-link">
+                        <a href="/category/bath-bombs" class="category-card-link">
                             <span class="icon-img" aria-hidden="true">
                                 <i class="fa-solid fa-bath"></i>
                             </span>
@@ -353,7 +357,7 @@
                         <span class="category-notify" data-cat="Bath Bombs" hidden></span>
                     </div>
                     <div class="soft-card category-card">
-                        <a href="/products?cat=Footsoaks" class="category-card-link">
+                        <a href="/category/footsoaks" class="category-card-link">
                             <span class="icon-img" aria-hidden="true">
                                 <i class="fa-solid fa-shoe-prints"></i>
                             </span>
@@ -365,7 +369,7 @@
                         <span class="category-notify" data-cat="Footsoaks" hidden></span>
                     </div>
                     <div class="soft-card category-card">
-                        <a href="/products?cat=Oral%20Care" class="category-card-link">
+                        <a href="/category/oral-care" class="category-card-link">
                             <span class="icon-img" aria-hidden="true">
                                 <i class="fa-solid fa-tooth"></i>
                             </span>
@@ -377,7 +381,7 @@
                         <span class="category-notify" data-cat="Oral Care" hidden></span>
                     </div>
                     <div class="soft-card category-card">
-                        <a href="/products?cat=Cleaning%20Supply" class="category-card-link">
+                        <a href="/category/cleaning-supply" class="category-card-link">
                             <span class="icon-img" aria-hidden="true">
                                 <i class="fa-solid fa-broom"></i>
                             </span>
@@ -624,6 +628,7 @@
         <script src="./js/config.js"></script>
         <script src="./js/icons.js"></script>
         <script src="./js/visitor.js"></script>
+        <script src="./js/seo.js"></script>
         <script src="./js/products.js"></script>
         <script src="./js/invoice.js"></script>
         <script src="./js/script.js"></script>

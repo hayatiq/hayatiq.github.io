@@ -1,1 +1,19 @@
-/*    /index.html   200
+# The shop is one page (index.html); js/script.js shows the right view for each address.
+# Known addresses are served with 200. tools/product-pages.js adds, above these at deploy,
+# one rule per product and category page, then /product/* and /category/* rules that
+# answer 404 for products or categories that don't exist. If that tool ever fails, the
+# /product/* and /category/* lines below keep every product page working (200).
+/products     /index.html  200
+/product/*    /index.html  200
+/category/*   /index.html  200
+/categories   /index.html  200
+/contact      /index.html  200
+/about        /index.html  200
+/cart         /index.html  200
+/checkout     /index.html  200
+/order        /index.html  200
+/orders       /index.html  200
+/wishlist     /index.html  200
+
+# Anything else: the page's "not found" view, with a real 404 status for search engines.
+/*            /index.html  404

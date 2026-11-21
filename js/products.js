@@ -262,6 +262,9 @@ const PRODUCTS = [
     name: "Magnesium Oil Spray",
     subtitle: "30% Concentration · 100ml",
     slug: "magnesium-oil",
+    seoTitle: "Magnesium Oil Spray 30% 100ml Price in Bangladesh | HAYATIQ",
+    // Search-result text (setPageMeta / tools/product-pages.js); `short` stays the on-page line.
+    metaDescription: "Magnesium Oil Spray 30% (100ml, ৳360): magnesium chloride brine with lavender essential oil, handmade in Bangladesh. The lightest of our three strengths.",
     price: 360,
     category: "Magnesium Oil Spray",
     images: [
@@ -329,6 +332,9 @@ const PRODUCTS = [
     name: "Magnesium Oil Spray",
     subtitle: "50% Concentration · 100ml",
     slug: "magnesium-oil-50-concentration",
+    seoTitle: "Magnesium Oil Spray 50% 100ml Price in Bangladesh | HAYATIQ",
+    // Search-result text (setPageMeta / tools/product-pages.js); `short` stays the on-page line.
+    metaDescription: "Magnesium Oil Spray 50% (100ml, ৳500): magnesium chloride brine with lavender essential oil, handmade in Bangladesh. The middle of our three strengths.",
     price: 500,
     category: "Magnesium Oil Spray",
     images: [
@@ -390,6 +396,9 @@ const PRODUCTS = [
     name: "Magnesium Oil Spray",
     subtitle: "2x Strength · 130ml",
     slug: "magnesium-oil-2x-strength",
+    seoTitle: "Magnesium Oil Spray 2x Strength 130ml | HAYATIQ Bangladesh",
+    // Search-result text (setPageMeta / tools/product-pages.js); `short` stays the on-page line.
+    metaDescription: "Magnesium Oil Spray 2x Strength (130ml, ৳850): our strongest magnesium chloride brine with lavender essential oil, handmade in Bangladesh.",
     price: 850,
     category: "Magnesium Oil Spray",
     images: ["./images/hayatiq_magnesium_oil_2x.webp"],
