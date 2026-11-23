@@ -742,6 +742,11 @@ html[data-hero="photo"] [data-hero="text"] {
   color: var(--color-earth);
   opacity: 0.85;
 }
+/* Before the script fills it in ("3 available"), the label already takes up its line, so
+   the tiles don't grow and push the page down once the script runs. */
+.category-status:empty::before {
+  content: "\00a0";
+}
 .category-status-empty {
   color: var(--color-seal-brown);
   opacity: 0.55;
@@ -2681,6 +2686,10 @@ html[lang="bn"] body * {
 .need-chips::-webkit-scrollbar {
   display: none;
 }
+/* "Shop by need" is filled in by script; keep its row's height from the start (no jump). */
+#needTilesGrid {
+  min-height: 37px;
+}
 .need-chips-label {
   flex: 0 0 auto;
   margin-right: 0.2rem;
@@ -3263,4 +3272,11 @@ img.fade-in.loaded {
   margin: 0;
   padding-left: 1.2rem;
   font-size: 0.95rem;
+}
+
+/* The Best Sellers row is filled in by script. Until then it keeps about the height the cards
+   will have, between the narrowest phone and a wide screen, so what is below it doesn't jump.
+   (It is hidden entirely, by the script, when no product is marked topSelling.) */
+#topProductsGrid {
+  min-height: clamp(348px, calc(240px + 30vw), 380px);
 }
