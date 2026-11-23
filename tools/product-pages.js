@@ -80,12 +80,19 @@ function productLines(slug) {
 }
 
 // js/seo.js (categories, JSON-LD) and js/products.js, run as the page runs them.
+// Delivery charges and times come from js/config.js: that file needs a browser, so only
+// the two constants are read out of it (check-seo.js fails if they can't be found).
 function loadShop() {
   const read = (file) => fs.readFileSync(path.join(ROOT, file), "utf8");
-  const sandbox = {};
+  const config = read("js/config.js");
+  const literal = (name) => {
+    const m = config.match(new RegExp(`^const ${name} = (\\{[^}]*\\});`, "m"));
+    return m ? vm.runInNewContext(`(${m[1]})`) : null;
+  };
+  const sandbox = { SHIPPING_RATES: literal("SHIPPING_RATES"), DELIVERY_TIME: literal("DELIVERY_TIME") };
   vm.runInNewContext(
     `${read("js/seo.js")}\n${read("js/products.js")}\n` +
-      "this.shop = { PRODUCTS, CATEGORIES, STATIC_PAGES, categorySlug, categoryPath, productTitle, productJsonLd, breadcrumbJsonLd, jsonForScript };",
+      "this.shop = { PRODUCTS, CATEGORIES, STATIC_PAGES, categorySlug, categoryPath, productTitle, productJsonLd, breadcrumbJsonLd, productFaqs, faqJsonLd, jsonForScript, settings: { shipping: SHIPPING_RATES, delivery: DELIVERY_TIME } };",
     sandbox
   );
   return sandbox.shop;
@@ -200,6 +207,7 @@ function productBody(p, shop) {
     ["Storage", list(p.storage)],
   ].filter(([, body]) => body);
   const similar = similarProducts(p, shop.PRODUCTS);
+  const faqs = shop.productFaqs(p, shop.settings);
   return `<article class="prerendered-product">
           <nav class="breadcrumb" aria-label="Breadcrumb"><a href="/">Home</a> › <a href="${cat}">${escapeAttr(p.category)}</a></nav>
           <h1 class="detail-title">${escapeAttr(p.name)}</h1>
@@ -208,6 +216,7 @@ function productBody(p, shop) {
           ${list(p.benefits)}
           <p>Handmade by HAYATIQ in Bangladesh. Cash on delivery across Bangladesh: check your order before you pay.</p>
           ${sections.map(([title, body]) => `<section><h2>${title}</h2>${body}</section>`).join("\n          ")}
+          ${faqs.length ? `<section><h2>Common questions</h2>${faqs.map((f) => `<h3>${escapeAttr(f.q)}</h3><p>${escapeAttr(f.a)}</p>`).join("")}</section>` : ""}
           ${similar.length ? `<section><h2>You may also like</h2><ul>${similar.map((x) => `<li><a href="/product/${x.slug}">${escapeAttr(x.name)}${x.subtitle ? ` · ${escapeAttr(x.subtitle)}` : ""}</a></li>`).join("")}</ul></section>` : ""}
           <p><a href="${cat}">All ${escapeAttr(p.category)} products</a></p>
         </article>`;
@@ -249,6 +258,8 @@ function productPage(template, facts, p, shop, site) {
     { name: p.category, path: shop.categoryPath(p.category) },
     { name: p.name, path: `/product/${p.slug}` },
   ], site)));
+  const faq = shop.faqJsonLd(shop.productFaqs(p, shop.settings));
+  html = setJsonLd(html, "faqJsonLd", faq ? shop.jsonForScript(faq) : "{}");
   html = fillContainer(demoteHomeHeadline(html), "detailWrap", productBody(p, shop));
   return html;
 }
@@ -267,7 +278,7 @@ function staticPage(template, route, shop, site, live) {
   html = setMeta(html, "name", "twitter:title", title);
   html = setMeta(html, "name", "twitter:description", description);
   html = html.replace(/(<link rel="canonical" href=")[^"]*(")/, `$1${url}$2`);
-  html = demoteHomeHeadline(html);
+  html = setJsonLd(demoteHomeHeadline(html), "faqJsonLd", "{}"); // the homepage FAQ isn't on this page
   if (route === "/products") {
     html = html.replace(/<h2 id="productsHeading">[^<]*<\/h2>/, `<h1 id="productsHeading">Products</h1>`);
     if (!html.includes('<h1 id="productsHeading">')) throw new Error('index.html has no <h2 id="productsHeading">');
@@ -280,6 +291,14 @@ function staticPage(template, route, shop, site, live) {
   const heading = STATIC_HEADINGS[route];
   if (html.split(heading).length !== 2) throw new Error(`index.html: expected exactly one ${heading}`);
   return html.replace(heading, heading.replace("<h2>", "<h1>").replace("</h2>", "</h1>"));
+}
+
+// The homepage (index.html itself): its product grid is empty until JavaScript runs, so a
+// crawler without it saw a shop with no products. A plain list of every product goes into
+// #featuredGrid; renderFeatured() replaces it with the cards when the page loads.
+function homePage(template, shop, site) {
+  const items = shop.PRODUCTS.filter(isLive).map((p) => `<li><a href="/product/${p.slug}">${escapeAttr(p.name)}${p.subtitle ? ` · ${escapeAttr(p.subtitle)}` : ""}</a> — ${productFacts(p, site, shop).price}</li>`);
+  return fillContainer(template, "featuredGrid", `<ul class="prerendered-list">\n          ${items.join("\n          ")}\n        </ul>`);
 }
 
 // A category's own page, /category/<slug>; the router shows it with setupProductFilters().
@@ -305,6 +324,7 @@ function categoryPage(template, cat, shop, site, live) {
     { name: "Home", path: "/" },
     { name: cat, path: shop.categoryPath(cat) },
   ], site)));
+  html = setJsonLd(html, "faqJsonLd", "{}"); // the homepage FAQ isn't on this page
   // The listing's heading becomes this page's h1 (the router sets the same text).
   html = demoteHomeHeadline(html).replace(/<h2 id="productsHeading">[^<]*<\/h2>/, `<h1 id="productsHeading">${escapeAttr(cat)}</h1>`);
   if (!html.includes(`<h1 id="productsHeading">`)) throw new Error("index.html has no <h2 id=\"productsHeading\">");
@@ -377,6 +397,7 @@ ${urls.map((url) => `  <url><loc>${escapeAttr(url)}</loc>${modified.get(url) ? `
   fs.writeFileSync(local ? path.join(outDir, "sitemap.xml") : path.join(ROOT, "sitemap.xml"), sitemap);
 
   if (local) {
+    try { fs.writeFileSync(path.join(outDir, "home.html"), homePage(template, shop, site)); } catch (err) { console.error("product-pages: homepage skipped:", err.message); }
     console.log(`product-pages: wrote ${urls.length - SITEMAP_PAGES.length} pages and sitemap.xml to ${outDir}\n${rules.join("\n")}`);
     return;
   }
@@ -385,6 +406,13 @@ ${urls.map((url) => `  <url><loc>${escapeAttr(url)}</loc>${modified.get(url) ? `
   const current = fs.readFileSync(redirectsFile, "utf8");
   if (!current.includes(MARK)) fs.writeFileSync(redirectsFile, `${MARK}\n${rules.join("\n")}\n\n${current}`);
   console.log(`product-pages: ${urls.length - SITEMAP_PAGES.length} product and category pages added`);
+  // Last, and apart from the rules above: a failure here leaves index.html as it is.
+  try {
+    fs.writeFileSync(path.join(ROOT, "index.html"), homePage(template, shop, site));
+    console.log("product-pages: homepage product list added to index.html");
+  } catch (err) {
+    console.error("product-pages: homepage left as it is.", err.message);
+  }
 }
 
 try {

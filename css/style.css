@@ -2208,6 +2208,9 @@ body.drawer-open {
 }
 
 /* Products page pill size */
+#productCount:empty {
+  display: none; /* the count is filled in by renderProducts(); empty until then */
+}
 .pill-small {
   font-size: 0.75rem;
   padding: 0.35rem 0.6rem;
@@ -3252,4 +3255,12 @@ img.fade-in.loaded {
   color: inherit;
   text-decoration: underline;
   text-underline-offset: 2px;
+}
+
+/* A plain product list that tools/product-pages.js writes into a page for crawlers without
+   JavaScript; the app replaces it with the real cards when it runs. */
+.prerendered-list {
+  margin: 0;
+  padding-left: 1.2rem;
+  font-size: 0.95rem;
 }

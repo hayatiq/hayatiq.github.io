@@ -98,6 +98,21 @@ function resetProductJsonLd() {
   const script = document.getElementById("productJsonLd");
   if (script) script.textContent = "{}";
   setBreadcrumbJsonLd(null);
+  setFaqJsonLd(null);
+}
+
+// FAQPage markup, only on pages that show those questions (null clears it).
+function setFaqJsonLd(data) {
+  const script = document.getElementById("faqJsonLd");
+  if (script) script.textContent = data ? jsonForScript(data) : "{}";
+}
+
+// The homepage FAQ, read from what is on screen so the markup always matches it.
+function homeFaqJsonLd() {
+  const clean = (el) => (el ? el.textContent.replace(/\s+/g, " ").trim() : "");
+  return faqJsonLd([...document.querySelectorAll("#view-home .accordion-item")]
+    .map((d) => ({ q: clean(d.querySelector("summary")), a: clean(d.querySelector(".accordion-panel")) }))
+    .filter((f) => f.q && f.a));
 }
 
 // Home › Category › Product for search results (BreadcrumbList in js/seo.js); null clears it.
@@ -228,6 +243,7 @@ function navigate() {
       { path: "/" }
     );
     resetProductJsonLd();
+    setFaqJsonLd(homeFaqJsonLd());
   } else {
     renderNotFound(path);
   }
@@ -811,6 +827,9 @@ function renderDetail(id, variantId = null) {
     { name: p.category, path: categoryPath(p.category) },
     { name: p.name, path: `/product/${p.slug}` },
   ]);
+  // Common questions from the product's own text (js/seo.js); shown below and marked up to match.
+  const faqs = productFaqs(p, { shipping: SHIPPING_RATES, delivery: DELIVERY_TIME });
+  setFaqJsonLd(isComingSoon ? null : faqJsonLd(faqs)); // a coming-soon page doesn't show the questions
 
   if (isComingSoon) {
     const [main] = display.images || ["./images/placeholder.webp"];
@@ -927,6 +946,11 @@ function renderDetail(id, variantId = null) {
             ${p.tips && p.tips.length ? accordionItem("For Optimal Benefits", p.tips, { open: openAccordions.includes("For Optimal Benefits") }) : ''}
             ${p.storage && p.storage.length ? accordionItem("Storage", p.storage, { open: openAccordions.includes("Storage") }) : ''}
           </div>
+
+          ${faqs.length ? `<section class="soft-card product-faq" aria-label="Common questions">
+            <h3 style="margin-bottom:.4rem;">Common questions</h3>
+            <div class="accordion-group">${faqs.map((f) => `<details class="accordion-item"><summary>${escapeHtml(f.q)}</summary><div class="accordion-panel"><p>${escapeHtml(f.a)}</p></div></details>`).join("")}</div>
+          </section>` : ""}
 
           ${reviews.length ? `<div class="soft-card">
             <h3 style="margin-bottom:.4rem;">Customer Reviews</h3>
@@ -1087,9 +1111,7 @@ function chooseProductVariant(productId, variantId, variantLabel) {
   renderDetail(productId, variantId);
 }
 
-// Shared with the checkout shipping calculation and the product detail page's
-// delivery-transparency note, so both always agree.
-const SHIPPING_RATES = { inside_dhaka: 80, outside_dhaka: 130 };
+// SHIPPING_RATES (delivery charges) is in js/config.js.
 
 /* ==============================
        Local Cart (localStorage)

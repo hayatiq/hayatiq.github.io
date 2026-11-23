@@ -306,7 +306,7 @@ const PRODUCTS = [
       "<b>Skin sensitivity:</b>  A mild tingling, itching, or warmth is normal for first-time users. If irritation persists, rinse off and dilute with water before reapplying."
     ],
     storage: [
-      "Keep bottle tightly sealed. Store in a cool, dry placeaway from direct sunlight, heat, or children’s reach.",
+      "Keep bottle tightly sealed. Store in a cool, dry place away from direct sunlight, heat, or children’s reach.",
       "Use within 6 months of manufacture."
     ],
     // "Shop by Need" tags — drawn from this product's own `how` entries above (Sleep &
@@ -374,7 +374,7 @@ const PRODUCTS = [
       "<b>Skin sensitivity:</b>  A mild tingling, itching, or warmth is normal for first-time users. If irritation persists, rinse off and dilute with water before reapplying."
     ],
     storage: [
-      "Keep bottle tightly sealed. Store in a cool, dry placeaway from direct sunlight, heat, or children’s reach.",
+      "Keep bottle tightly sealed. Store in a cool, dry place away from direct sunlight, heat, or children’s reach.",
       "Use within 6 months of manufacture."
     ],
     // See NEED_TILES — same usage guidance as the 30% variant above.
@@ -436,7 +436,7 @@ const PRODUCTS = [
       "<b>Skin sensitivity:</b>  A mild tingling, itching, or warmth is normal for first-time users — being the strongest concentration, patch-testing matters even more here. If irritation persists, rinse off and dilute with water before reapplying."
     ],
     storage: [
-      "Keep bottle tightly sealed. Store in a cool, dry placeaway from direct sunlight, heat, or children’s reach.",
+      "Keep bottle tightly sealed. Store in a cool, dry place away from direct sunlight, heat, or children’s reach.",
       "Use within 6 months of manufacture."
     ],
     bn: {

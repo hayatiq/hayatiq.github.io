@@ -152,6 +152,7 @@ const BN = {
   "Storage": "সংরক্ষণ",
   "Reviews": "রিভিউ",
   "You may also like": "আপনার পছন্দ হতে পারে",
+  "Common questions": "সাধারণ প্রশ্ন",
   "Shape:": "আকার:",
   "Scent:": "সুগন্ধ:",
   "Style:": "স্টাইল:",

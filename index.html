@@ -45,6 +45,9 @@
         <script type="application/ld+json" id="productJsonLd">{}</script>
         <!-- Home › Category › Product; filled per page (js/script.js, and at deploy by tools/product-pages.js). -->
         <script type="application/ld+json" id="breadcrumbJsonLd">{}</script>
+        <!-- Common questions: the homepage FAQ here (text must match the visible FAQ; tools/check-seo.js
+             checks it); product pages get their own at deploy (tools/product-pages.js) and in js/script.js. -->
+        <script type="application/ld+json" id="faqJsonLd">{"@context": "https://schema.org/", "@type": "FAQPage", "mainEntity": [{"@type": "Question", "name": "Is Cash on Delivery really available?", "acceptedAnswer": {"@type": "Answer", "text": "Yes — every order is Cash on Delivery. You can check your item when the courier arrives and pay in cash right then, no advance payment needed."}}, {"@type": "Question", "name": "Do I need to create an account to order?", "acceptedAnswer": {"@type": "Answer", "text": "No account needed. Add items to your cart, fill in your name, phone number, and delivery address at checkout, and place your order."}}, {"@type": "Question", "name": "Which areas do you deliver to?", "acceptedAnswer": {"@type": "Answer", "text": "We deliver nationwide — Inside Dhaka (৳80) and Outside Dhaka (৳130)."}}, {"@type": "Question", "name": "Is the Magnesium Oil Spray safe for sensitive skin?", "acceptedAnswer": {"@type": "Answer", "text": "We recommend a patch test on a small area first. A mild tingling on first use is normal and fades with regular use — you can dilute it with water if needed. Avoid the eyes, mouth, broken skin, and freshly shaved skin, and it's for external use only."}}, {"@type": "Question", "name": "How do I get in touch if I have a question?", "acceptedAnswer": {"@type": "Answer", "text": "Message us on Facebook, or use the Contact page."}}]}</script>
         <!-- Who runs the shop, on every page. Add the Daraz/Packly shop links to sameAs once known. -->
         <script type="application/ld+json" id="siteJsonLd">{"@context": "https://schema.org/", "@graph": [{"@type": "Organization", "@id": "https://hayatiq.netlify.app/#organization", "name": "HAYATIQ", "url": "https://hayatiq.netlify.app/", "logo": "https://hayatiq.netlify.app/images/logo.webp", "description": "Handmade natural wellness products from Dhaka, Bangladesh: magnesium oil spray, shampoo and conditioner bars, oral care and non-toxic cleaning supplies.", "address": {"@type": "PostalAddress", "addressLocality": "Dhaka", "addressCountry": "BD"}, "areaServed": {"@type": "Country", "name": "Bangladesh"}, "sameAs": ["https://www.facebook.com/hayatiq.life", "https://www.instagram.com/hayatiq.life/"]}, {"@type": "WebSite", "@id": "https://hayatiq.netlify.app/#website", "name": "HAYATIQ", "url": "https://hayatiq.netlify.app/", "inLanguage": "en", "publisher": {"@id": "https://hayatiq.netlify.app/#organization"}}]}</script>
         <link rel="icon" type="image/webp" href="./images/logo-small.webp">
@@ -203,7 +206,8 @@
                         <button class="carousel-nav carousel-next" aria-label="Next product" onclick="scrollTopProducts(1)"><i class="fa-solid fa-chevron-right" aria-hidden="true"></i></button>
                     </div>
                 </section>
-                <section aria-label="Customer Love" id="testimonialSection">
+                <!-- Hidden here, shown by renderTestimonials() once there are real testimonials: an empty "Customer Love" heading looks bad to a crawler without JavaScript. -->
+                <section aria-label="Customer Love" id="testimonialSection" style="display:none">
                     <div class="section-title">
                         <h2>Customer Love</h2>
                     </div>
@@ -293,7 +297,7 @@
             <section id="view-products" class="view" aria-label="Product Listing">
                 <div class="section-title products-title-row">
                     <h2 id="productsHeading">Products</h2>
-                    <div class="pill pill-small" id="productCount">0 items</div>
+                    <div class="pill pill-small" id="productCount"></div>
                 </div>
                 <!-- Category chips, filled by setupProductFilters() in script.js. -->
                 <nav class="filter-chips" id="categoryChips" aria-label="Filter by category"></nav>

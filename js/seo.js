@@ -113,5 +113,55 @@ function breadcrumbJsonLd(items, site = SEO_SITE) {
   };
 }
 
+// Common questions for a product page, built ONLY from that product's own text on the page
+// (ingredients, how to use, cautions, storage) plus the delivery terms, so nothing is added
+// that the page doesn't already say. Placeholder text ("coming soon", the generic storage
+// line) is skipped. A product with fewer than 2 real answers gets none: one boilerplate
+// delivery answer repeated across pages is no help to anyone. `settings` is
+// { shipping, delivery } from js/config.js; without it the delivery answer is left out.
+// The page shows these as visible questions and answers; the FAQPage JSON-LD matches them.
+function productFaqs(p, settings = null) {
+  const sub = String(p.subtitle || "").split("·")[0].trim();
+  const label = `${p.name}${sub ? ` (${sub})` : ""}`;
+  const placeholderStorage = typeof PLACEHOLDER_STORAGE !== "undefined" ? PLACEHOLDER_STORAGE : [];
+  const real = (list, notReal) => (list || []).map(stripHtml).filter((t) => t && !notReal(t));
+  const dot = (t) => (/[.!?]$/.test(t) ? t : `${t}.`);
+  const faqs = [];
+
+  const ingredients = (p.ingredients || []).map((i) => stripHtml((String(i).match(/<b>(.*?)<\/b>/) || [])[1] || i)).filter(Boolean);
+  if (ingredients.length) faqs.push({ q: `What is ${label} made with?`, a: `${label} is made with ${ingredients.join(", ")}.` });
+
+  if ((p.how || []).length) {
+    // "Tab Name: step; step;" (see renderHowToUseTags): the steps of the first tab, not its label.
+    const points = String(p.how[0]).split(":").slice(1).join(":").split(";").map(stripHtml).filter(Boolean);
+    if (points.length) faqs.push({ q: `How do I use ${label}?`, a: `${points.map(dot).join(" ")}${p.how.length > 1 ? " The product page lists more ways to use it." : ""}` });
+  }
+
+  const cautions = real(p.warns, (t) => /coming soon/i.test(t));
+  if (cautions.length) faqs.push({ q: `What should I know before using ${label}?`, a: cautions.map(dot).join(" ") });
+
+  const storage = real(p.storage, (t) => placeholderStorage.includes(t));
+  if (storage.length) faqs.push({ q: `How should I store ${label}?`, a: storage.map(dot).join(" ") });
+
+  if (settings && settings.shipping && settings.delivery && faqs.length) {
+    const { shipping: s, delivery: d } = settings;
+    faqs.push({
+      q: `Can I pay on delivery, and how much is delivery?`,
+      a: `Yes, every HAYATIQ order is cash on delivery: check your order when it arrives and pay then. Delivery is ৳${s.inside_dhaka} inside Dhaka (${d.inside_dhaka}) and ৳${s.outside_dhaka} outside Dhaka (${d.outside_dhaka}).`,
+    });
+  }
+  return faqs.length >= 2 ? faqs : [];
+}
+
+// schema.org FAQPage for a list of { q, a }; [] gives null.
+function faqJsonLd(faqs) {
+  if (!faqs.length) return null;
+  return {
+    "@context": "https://schema.org/",
+    "@type": "FAQPage",
+    mainEntity: faqs.map((f) => ({ "@type": "Question", name: f.q, acceptedAnswer: { "@type": "Answer", text: f.a } })),
+  };
+}
+
 // `</script>` inside JSON would end the <script> tag early.
 const jsonForScript = (data) => JSON.stringify(data).replace(/</g, "\\u003c");

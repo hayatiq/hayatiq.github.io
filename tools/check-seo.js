@@ -35,11 +35,12 @@ const jsonLd = (html, id) => {
   try { return JSON.parse(m[1]); } catch (e) { return "invalid"; }
 };
 const h1s = (html) => [...html.matchAll(/<h1[^>]*>([^<]*)<\/h1>/g)].map((m) => m[1].replace(/&amp;/g, "&"));
-const unescape = (t) => t.replace(/&#39;/g, "'").replace(/&quot;/g, '"').replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/&amp;/g, "&");
 const meta = (html, name) => unescape((html.match(new RegExp(`<meta name="${name}" content="([^"]*)"`)) || [])[1] || "");
 const title = (html) => (html.match(/<title>([^<]*)<\/title>/) || [])[1] || "";
 
 const titles = new Map();
+let faqPages = 0;
+const unescape = (t) => t.replace(/&#39;/g, "'").replace(/&quot;/g, '"').replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/&amp;/g, "&");
 for (const p of PRODUCTS) {
   const file = path.join(out, `${p.slug}.html`);
   if (!fs.existsSync(file)) { problems.push(`${p.slug}: no page`); continue; }
@@ -60,6 +61,20 @@ for (const p of PRODUCTS) {
   check(html.includes(`<link rel="canonical" href="https://hayatiq.netlify.app${where}"`), `${where}: wrong canonical`);
   const body = html.slice(html.indexOf('id="detailWrap"'));
   check(body.includes(`href="/category/${categorySlug(p.category)}"`), `${where}: no link to its category`);
+  // Common questions: FAQ markup equals the questions in the page text; none from placeholders.
+  const faq = jsonLd(html, "faqJsonLd");
+  check(faq !== "invalid", `${where}: FAQ JSON-LD invalid`);
+  if (faq && faq !== "invalid" && faq["@type"] === "FAQPage") {
+    faqPages++;
+    const text = unescape(body);
+    check(faq.mainEntity.length >= 2, `${where}: FAQ with fewer than 2 questions`);
+    for (const e of faq.mainEntity) {
+      check(text.includes(e.name) && text.includes(e.acceptedAnswer.text), `${where}: FAQ "${e.name}" is not in the page text`);
+      check(!/coming soon/i.test(e.acceptedAnswer.text), `${where}: FAQ answer uses placeholder text`);
+      check(!/undefined|NaN|\[object/.test(e.name + e.acceptedAnswer.text), `${where}: FAQ has a broken value`);
+    }
+    check(/৳\d+ inside Dhaka/.test(JSON.stringify(faq)), `${where}: FAQ is missing the delivery answer (config.js values not read?)`);
+  } else check(faq && Object.keys(faq).length === 0, `${where}: a page without a FAQ must have an empty FAQ JSON-LD (the homepage FAQ is not on it)`);
   const first = (p.ingredients || [])[0];
   if (first) check(body.includes(first), `${where}: ingredients not in the page`);
   const t = title(html);
@@ -76,6 +91,7 @@ for (const cat of CATEGORIES) {
   check(JSON.stringify(h1s(html)) === JSON.stringify([cat]), `/category/${slug}: h1s are ${JSON.stringify(h1s(html))}`);
   for (const p of PRODUCTS.filter((x) => x.category === cat)) check(html.includes(`href="/product/${p.slug}"`), `/category/${slug}: no link to ${p.slug}`);
   check(html.includes(`<link rel="canonical" href="https://hayatiq.netlify.app/category/${slug}"`), `/category/${slug}: wrong canonical`);
+  check(JSON.stringify(jsonLd(html, "faqJsonLd")) === "{}", `/category/${slug}: carries a FAQ it doesn't show`);
 }
 
 // /products, /categories, /about, /contact: their own title, canonical, one h1 (not the homepage's).
@@ -92,6 +108,7 @@ for (const route of Object.keys(STATIC_PAGES)) {
   check(STATIC_PAGES[route].description.length <= 165 && t.length <= 70, `${route}: title or description too long`);
   check(html.includes(`<link rel="canonical" href="https://hayatiq.netlify.app${route}"`), `${route}: canonical is not itself`);
   check(h1s(html).length === 1, `${route}: h1s are ${JSON.stringify(h1s(html))}`);
+  check(JSON.stringify(jsonLd(html, "faqJsonLd")) === "{}", `${route}: carries the homepage FAQ it doesn't show`);
 }
 check(!titles.has("Hayatiq — Handcrafted with Intention"), "a page still has the homepage title");
 
@@ -115,6 +132,30 @@ check(redirects[redirects.length - 1].replace(/\s+/g, " ") === "/* /index.html 4
 const index = read("index.html");
 check(jsonLd(index, "siteJsonLd") && jsonLd(index, "siteJsonLd") !== "invalid", "index.html: site JSON-LD invalid");
 
+check(faqPages >= 6, `only ${faqPages} product pages have common questions (expected the 7 with real content)`);
+// The homepage a crawler gets: every live product linked, no "0 items", no empty Customer Love block.
+{
+  const home = fs.readFileSync(path.join(out, "home.html"), "utf8");
+  for (const p of PRODUCTS) if ((p.variants || [p]).some((v) => typeof v.price === "number")) check(home.includes(`<li><a href="/product/${p.slug}"`), `homepage list: no link to ${p.slug}`);
+  check(!/id="productCount">0 items/.test(home) && !/id="productCount">0 items/.test(index), 'a page still says "0 items"');
+  check(/id="testimonialSection" style="display:none"/.test(index), "index.html: the empty Customer Love section must start hidden");
+  // index.html carries both hero variants (HOME_HERO shows one); their headlines must be the same words.
+  const homeH1 = h1s(home);
+  check(homeH1.length >= 1 && homeH1.length <= 2 && new Set(homeH1).size === 1, `homepage h1s: ${JSON.stringify(homeH1)}`);
+}
+// The homepage: its FAQ markup must equal the FAQ people can read there.
+{
+  const faqPart = index.slice(index.indexOf('aria-label="Frequently Asked Questions"'));
+  // Tags removed without a space, like textContent in the browser (js/script.js homeFaqJsonLd()).
+  const plain = (h) => unescape(h.replace(/<[^>]*>/g, "").replace(/\s+/g, " ").trim());
+  const shown = [...faqPart.matchAll(/<summary>([^<]*)<\/summary>\s*<div class="accordion-panel">([\s\S]*?)<\/div>\s*<\/details>/g)].slice(0, 5).map((m) => [plain(m[1]), plain(m[2])]);
+  const marked = jsonLd(index, "faqJsonLd");
+  check(marked && marked !== "invalid" && marked["@type"] === "FAQPage", "index.html: homepage FAQ JSON-LD missing or invalid");
+  if (marked && marked !== "invalid") {
+    const got = marked.mainEntity.map((e) => [e.name, e.acceptedAnswer.text]);
+    check(shown.length === 5 && JSON.stringify(got) === JSON.stringify(shown), "index.html: the homepage FAQ JSON-LD does not match the visible FAQ (edit both together)");
+  }
+}
 // IndexNow: key file matches the module, changed-page picking, and the request it would send.
 check(fs.existsSync(path.join(ROOT, `${indexNow.KEY}.txt`)) && read(`${indexNow.KEY}.txt`) === indexNow.KEY, "indexnow: key file missing or its text is not the key");
 check(/^[a-f0-9]{16,128}$/.test(indexNow.KEY), "indexnow: key must be 8 to 128 letters or digits");

@@ -129,6 +129,9 @@ const SHOW_BANGLA = true;
 
 /* ---- Delivery and support text shown to customers ---- */
 const DELIVERY_TIME = { inside_dhaka: "about 2 days", outside_dhaka: "3–5 days" };
+// Delivery charges in Taka. Shared by checkout, the product page's delivery note and the
+// common-questions answers (js/seo.js, which tools/product-pages.js also reads from here).
+const SHIPPING_RATES = { inside_dhaka: 80, outside_dhaka: 130 };
 const DAMAGE_PROMISE = "If anything arrives damaged, message us on Facebook and we'll sort it out.";
 const FACEBOOK_URL = "https://facebook.com/hayatiq.life";
 const MESSENGER_URL = "https://m.me/hayatiq.life";
