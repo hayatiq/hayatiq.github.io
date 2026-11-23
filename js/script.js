@@ -172,23 +172,24 @@ function navigate() {
     routes.products.classList.add("active");
     const concern = new URLSearchParams(search).get("concern");
     setupProductFilters(null, concern);
+    // The plain list uses the title a crawler also gets (js/seo.js); a "Shop by need" filter has its own.
     setPageMeta(
-      `${concern ? concern + " " : ""}Products — Hayatiq`,
-      `Shop ${concern ? concern.toLowerCase() + " " : ""}products from Hayatiq — handcrafted natural wellness essentials.`,
+      concern ? `${concern} Products — Hayatiq` : STATIC_PAGES["/products"].title,
+      concern ? `Shop ${concern.toLowerCase()} products from Hayatiq — handcrafted natural wellness essentials.` : STATIC_PAGES["/products"].description,
       { path: "/products" + search }
     );
     resetProductJsonLd();
   } else if (path === "/categories") {
     routes.categories.classList.add("active");
-    setPageMeta("Shop by Category — Hayatiq", "Browse Hayatiq's Hair Care, Magnesium Oil Spray, Salves & Balms, Bath Bombs, Footsoaks, Oral Care, and Cleaning Supply product categories.", { path: "/categories" });
+    setPageMeta(STATIC_PAGES["/categories"].title, STATIC_PAGES["/categories"].description, { path: "/categories" });
     resetProductJsonLd();
   } else if (path === "/contact") {
     routes.contact.classList.add("active");
-    setPageMeta("Contact Us — Hayatiq", "Get in touch with Hayatiq for questions about our handcrafted natural wellness products.", { path: "/contact" });
+    setPageMeta(STATIC_PAGES["/contact"].title, STATIC_PAGES["/contact"].description, { path: "/contact" });
     resetProductJsonLd();
   } else if (path === "/about") {
     routes.about.classList.add("active");
-    setPageMeta("Our Story — Hayatiq", "Learn about Hayatiq's story — handmade natural wellness products crafted with intention.", { path: "/about" });
+    setPageMeta(STATIC_PAGES["/about"].title, STATIC_PAGES["/about"].description, { path: "/about" });
     resetProductJsonLd();
   } else if (path === "/cart") {
     routes.cart.classList.add("active");

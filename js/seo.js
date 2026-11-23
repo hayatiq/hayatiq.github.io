@@ -12,6 +12,28 @@ const SEO_BRAND = "HAYATIQ";
 // Must match each product's `category` in js/products.js and the blocks in #view-categories.
 const CATEGORIES = ["Hair Care", "Magnesium Oil Spray", "Oral Care", "Cleaning Supply", "Bath Bombs", "Footsoaks", "Salves & Balms"];
 
+// Own title and description for the shop's fixed pages. js/script.js (setPageMeta) and
+// tools/product-pages.js both read this, so a crawler without JavaScript gets the same
+// words a browser shows. Titles about 60 characters, descriptions about 155 at most.
+const STATIC_PAGES = {
+  "/products": {
+    title: "All Products — HAYATIQ Handmade Natural Wellness",
+    description: "Shop all HAYATIQ products: magnesium oil spray, shampoo and conditioner bars, oral care, bath bombs and non-toxic cleaning. Cash on delivery in Bangladesh.",
+  },
+  "/categories": {
+    title: "Shop by Category — HAYATIQ Bangladesh",
+    description: "Browse HAYATIQ's hair care, magnesium oil spray, oral care, cleaning supply, bath bomb, footsoak and salve categories. Handmade in Bangladesh, cash on delivery.",
+  },
+  "/about": {
+    title: "Our Story — HAYATIQ Handmade in Bangladesh",
+    description: "HAYATIQ makes handmade natural wellness products with a minimal, elegant touch, inspired by nature and made to soothe both skin and mind.",
+  },
+  "/contact": {
+    title: "Contact HAYATIQ — Questions and Orders",
+    description: "Contact HAYATIQ with a question about our handmade natural wellness products, or message us on Facebook Messenger. Cash on delivery across Bangladesh.",
+  },
+};
+
 // "Salves & Balms" -> "salves-and-balms". Part of a live URL: don't change for an existing category.
 function categorySlug(name) {
   return String(name).toLowerCase().replace(/&/g, " and ").replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "");

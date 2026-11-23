@@ -23,8 +23,9 @@ execFileSync(process.execPath, [path.join(__dirname, "product-pages.js"), "--out
 
 const read = (file) => fs.readFileSync(path.join(ROOT, file), "utf8");
 const shop = {};
-vm.runInNewContext(`${read("js/seo.js")}\n${read("js/products.js")}\nthis.s = { PRODUCTS, CATEGORIES, categorySlug };`, shop);
+vm.runInNewContext(`${read("js/seo.js")}\n${read("js/products.js")}\nthis.s = { PRODUCTS, CATEGORIES, STATIC_PAGES, categorySlug };`, shop);
 const { PRODUCTS, CATEGORIES, categorySlug } = shop.s;
+const indexNow = require("./indexnow.js");
 
 const problems = [];
 const check = (ok, msg) => ok || problems.push(msg);
@@ -34,7 +35,8 @@ const jsonLd = (html, id) => {
   try { return JSON.parse(m[1]); } catch (e) { return "invalid"; }
 };
 const h1s = (html) => [...html.matchAll(/<h1[^>]*>([^<]*)<\/h1>/g)].map((m) => m[1].replace(/&amp;/g, "&"));
-const meta = (html, name) => (html.match(new RegExp(`<meta name="${name}" content="([^"]*)"`)) || [])[1] || "";
+const unescape = (t) => t.replace(/&#39;/g, "'").replace(/&quot;/g, '"').replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/&amp;/g, "&");
+const meta = (html, name) => unescape((html.match(new RegExp(`<meta name="${name}" content="([^"]*)"`)) || [])[1] || "");
 const title = (html) => (html.match(/<title>([^<]*)<\/title>/) || [])[1] || "";
 
 const titles = new Map();
@@ -76,7 +78,29 @@ for (const cat of CATEGORIES) {
   check(html.includes(`<link rel="canonical" href="https://hayatiq.netlify.app/category/${slug}"`), `/category/${slug}: wrong canonical`);
 }
 
+// /products, /categories, /about, /contact: their own title, canonical, one h1 (not the homepage's).
+const { STATIC_PAGES } = shop.s;
+for (const route of Object.keys(STATIC_PAGES)) {
+  const file = path.join(out, `page-${route.slice(1)}.html`);
+  if (!fs.existsSync(file)) { problems.push(`${route}: no page`); continue; }
+  const html = fs.readFileSync(file, "utf8");
+  const t = title(html);
+  check(t === STATIC_PAGES[route].title, `${route}: title is "${t}"`);
+  check(!titles.has(t), `${route}: same title as ${titles.get(t)}`);
+  titles.set(t, route);
+  check(meta(html, "description") === STATIC_PAGES[route].description, `${route}: description is not its own`);
+  check(STATIC_PAGES[route].description.length <= 165 && t.length <= 70, `${route}: title or description too long`);
+  check(html.includes(`<link rel="canonical" href="https://hayatiq.netlify.app${route}"`), `${route}: canonical is not itself`);
+  check(h1s(html).length === 1, `${route}: h1s are ${JSON.stringify(h1s(html))}`);
+}
+check(!titles.has("Hayatiq — Handcrafted with Intention"), "a page still has the homepage title");
+
 const sitemap = fs.readFileSync(path.join(out, "sitemap.xml"), "utf8");
+// lastmod: either on every address (full git history) or on none (shallow clone), always YYYY-MM-DD.
+const entries = indexNow.parseSitemap(sitemap);
+const dates = entries.map((e) => e.lastmod);
+check(dates.every((d) => /^\d{4}-\d{2}-\d{2}$/.test(d)) || dates.every((d) => !d), "sitemap: lastmod must be on every address or none");
+check(entries.length === PRODUCTS.length + CATEGORIES.length + 5, `sitemap: ${entries.length} addresses`);
 for (const cat of CATEGORIES) check(sitemap.includes(`/category/${categorySlug(cat)}<`), `sitemap: no /category/${categorySlug(cat)}`);
 for (const p of PRODUCTS) check(sitemap.includes(`/product/${p.slug}<`), `sitemap: no /product/${p.slug}`);
 
@@ -91,9 +115,26 @@ check(redirects[redirects.length - 1].replace(/\s+/g, " ") === "/* /index.html 4
 const index = read("index.html");
 check(jsonLd(index, "siteJsonLd") && jsonLd(index, "siteJsonLd") !== "invalid", "index.html: site JSON-LD invalid");
 
+// IndexNow: key file matches the module, changed-page picking, and the request it would send.
+check(fs.existsSync(path.join(ROOT, `${indexNow.KEY}.txt`)) && read(`${indexNow.KEY}.txt`) === indexNow.KEY, "indexnow: key file missing or its text is not the key");
+check(/^[a-f0-9]{16,128}$/.test(indexNow.KEY), "indexnow: key must be 8 to 128 letters or digits");
+const sample = indexNow.parseSitemap(`<urlset><url><loc>https://hayatiq.netlify.app/a</loc><lastmod>2026-11-22</lastmod></url><url><loc>https://hayatiq.netlify.app/b?x=1&amp;y=2</loc><lastmod>2026-10-01</lastmod></url><url><loc>https://other.example/c</loc></url></urlset>`);
+check(sample.length === 2 && sample[1].loc.endsWith("/b?x=1&y=2"), "indexnow: sitemap parsing");
+const now = new Date("2026-11-23T10:00:00Z");
+check(JSON.stringify(indexNow.pickUrls(sample, { now })) === JSON.stringify(["https://hayatiq.netlify.app/a"]), "indexnow: should send only recently changed pages");
+check(indexNow.pickUrls(sample, { all: true }).length === 2, "indexnow: --all should send everything");
+check(indexNow.pickUrls([{ loc: "https://hayatiq.netlify.app/a", lastmod: "" }], { now }).length === 1, "indexnow: undated sitemap should send everything");
+let sentBody = null;
+indexNow.submit(["https://hayatiq.netlify.app/a"], { fetchImpl: async (url, init) => { sentBody = { url, ...JSON.parse(init.body) }; return { status: 202 }; } }).then((r) => {
+  check(r.ok && sentBody.host === "hayatiq.netlify.app" && sentBody.key === indexNow.KEY && sentBody.keyLocation === `https://hayatiq.netlify.app/${indexNow.KEY}.txt` && sentBody.urlList.length === 1, "indexnow: request format");
+  finish();
+});
+
+function finish() {
 fs.rmSync(out, { recursive: true, force: true });
 if (problems.length) {
   console.error(`check-seo: ${problems.length} problem(s)\n- ${problems.join("\n- ")}`);
   process.exit(1);
 }
-console.log(`check-seo: ok (${PRODUCTS.length} product pages, ${CATEGORIES.length} category pages, ${routes.length + 3} routes)`);
+console.log(`check-seo: ok (${PRODUCTS.length} product pages, ${CATEGORIES.length} category pages, ${Object.keys(STATIC_PAGES).length} fixed pages, ${routes.length + 3} routes, IndexNow)`);
+}

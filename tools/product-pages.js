@@ -38,6 +38,46 @@ const PAGE_DIR = "preview"; // served at /preview/<slug>.html
 const MARK = "# Product link previews (added by tools/product-pages.js at deploy)";
 // Pages listed in sitemap.xml besides the products (not the cart, checkout or orders).
 const SITEMAP_PAGES = ["/", "/products", "/categories", "/about", "/contact"];
+// The headings that become each fixed page's <h1> (index.html has them as <h2>).
+const STATIC_HEADINGS = {
+  "/categories": "<h2>Categories</h2>",
+  "/about": "<h2>Our Story</h2>",
+  "/contact": "<h2>Contact Us</h2>",
+};
+
+// <lastmod> for the sitemap, from git history: the day a page's content last changed.
+// Product pages: the commit that last touched that product's block in js/products.js, or
+// the rendering code (js/seo.js, this tool). Other pages: their source files. Returns ""
+// (no <lastmod>) when git history isn't complete, e.g. a shallow clone, since a wrong date
+// is worse than none: Bing uses it to decide when to re-crawl.
+const { execFileSync } = require("child_process");
+function gitDay(args) {
+  try {
+    const out = execFileSync("git", ["-C", ROOT, "log", "-1", "--format=%cs", ...args], { stdio: ["ignore", "pipe", "ignore"] }).toString().trim();
+    return /^\d{4}-\d{2}-\d{2}$/.test(out) ? out : "";
+  } catch (e) {
+    return "";
+  }
+}
+function historyIsComplete() {
+  try {
+    return execFileSync("git", ["-C", ROOT, "rev-parse", "--is-shallow-repository"], { stdio: ["ignore", "pipe", "ignore"] }).toString().trim() === "false";
+  } catch (e) {
+    return false;
+  }
+}
+const latest = (...days) => days.filter(Boolean).sort().pop() || "";
+// First and last line of the `slug: "<slug>"` product object in js/products.js.
+function productLines(slug) {
+  const lines = fs.readFileSync(path.join(ROOT, "js/products.js"), "utf8").split("\n");
+  const at = lines.findIndex((l) => l.includes(`slug: "${slug}"`));
+  if (at < 0) return null;
+  let start = at;
+  while (start > 0 && lines[start].trim() !== "{") start--;
+  let end = at;
+  while (end < lines.length - 1 && !/^  \},?$/.test(lines[end])) end++;
+  return [start + 1, end + 1];
+}
 
 // js/seo.js (categories, JSON-LD) and js/products.js, run as the page runs them.
 function loadShop() {
@@ -45,7 +85,7 @@ function loadShop() {
   const sandbox = {};
   vm.runInNewContext(
     `${read("js/seo.js")}\n${read("js/products.js")}\n` +
-      "this.shop = { PRODUCTS, CATEGORIES, categorySlug, categoryPath, productTitle, productJsonLd, breadcrumbJsonLd, jsonForScript };",
+      "this.shop = { PRODUCTS, CATEGORIES, STATIC_PAGES, categorySlug, categoryPath, productTitle, productJsonLd, breadcrumbJsonLd, jsonForScript };",
     sandbox
   );
   return sandbox.shop;
@@ -213,6 +253,35 @@ function productPage(template, facts, p, shop, site) {
   return html;
 }
 
+// /products, /categories, /about and /contact: index.html with each page's own title,
+// description, canonical link and <h1>, so a crawler without JavaScript doesn't read them
+// as copies of the homepage. /products also lists every product, as a category page does.
+function staticPage(template, route, shop, site, live) {
+  const { title, description } = shop.STATIC_PAGES[route];
+  const url = `${live}${route}`;
+  let html = template.replace(/<title>[^<]*<\/title>/, `<title>${escapeAttr(title)}</title>`);
+  html = setMeta(html, "name", "description", description);
+  html = setMeta(html, "property", "og:title", title);
+  html = setMeta(html, "property", "og:description", description);
+  html = setMeta(html, "property", "og:url", url);
+  html = setMeta(html, "name", "twitter:title", title);
+  html = setMeta(html, "name", "twitter:description", description);
+  html = html.replace(/(<link rel="canonical" href=")[^"]*(")/, `$1${url}$2`);
+  html = demoteHomeHeadline(html);
+  if (route === "/products") {
+    html = html.replace(/<h2 id="productsHeading">[^<]*<\/h2>/, `<h1 id="productsHeading">Products</h1>`);
+    if (!html.includes('<h1 id="productsHeading">')) throw new Error('index.html has no <h2 id="productsHeading">');
+    html = html.replace(/(<div class="pill pill-small" id="productCount">)[^<]*(<\/div>)/, `$1${shop.PRODUCTS.length} items$2`);
+    const body = `<ul class="prerendered-list">
+          ${shop.PRODUCTS.map((p) => `<li><a href="/product/${p.slug}">${escapeAttr(p.name)}${p.subtitle ? ` · ${escapeAttr(p.subtitle)}` : ""}</a> — ${productFacts(p, site, shop).price || "Coming Soon"}. ${stripTags(p.metaDescription || p.short)}</li>`).join("\n          ")}
+        </ul>`;
+    return fillContainer(html, "productsGrid", body);
+  }
+  const heading = STATIC_HEADINGS[route];
+  if (html.split(heading).length !== 2) throw new Error(`index.html: expected exactly one ${heading}`);
+  return html.replace(heading, heading.replace("<h2>", "<h1>").replace("</h2>", "</h1>"));
+}
+
 // A category's own page, /category/<slug>; the router shows it with setupProductFilters().
 function categoryPage(template, cat, shop, site, live) {
   const items = shop.PRODUCTS.filter((p) => p.category === cat);
@@ -265,26 +334,44 @@ function main() {
 
   fs.mkdirSync(outDir, { recursive: true });
   const rules = [];
+  const dated = historyIsComplete();
+  const codeDay = dated ? gitDay(["--", "js/seo.js", "tools/product-pages.js"]) : "";
+  const modified = new Map(); // address -> YYYY-MM-DD
   const urls = SITEMAP_PAGES.map((page) => `${live}${page === "/" ? "/" : page}`);
+  if (dated) {
+    const catalog = gitDay(["--", "js/products.js"]);
+    const days = { "/": latest(gitDay(["--", "index.html"]), catalog), "/products": latest(gitDay(["--", "index.html"]), catalog, codeDay), "/categories": latest(gitDay(["--", "index.html"]), catalog, codeDay), "/about": latest(gitDay(["--", "index.html"]), codeDay), "/contact": latest(gitDay(["--", "index.html"]), codeDay) };
+    for (const page of SITEMAP_PAGES) modified.set(`${live}${page === "/" ? "/" : page}`, days[page]);
+  }
   const shop = loadShop();
+  for (const route of Object.keys(shop.STATIC_PAGES)) {
+    const name = `page-${route.slice(1)}`;
+    fs.writeFileSync(path.join(outDir, `${name}.html`), staticPage(template, route, shop, site, live));
+    rules.push(`${route}  /${PAGE_DIR}/${name}.html  200`);
+  }
   for (const cat of shop.CATEGORIES) {
     const slug = shop.categorySlug(cat);
     fs.writeFileSync(path.join(outDir, `category-${slug}.html`), categoryPage(template, cat, shop, site, live));
     rules.push(`/category/${slug}  /${PAGE_DIR}/category-${slug}.html  200`);
     urls.push(`${live}/category/${slug}`);
+    if (dated) modified.set(`${live}/category/${slug}`, latest(gitDay(["--", "js/products.js"]), codeDay));
   }
   for (const p of shop.PRODUCTS) {
     if (!p.slug || !/^[a-z0-9-]+$/i.test(p.slug)) continue;
     fs.writeFileSync(path.join(outDir, `${p.slug}.html`), productPage(template, productFacts(p, site, shop), p, shop, site));
     rules.push(`/product/${p.slug}  /${PAGE_DIR}/${p.slug}.html  200`);
     urls.push(`${live}/product/${p.slug}`);
+    if (dated) {
+      const range = productLines(p.slug);
+      modified.set(`${live}/product/${p.slug}`, latest(range ? gitDay(["-L", `${range[0]},${range[1]}:js/products.js`, "-s"]) : "", codeDay));
+    }
   }
   // Any other product or category address: the not-found view with a real 404 status.
   rules.push("/product/*  /index.html  404", "/category/*  /index.html  404");
   // Always the live address (as in robots.txt), even on a deploy preview.
   const sitemap = `<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-${urls.map((url) => `  <url><loc>${escapeAttr(url)}</loc></url>`).join("\n")}
+${urls.map((url) => `  <url><loc>${escapeAttr(url)}</loc>${modified.get(url) ? `<lastmod>${modified.get(url)}</lastmod>` : ""}</url>`).join("\n")}
 </urlset>
 `;
   fs.writeFileSync(local ? path.join(outDir, "sitemap.xml") : path.join(ROOT, "sitemap.xml"), sitemap);
