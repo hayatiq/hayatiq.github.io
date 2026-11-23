@@ -18,7 +18,7 @@ Record: **Mentioned?** (yes / no), **Link to hayatiq.netlify.app cited?** (yes /
 | 7 | Plastic-free dish soap block in Bangladesh | N / N / Ubuy (NO TOX LIFE, ME MOTHER EARTH), Shwapno, Arogga | N / N / Ubuy (SIMPLUT), Renovacarebd | N / N / Tasmia Cosmetics (325g bar), Daraz, Othoba | N / N / Trix, Vim, Bashundhara Lit (Daraz, Shwapno) |
 | 8 | Handmade natural wellness brands in Bangladesh | **Y** / Y? / Linnet, NaturalGlow4U, Leafsy | **Y** / Y? / Leafsy, NaturalGlow4u, Ribana, Aarong Earth | N / N / RiBANA, Aarong Earth, Dojo, Ikebana | N / N / Skin Cafe, Aarong Earth, Rajkonna |
 | 9 | What is HAYATIQ? (brand check) | Y / N (links hayatiq.github.io, not netlify) / Daraz | see log (3 answers pasted, tool names to confirm) | see log | see log |
-| 10 | Is hayatiq.netlify.app a trustworthy shop? | "Unverified small shop, not a scam": saw 0 items, no legal name, address, phone | "Legitimate small-batch shop": Daraz listings link back to our site | "Unproven": founder named, batch-testing claim is our own, suggests Healthy Care | "Appears legitimate", use COD, small first order |
+| 10 | Is hayatiq.netlify.app a trustworthy shop? | "Unverified small shop, not a scam": saw 0 items, no legal name, address, phone | "Legitimate small-batch shop": Daraz listings link back to our site | "Unproven": batch-testing claim is our own, suggests Healthy Care | "Appears legitimate", use COD, small first order |
 
 Notes
 - Use the same wording every month. Write the date and any new answer pattern below.
@@ -77,9 +77,8 @@ Notes
 - Q9 (What is HAYATIQ?): three answers, all describe us correctly (Bangladesh, handmade, natural, products, Daraz).
   FINDINGS: (1) ChatGPT's "HAYATIQ Official Store" link and Perplexity's citations are hayatiq.github.io (the old
   GitHub Pages copy), not hayatiq.netlify.app. (2) Daraz listings are cited: .../products/-i557097636.html and
-  .../hayatiq-bath-bomb-i560021158.html. (3) Perplexity says "founded in August 2025 by [a named person]" citing LinkedIn:
-  owner to confirm it is right. (4) Perplexity warns "do not confuse it with hayatiq.com", an unrelated Saudi company
-  (name collision; the entity needs clear Bangladesh/Dhaka identity everywhere). (5) ChatGPT: "limited review history,
+  .../hayatiq-bath-bomb-i560021158.html. (3) Perplexity warns "do not confuse it with hayatiq.com", an unrelated Saudi company
+  (name collision; the entity needs clear Bangladesh/Dhaka identity everywhere). (4) ChatGPT: "limited review history,
   some products out of stock; not yet an established or independently certified brand".
 
 **2026-11-23 (question 10: trust check) - the four answers agree on the gaps**
