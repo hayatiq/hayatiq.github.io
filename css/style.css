@@ -3280,3 +3280,78 @@ img.fade-in.loaded {
 #topProductsGrid {
   min-height: clamp(348px, calc(240px + 30vw), 380px);
 }
+
+/* "What stopped you?": a one-tap card at the bottom of the screen, shown by js/visitor.js
+   when someone leaves checkout without ordering. Above the cart bar, below the toast. */
+.stop-card {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 110;
+  max-width: 480px;
+  margin: 0 auto;
+  padding: 1.1rem 1rem calc(1rem + env(safe-area-inset-bottom));
+  border-radius: 18px 18px 0 0;
+  background: var(--color-surface, #fff);
+  box-shadow: 0 -8px 28px rgba(0, 0, 0, 0.18);
+  animation: stop-card-in 0.25s ease-out;
+}
+@keyframes stop-card-in {
+  from {
+    transform: translateY(100%);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .stop-card {
+    animation: none;
+  }
+}
+.stop-title {
+  margin: 0 2rem 0.15rem 0;
+  color: var(--color-heading);
+  font-size: 1.1rem;
+  font-weight: 700;
+}
+.stop-sub {
+  margin: 0 0 0.7rem;
+  color: var(--color-text-light, #6d766f);
+  font-size: 0.88rem;
+}
+.stop-close {
+  position: absolute;
+  top: 0.6rem;
+  right: 0.6rem;
+  width: 44px;
+  height: 44px;
+  border: 0;
+  background: none;
+  color: var(--color-text-light, #6d766f);
+  font-size: 1.1rem;
+  cursor: pointer;
+}
+.stop-options {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.5rem;
+}
+.stop-option:last-child:nth-child(odd) {
+  grid-column: 1 / -1; /* an odd last choice takes the full row */
+}
+.stop-option {
+  min-height: 48px;
+  padding: 0.5rem 0.8rem;
+  line-height: 1.25;
+  border: 1.5px solid var(--color-border, #e6ded3);
+  border-radius: 12px;
+  background: var(--color-surface, #fff);
+  color: var(--color-heading);
+  font: inherit;
+  font-weight: 600;
+  text-align: left;
+  cursor: pointer;
+}
+.stop-option:active {
+  border-color: var(--color-primary);
+  background: var(--color-primary-soft, #e4f1ea);
+}

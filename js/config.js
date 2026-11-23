@@ -200,13 +200,50 @@ function visitSource() {
 }
 visitSource();
 
+// Plain names for the places visitors come from. The first match wins, so the AI assistants
+// (gemini.google.com, ...) are listed before "Google search".
+const SOURCE_NAMES = [
+  [/(^|\.)(chatgpt\.com|chat\.openai\.com|openai\.com)$|^chatgpt$/i, "ChatGPT (AI assistant)"],
+  [/(^|\.)perplexity\.ai$|^perplexity$/i, "Perplexity (AI assistant)"],
+  [/(^|\.)(gemini|bard)\.google\.com$|^gemini$/i, "Gemini (AI assistant)"],
+  [/(^|\.)copilot\.(microsoft\.com|cloud\.microsoft)$|^copilot$/i, "Copilot (AI assistant)"],
+  [/(^|\.)claude\.ai$|^claude$/i, "Claude (AI assistant)"],
+  [/(^|\.)google\.[a-z.]+$|^google$/i, "Google search"],
+  [/(^|\.)bing\.com$|^bing$/i, "Bing search"],
+  [/(^|\.)duckduckgo\.com$/i, "DuckDuckGo search"],
+  [/(^|\.)yahoo\.com$/i, "Yahoo search"],
+  [/(^|\.)(facebook\.com|fb\.com|fb\.me)$|^(facebook|fb)$/i, "Facebook"],
+  [/(^|\.)instagram\.com$|^(instagram|ig)$/i, "Instagram"],
+  [/(^|\.)(messenger\.com|m\.me)$|^messenger$/i, "Messenger"],
+  [/(^|\.)(whatsapp\.com|wa\.me)$|^whatsapp$/i, "WhatsApp"],
+  [/(^|\.)daraz\.com\.bd$|^daraz$/i, "Daraz"],
+  [/(^|\.)(youtube\.com|youtu\.be)$|^youtube$/i, "YouTube"],
+  [/(^|\.)(t\.co|twitter\.com|x\.com)$/i, "X (Twitter)"],
+  [/(^|\.)(linkedin\.com|lnkd\.in)$/i, "LinkedIn"],
+  [/(^|\.)hayatiq\.github\.io$/i, "Old GitHub address"],
+];
+function friendlySource(text) {
+  const hit = SOURCE_NAMES.find(([pattern]) => pattern.test(String(text || "").trim()));
+  return hit ? hit[1] : "";
+}
+
+// Where a visit came from, in words: a campaign tag (utm_source) or the referring site,
+// named plainly when it is a known one (ChatGPT, Google search, Facebook, Daraz, ...).
+// With no referrer at all, the browser tells us when it is the Facebook/Instagram app.
 function sourceLabel(source = visitSource()) {
   if (source.utm_source) {
-    return [source.utm_source, source.utm_medium, source.utm_campaign].filter(Boolean).join(" / ");
+    return [friendlySource(source.utm_source) || source.utm_source, source.utm_medium, source.utm_campaign].filter(Boolean).join(" / ");
   }
-  if (!source.referrer) return "Direct or in-app browser";
+  if (!source.referrer) {
+    const ua = navigator.userAgent || "";
+    if (/FBAN|FBAV|FB_IAB|FB4A/i.test(ua)) return "Facebook / Messenger app (in-app browser)";
+    if (/Instagram/i.test(ua)) return "Instagram app (in-app browser)";
+    return "Direct (typed link, bookmark, or an app that hides its source)";
+  }
   try {
-    return new URL(source.referrer).hostname;
+    const host = new URL(source.referrer).hostname.replace(/^www\./, "");
+    const name = friendlySource(host);
+    return name ? `${name} (${host})` : host;
   } catch (e) {
     return source.referrer;
   }

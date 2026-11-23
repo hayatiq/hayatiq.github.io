@@ -127,6 +127,7 @@ function setBreadcrumbJsonLd(items) {
 // answers these addresses with a 404 status (_redirects); `noindex` is a second guard.
 function renderNotFound(path) {
   routes.notfound.classList.add("active");
+  if (typeof trackBrokenLink === "function") trackBrokenLink(path); // shown in the visit email
   // Best sellers with a real photo, topped up with other live products, up to 4.
   const picks = [...topProducts(), ...PRODUCTS]
     .filter((p, i, all) => all.indexOf(p) === i && isLiveProduct(p) && hasRealPhoto(p))
