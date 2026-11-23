@@ -524,7 +524,8 @@ function visitorProfile(s) {
   else insight = "First visit, still browsing.";
   if (step && !s.orderPlaced && !reachedCheckout) insight += " (They started checkout steps.)";
 
-  const lines = [`• Type: ${returning ? `Returning visitor, visit #${count}` : "New visitor, first visit"} on this ${deviceTypeWord(navigator.userAgent)}`];
+  // A plain-text email can't show coloured text, so the visit number gets a blue circle to stand out.
+  const lines = [`• Type: ${returning ? `Returning visitor, 🔵 visit #${count}` : "New visitor, 🔵 first visit"} on this ${deviceTypeWord(navigator.userAgent)}`];
   if (returning) lines.push(`• First seen: ${daysAgoText(firstSeen)}${earlier.length ? ` · Last visit: ${daysAgoText(earlier[0].startTimestamp)}` : ""}`);
   lines.push(`• Past orders on this device: ${pastOrders.length ? `${pastOrders.length} (last ${daysAgoText(Date.parse(pastOrders[0].createdAt) || pastOrders[0].createdAt)})` : "none"}`);
   if (earlierViewed.length) lines.push(`• Looked at before: ${earlierViewed.join(", ")}`);
@@ -553,17 +554,24 @@ function formatCheckoutLines(s) {
 }
 
 function formatTechLines(s) {
-  const t = s.tech || {};
+  // A visit that began before connection, memory and speed were recorded (an older version of this
+  // file started it) has no `tech` / `vitals`: say so, instead of guessing or blaming the browser.
+  const t = s.tech && Object.keys(s.tech).length ? s.tech : null;
   const v = s.vitals;
-  const lines = ["DEVICE", `• Device: ${parseUserAgent(navigator.userAgent)}`, `• Screen: ${window.screen ? `${window.screen.width} × ${window.screen.height}` : "Unknown"}${t.viewport ? ` (window ${t.viewport})` : ""}`];
-  lines.push(`• Language: browser ${t.language || "unknown"} · site shown in ${t.siteLanguage === "bn" ? "Bangla" : "English"}`);
+  const early = "not captured for this visit (it began before this update)";
+  const lines = ["DEVICE", `• Device: ${parseUserAgent(navigator.userAgent)}`, `• Screen: ${window.screen ? `${window.screen.width} × ${window.screen.height}` : "Unknown"}${t && t.viewport ? ` (window ${t.viewport})` : ""}`];
+  lines.push(t ? `• Language: browser ${t.language || "unknown"} · site shown in ${t.siteLanguage === "bn" ? "Bangla" : "English"}` : `• Language: ${early}`);
   lines.push("", "NETWORK AND HARDWARE");
-  if (t.effectiveType || t.downlink != null) {
-    lines.push(`• Connection: ${t.effectiveType || "unknown"}${t.downlink != null ? ` · about ${t.downlink} Mbps` : ""}${t.rtt != null ? ` · ${t.rtt} ms delay` : ""}${t.saveData ? " · Data Saver is ON" : ""}`);
-  } else lines.push("• Connection: not reported by this browser (iPhone / Safari don't share it)");
-  lines.push(`• Memory: ${t.deviceMemory != null ? `about ${t.deviceMemory} GB` : "not reported"} · CPU cores: ${t.cores || "not reported"}`);
+  if (!t) lines.push(`• Connection, memory and CPU: ${early}`);
+  else {
+    if (t.effectiveType || t.downlink != null) {
+      lines.push(`• Connection: ${t.effectiveType || "unknown"}${t.downlink != null ? ` · about ${t.downlink} Mbps` : ""}${t.rtt != null ? ` · ${t.rtt} ms delay` : ""}${t.saveData ? " · Data Saver is ON" : ""}`);
+    } else lines.push("• Connection: not shared by this browser (Safari and Firefox don't share it)");
+    lines.push(`• Memory: ${t.deviceMemory != null ? `about ${t.deviceMemory} GB` : "not shared by this browser"} · CPU cores: ${t.cores || "not shared by this browser"}`);
+  }
   lines.push("", `PAGE SPEED${v && v.path ? ` (page loaded: ${v.path})` : ""}`);
-  if (!v || (v.lcp == null && v.fcp == null && v.ttfb == null)) lines.push("• Not measured (this browser doesn't report page speed)");
+  if (!v) lines.push(`• ${early[0].toUpperCase()}${early.slice(1)}`);
+  else if (v.lcp == null && v.fcp == null && v.ttfb == null) lines.push("• Not measured (this browser doesn't report page speed)");
   else {
     lines.push(`• ${rate(v.lcp, 2500, 4000)} Main content shown: ${secondsText(v.lcp)} (good: 2.5 s or less)`);
     lines.push(`• ${rate(v.fcp, 1800, 3000)} First content shown: ${secondsText(v.fcp)} (good: 1.8 s or less)`);
